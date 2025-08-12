@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace TrueColor;
@@ -10,9 +11,23 @@ public static class AnsiConsole
     static AnsiConsole() => TryEnableVirtualTerminalOnWindows();
 
     /// <summary>
-    /// Writes a single character with the specified foreground and background colors.
-    /// Emits full SGR every call; no internal caching or state.
+    /// Writes a single character to standard output using the set Console foreground and background colors.
     /// </summary>
+    /// <param name="ch">Character to write</param>
+    /// <seealso cref="Console.ForegroundColor"/>
+    /// <seealso cref="Console.BackgroundColor"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(char ch)
+    {
+       throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Writes a single character to standard output with the specified foreground and background colors.
+    /// </summary>
+    /// <param name="ch">Character to write</param>
+    /// <param name="fg">Foreground color</param>
+    /// <param name="bg">Background color</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(char ch, Rgb fg, Rgb bg)
     {
