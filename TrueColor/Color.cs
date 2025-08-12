@@ -1,11 +1,16 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace TrueColor;
 
 /// <summary>
-/// Immutable struct for 24-bit true colors
+/// Immutable platform-independent struct for 24-bit true colors.
+/// Also provides set of predefined named colors.
 /// </summary>
-public readonly struct Color : IEquatable<Color>
+/// <remarks>
+/// Predefined colors are equivalent to set in <see cref="System.Drawing.KnownColor"/> but without the heavy dependency to System.Drawing.
+/// </remarks>
+public readonly partial struct Color : IEquatable<Color>
 {
     /// <summary>
     /// Red component value of this color (0-255).
@@ -63,4 +68,30 @@ public readonly struct Color : IEquatable<Color>
     /// <param name="b">The second color to compare.</param>
     /// <returns><see langword="true"/> <b>iff</b> the value of <paramref name="a"/> is different from the value of <paramref name="b"/>.</returns>
     public static bool operator !=(Color a, Color b) => !a.Equals(b);
+
+    /// <summary>
+    /// Converts <see cref="ConsoleColor"/> to <see cref="Color"/>.
+    /// </summary>
+    /// <param name="c">Console color to convert</param>
+    /// <remarks>The conversion is not guaranteed to be exact.</remarks>
+    /// <returns>RGB color value</returns>
+    public static Color FromConsoleColor(ConsoleColor c) => c switch
+    {
+        ConsoleColor.Black => Black,
+        ConsoleColor.DarkBlue => DarkBlue,
+        ConsoleColor.DarkGreen => DarkGreen,
+        ConsoleColor.DarkCyan => DarkCyan,
+        ConsoleColor.DarkRed => DarkRed,
+        ConsoleColor.DarkMagenta => DarkMagenta,
+        ConsoleColor.DarkYellow => Goldenrod,
+        ConsoleColor.Gray => Gray,
+        ConsoleColor.DarkGray => DarkGray,
+        ConsoleColor.Blue => Blue,
+        ConsoleColor.Green => Green,
+        ConsoleColor.Cyan => Cyan,
+        ConsoleColor.Red => Red,
+        ConsoleColor.Magenta => Magenta,
+        ConsoleColor.Yellow => Yellow,
+        _ => White // ConsoleColor.White
+    };
 }

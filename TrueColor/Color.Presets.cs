@@ -1,37 +1,7 @@
 ﻿namespace TrueColor;
 
-/// <summary>
-/// Predefined set of named colors.
-/// Platform independent set equivalent to <see cref="System.Drawing.KnownColor"/> but without the heavy dependency to System.Drawing.
-/// </summary>
-public static class Colors
+public readonly partial struct Color
 {
-    /// <summary>
-    /// Converts <see cref="ConsoleColor"/> to <see cref="Color"/>.
-    /// </summary>
-    /// <param name="c">Console color to convert</param>
-    /// <remarks>The conversion is not guaranteed to be exact.</remarks>
-    /// <returns>RGB color value</returns>
-    public static Color FromConsoleColor(ConsoleColor c) => c switch
-    {
-        ConsoleColor.Black => Black,
-        ConsoleColor.DarkBlue => DarkBlue,
-        ConsoleColor.DarkGreen => DarkGreen,
-        ConsoleColor.DarkCyan => DarkCyan,
-        ConsoleColor.DarkRed => DarkRed,
-        ConsoleColor.DarkMagenta => DarkMagenta,
-        ConsoleColor.DarkYellow => Goldenrod,
-        ConsoleColor.Gray => Gray,
-        ConsoleColor.DarkGray => DarkGray,
-        ConsoleColor.Blue => Blue,
-        ConsoleColor.Green => Green,
-        ConsoleColor.Cyan => Cyan,
-        ConsoleColor.Red => Red,
-        ConsoleColor.Magenta => Magenta,
-        ConsoleColor.Yellow => Yellow,
-        _ => White // ConsoleColor.White
-    };
-
     public static Color ActiveBorder => new(180, 180, 180);
     public static Color ActiveCaption => new(153, 180, 209);
     public static Color ActiveCaptionText => new(0, 0, 0);

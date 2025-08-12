@@ -43,7 +43,7 @@ public static class SemanticDocumentConsoleRenderer
       
         foreach ((char character, SemanticCharStyle style) in document)
         {
-            AnsiConsole.Write(character, Colors.FromConsoleColor(style.Color), Colors.FromConsoleColor(style.BackColor));
+            AnsiConsole.Write(character, Color.FromConsoleColor(style.Color), Color.FromConsoleColor(style.BackColor));
         }
 
         (Console.ForegroundColor, Console.BackgroundColor) = initColors;

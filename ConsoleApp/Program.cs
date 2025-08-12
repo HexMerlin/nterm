@@ -24,8 +24,8 @@ internal static class Program
         Console.WriteLine("This is in YELLOW using Console.ForegroundColor");
 
         // Test 2: New AnsiConsole property-based API
-        AnsiConsole.ForegroundColor = Colors.Red;
-        AnsiConsole.BackgroundColor = Colors.Blue;
+        AnsiConsole.ForegroundColor = Color.Red;
+        AnsiConsole.BackgroundColor = Color.Blue;
         Console.WriteLine("This is RED on BLUE using AnsiConsole properties!");
         
         Console.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
@@ -38,8 +38,8 @@ internal static class Program
         AnsiConsole.Write('\n');
 
         // Test 4: 24-bit color that doesn't exist in ConsoleColor enum
-        AnsiConsole.ForegroundColor = Colors.Chocolate;
-        AnsiConsole.BackgroundColor = Colors.Black;
+        AnsiConsole.ForegroundColor = Color.Chocolate;
+        AnsiConsole.BackgroundColor = Color.Black;
         Console.WriteLine("This is CHOCOLATE colored text!");
         Console.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
         //Yes, Console outputs nearest matching color DarkYellow
@@ -52,7 +52,7 @@ internal static class Program
         // Test 6: Rapid color changes
         Console.WriteLine();
         Console.WriteLine("Rapid color changes test:");
-        Color[] colors = [Colors.Red, Colors.Green, Colors.Blue, Colors.Yellow, Colors.Magenta, Colors.Cyan];
+        Color[] colors = [Color.Red, Color.Green, Color.Blue, Color.Yellow, Color.Magenta, Color.Cyan];
         for (int i = 0; i < colors.Length; i++)
         {
             AnsiConsole.ForegroundColor = colors[i];
