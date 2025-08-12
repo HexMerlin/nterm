@@ -51,5 +51,12 @@ Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
         // 4) Render to console using rich semantic information
         SemanticDocumentConsoleRenderer.Render(document);
         Console.WriteLine();
+        
+        //Console.WriteLine();
+        //Console.WriteLine("Press any key to run performance benchmark...");
+        //Console.ReadKey(true);
+        
+        //// 5) Run performance benchmark
+        //Benchmark.RunPerformanceBenchmark();
     }
 }

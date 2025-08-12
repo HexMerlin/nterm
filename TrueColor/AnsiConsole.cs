@@ -14,42 +14,84 @@ public static class AnsiConsole
 
     private static readonly ConsoleColor OriginalBackground = Console.BackgroundColor;
 
+    /// <summary>
+    /// Cached foreground color to avoid redundant escape sequences.
+    /// </summary>
+    private static Color? _cachedForeground;
+
+    /// <summary>
+    /// Cached background color to avoid redundant escape sequences.
+    /// </summary>
+    private static Color? _cachedBackground;
+
+    /// <summary>
+    /// Pre-computed ASCII representations for bytes 0-255. Each entry contains the byte representation
+    /// followed by length information for ultra-fast lookup without division operations.
+    /// </summary>
+    private static readonly byte[][] ByteToAsciiLookup = InitializeByteLookup();
+
+    /// <summary>
+    /// Pre-computed lengths for each byte value 0-255 to avoid repeated calculations.
+    /// </summary>
+    private static readonly byte[] ByteLengthLookup = InitializeLengthLookup();
+
+
     static AnsiConsole()
     {
         TryEnableVirtualTerminalOnWindows();
     }
 
     /// <summary>
-    /// Writes a character with specified colors.
+    /// Writes a character with specified colors using optimized color caching.
     /// </summary>
     /// <param name="ch">Character to write</param>
     /// <param name="foreground">Foreground color</param>
     /// <param name="background">Background color</param>
+    /// <remarks>
+    /// Ultra-optimized implementation avoids redundant color escape sequences when colors haven't changed.
+    /// Uses pre-computed lookup tables and minimal memory operations for maximum throughput.
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(char ch, Color foreground, Color background)
     {
-        // Worst-case length fits comfortably in 64 bytes:
-        // ESC[38;2;r;g;bmESC[48;2;r;g;bm<char>
+        // Check if colors have changed to avoid redundant escape sequences
+        bool foregroundChanged = _cachedForeground != foreground;
+        bool backgroundChanged = _cachedBackground != background;
+
+        if (!foregroundChanged && !backgroundChanged)
+        {
+            // Only write the character - colors haven't changed
+            Span<byte> charBuf = stackalloc byte[4]; // Max UTF-8 char length
+            int charLen = EncodeCharUtf8(ch, charBuf);
+            Stdout.Write(charBuf[..charLen]);
+            return;
+        }
+
+        // Worst-case length: ESC[38;2;255;255;255mESC[48;2;255;255;255m + 4-byte UTF-8 char
         Span<byte> buf = stackalloc byte[64];
         int i = 0;
 
-        // ESC[
-        buf[i++] = 0x1B; buf[i++] = (byte)'[';
+        // Write foreground color if changed
+        if (foregroundChanged)
+        {
+            buf[i++] = 0x1B; buf[i++] = (byte)'[';
+            WriteForegroundPrefix(buf[i..]); i += 5; // "38;2;" is 5 bytes
+            i += WriteUInt8(foreground.R, buf[i..]); buf[i++] = (byte)';';
+            i += WriteUInt8(foreground.G, buf[i..]); buf[i++] = (byte)';';
+            i += WriteUInt8(foreground.B, buf[i..]); buf[i++] = (byte)'m';
+            _cachedForeground = foreground;
+        }
 
-        // 38;2;r;g;bm
-        i += WriteAscii("38;2;", buf[i..]);
-        i += WriteUInt8(foreground.R, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(foreground.G, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(foreground.B, buf[i..]); buf[i++] = (byte)'m';
-
-        // ESC[
-        buf[i++] = 0x1B; buf[i++] = (byte)'[';
-
-        // 48;2;r;g;bm
-        i += WriteAscii("48;2;", buf[i..]);
-        i += WriteUInt8(background.R, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(background.G, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(background.B, buf[i..]); buf[i++] = (byte)'m';
+        // Write background color if changed
+        if (backgroundChanged)
+        {
+            buf[i++] = 0x1B; buf[i++] = (byte)'[';
+            WriteBackgroundPrefix(buf[i..]); i += 5; // "48;2;" is 5 bytes
+            i += WriteUInt8(background.R, buf[i..]); buf[i++] = (byte)';';
+            i += WriteUInt8(background.G, buf[i..]); buf[i++] = (byte)';';
+            i += WriteUInt8(background.B, buf[i..]); buf[i++] = (byte)'m';
+            _cachedBackground = background;
+        }
 
         // char (UTF-8)
         i += EncodeCharUtf8(ch, buf[i..]);
@@ -70,33 +112,100 @@ public static class AnsiConsole
     {
         Console.ForegroundColor = OriginalForegroundColor;
         Console.BackgroundColor = OriginalBackground;
+        InvalidateColorCache();
+    }
+
+    /// <summary>
+    /// Invalidates cached color state. Call when external operations may have changed console colors.
+    /// </summary>
+    /// <remarks>
+    /// Forces next Write operation to output complete color escape sequences regardless of cached state.
+    /// Use when Console colors have been modified outside of this class.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void InvalidateColorCache()
+    {
+        _cachedForeground = null;
+        _cachedBackground = null;
     }
 
     #region Private Methods
 
+    private static byte[][] InitializeByteLookup()
+    {
+        byte[][] lookup = new byte[256][];
+        for (int i = 0; i <= 255; i++)
+        {
+            if (i < 10)
+            {
+                lookup[i] = [(byte)('0' + i)];
+            }
+            else if (i < 100)
+            {
+                lookup[i] = [(byte)('0' + (i / 10)), (byte)('0' + (i % 10))];
+            }
+            else
+            {
+                int hundreds = i / 100;
+                int rem = i - hundreds * 100;
+                lookup[i] = [(byte)('0' + hundreds), (byte)('0' + (rem / 10)), (byte)('0' + (rem % 10))];
+            }
+        }
+        return lookup;
+    }
+
+    private static byte[] InitializeLengthLookup()
+    {
+        byte[] lookup = new byte[256];
+        for (int i = 0; i <= 255; i++)
+        {
+            lookup[i] = i < 10 ? (byte)1 : i < 100 ? (byte)2 : (byte)3;
+        }
+        return lookup;
+    }
+
+    /// <summary>
+    /// Pre-computed byte sequences for common ANSI color prefixes.
+    /// </summary>
+    private static ReadOnlySpan<byte> ForegroundPrefix => "38;2;"u8;
+    private static ReadOnlySpan<byte> BackgroundPrefix => "48;2;"u8;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteAscii(string s, Span<byte> dest)
     {
-        for (int j = 0; j < s.Length; j++) dest[j] = (byte)s[j];
+        // Optimized for small ASCII strings using unsafe operations
+        unsafe
+        {
+            fixed (char* src = s)
+            fixed (byte* dst = dest)
+            {
+                for (int i = 0; i < s.Length; i++)
+                {
+                    dst[i] = (byte)src[i];
+                }
+            }
+        }
         return s.Length;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void WriteForegroundPrefix(Span<byte> dest)
+    {
+        ForegroundPrefix.CopyTo(dest);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void WriteBackgroundPrefix(Span<byte> dest)
+    {
+        BackgroundPrefix.CopyTo(dest);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUInt8(byte value, Span<byte> dest)
     {
-        if (value < 10) { dest[0] = (byte)('0' + value); return 1; }
-        if (value < 100)
-        {
-            dest[0] = (byte)('0' + (value / 10));
-            dest[1] = (byte)('0' + (value % 10));
-            return 2;
-        }
-        int hundreds = value / 100;
-        int rem = value - hundreds * 100;
-        dest[0] = (byte)('0' + hundreds);
-        dest[1] = (byte)('0' + (rem / 10));
-        dest[2] = (byte)('0' + (rem % 10));
-        return 3;
+        ReadOnlySpan<byte> bytes = ByteToAsciiLookup[value];
+        bytes.CopyTo(dest);
+        return ByteLengthLookup[value];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
