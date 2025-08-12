@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace TrueColor;
@@ -24,10 +23,10 @@ public static class AnsiConsole
     /// Writes a character with specified colors.
     /// </summary>
     /// <param name="ch">Character to write</param>
-    /// <param name="fg">Foreground color</param>
-    /// <param name="bg">Background color</param>
+    /// <param name="foreground">Foreground color</param>
+    /// <param name="background">Background color</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write(char ch, Rgb fg, Rgb bg)
+    public static void Write(char ch, Color foreground, Color background)
     {
         // Worst-case length fits comfortably in 64 bytes:
         // ESC[38;2;r;g;bmESC[48;2;r;g;bm<char>
@@ -39,18 +38,18 @@ public static class AnsiConsole
 
         // 38;2;r;g;bm
         i += WriteAscii("38;2;", buf[i..]);
-        i += WriteUInt8(fg.R, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(fg.G, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(fg.B, buf[i..]); buf[i++] = (byte)'m';
+        i += WriteUInt8(foreground.R, buf[i..]); buf[i++] = (byte)';';
+        i += WriteUInt8(foreground.G, buf[i..]); buf[i++] = (byte)';';
+        i += WriteUInt8(foreground.B, buf[i..]); buf[i++] = (byte)'m';
 
         // ESC[
         buf[i++] = 0x1B; buf[i++] = (byte)'[';
 
         // 48;2;r;g;bm
         i += WriteAscii("48;2;", buf[i..]);
-        i += WriteUInt8(bg.R, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(bg.G, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(bg.B, buf[i..]); buf[i++] = (byte)'m';
+        i += WriteUInt8(background.R, buf[i..]); buf[i++] = (byte)';';
+        i += WriteUInt8(background.G, buf[i..]); buf[i++] = (byte)';';
+        i += WriteUInt8(background.B, buf[i..]); buf[i++] = (byte)'m';
 
         // char (UTF-8)
         i += EncodeCharUtf8(ch, buf[i..]);
