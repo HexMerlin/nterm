@@ -58,11 +58,6 @@ public static class AnsiConsole
         Stdout.Write(buf[..i]);
     }
 
-    public static void MemorizeColors()
-    {
-
-    }
-
     /// <summary>
     /// Restores colors of the standard Console to their initial values.
     /// </summary>
