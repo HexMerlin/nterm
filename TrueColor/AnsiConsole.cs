@@ -8,19 +8,31 @@ public static class AnsiConsole
 {
     private static readonly Stream Stdout = Console.OpenStandardOutput();
 
-    static AnsiConsole() => TryEnableVirtualTerminalOnWindows();
+    /// <summary>
+    /// Default foreground color for character output.
+    /// </summary>
+    public static Rgb ForegroundColor { get; set; }
 
     /// <summary>
-    /// Writes a single character to standard output using the set Console foreground and background colors.
+    /// Default background color for character output.
+    /// </summary>
+    public static Rgb BackgroundColor { get; set; }
+
+    static AnsiConsole()
+    {
+        TryEnableVirtualTerminalOnWindows();
+        ForegroundColor = ToRgb(Console.ForegroundColor);
+        BackgroundColor = ToRgb(Console.BackgroundColor);
+    }
+
+    /// <summary>
+    /// Writes a single character to standard output using the default foreground and background colors.
     /// </summary>
     /// <param name="ch">Character to write</param>
-    /// <seealso cref="Console.ForegroundColor"/>
-    /// <seealso cref="Console.BackgroundColor"/>
+    /// <seealso cref="ForegroundColor"/>
+    /// <seealso cref="BackgroundColor"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write(char ch)
-    {
-       throw new NotImplementedException();
-    }
+    public static void Write(char ch) => Write(ch, ForegroundColor, BackgroundColor);
 
     /// <summary>
     /// Writes a single character to standard output with the specified foreground and background colors.
@@ -132,7 +144,7 @@ public static class AnsiConsole
         _ = SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     }
 
-    private static Rgb ToRgb(ConsoleColor c) => c switch
+    public static Rgb ToRgb(ConsoleColor c) => c switch
     {
         ConsoleColor.Black => new(0, 0, 0),
         ConsoleColor.DarkBlue => new(0, 0, 128),
@@ -140,7 +152,7 @@ public static class AnsiConsole
         ConsoleColor.DarkCyan => new(0, 128, 128),
         ConsoleColor.DarkRed => new(128, 0, 0),
         ConsoleColor.DarkMagenta => new(128, 0, 128),
-        ConsoleColor.DarkYellow => new(128, 128, 0),
+        ConsoleColor.DarkYellow => new(255, 204,0),
         ConsoleColor.Gray => new(192, 192, 192),
         ConsoleColor.DarkGray => new(128, 128, 128),
         ConsoleColor.Blue => new(0, 0, 255),

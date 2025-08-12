@@ -1,4 +1,5 @@
 ﻿using SemanticDocuments;
+using TrueColor;
 
 namespace ConsoleApp;
 
@@ -37,15 +38,18 @@ public static class SemanticDocumentConsoleRenderer
     /// </remarks>
     public static void Render(SemanticDocument document)
     {
-        (ConsoleColor, ConsoleColor) initColors = (Console.ForegroundColor, Console.BackgroundColor);
-                
+       // (ConsoleColor, ConsoleColor) initColors = (Console.ForegroundColor, Console.BackgroundColor);
+          
+        
         foreach ((char character, SemanticCharStyle style) in document)
         {
-            Console.ForegroundColor = style.Color;
-            Console.BackgroundColor = style.BackColor;
-            Console.Write(character);
+            AnsiConsole.Write(character, AnsiConsole.ToRgb(style.Color), AnsiConsole.ToRgb(style.BackColor));
+            
+            //Console.ForegroundColor = style.Color;
+            //Console.BackgroundColor = style.BackColor;
+            //Console.Write(character);
         }
         
-        (Console.ForegroundColor, Console.BackgroundColor) = initColors;
+        //(Console.ForegroundColor, Console.BackgroundColor) = initColors;
     }
 }
