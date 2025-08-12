@@ -4,24 +4,24 @@ using System.Runtime.InteropServices;
 
 namespace TrueColor;
 
+/// <summary>
+/// Optimized 24-bit color console writer.
+/// </summary>
 public static class AnsiConsole
 {
     private static readonly Stream Stdout = Console.OpenStandardOutput();
 
-    private static ConsoleColor OriginalForeground { get; }
-    private static ConsoleColor OriginalBackground { get; }
+    private static readonly ConsoleColor OriginalForegroundColor = Console.ForegroundColor;
+
+    private static readonly ConsoleColor OriginalBackground = Console.BackgroundColor;
 
     static AnsiConsole()
     {
-        OriginalForeground = Console.ForegroundColor;
-        OriginalBackground = Console.BackgroundColor;
         TryEnableVirtualTerminalOnWindows();
     }
 
-
-
     /// <summary>
-    /// Writes a single character to standard output with the specified foreground and background colors.
+    /// Writes a character with specified colors.
     /// </summary>
     /// <param name="ch">Character to write</param>
     /// <param name="fg">Foreground color</param>
@@ -58,13 +58,23 @@ public static class AnsiConsole
         Stdout.Write(buf[..i]);
     }
 
-    /// <summary>
-    /// Restores terminal colors to the originally set <see cref="Console.ForegroundColor"/> and <see cref="Console.BackgroundColor"/>.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Reset()
+    public static void MemorizeColors()
     {
-        Console.ForegroundColor = OriginalForeground;
+
+    }
+
+    /// <summary>
+    /// Restores colors of the standard Console to their initial values.
+    /// </summary>
+    /// <remarks>
+    /// The standard Console does not keep an explicit memory for its set color, but depend on last ANSI codes written.
+    /// Since this class writes ANSI codes to standard output, the color settings of the Console are inadvertently modified.
+    /// This method restores them to their original colors.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void RestoreOriginalColors()
+    {
+        Console.ForegroundColor = OriginalForegroundColor;
         Console.BackgroundColor = OriginalBackground;
     }
 
@@ -129,6 +139,11 @@ public static class AnsiConsole
         _ = SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     }
 
+    /// <summary>
+    /// Converts <see cref="ConsoleColor"/> to <see cref="Rgb"/>.
+    /// </summary>
+    /// <param name="c">Console color to convert</param>
+    /// <returns>RGB color value</returns>
     public static Rgb ToRgb(ConsoleColor c) => c switch
     {
         ConsoleColor.Black => new(0, 0, 0),
