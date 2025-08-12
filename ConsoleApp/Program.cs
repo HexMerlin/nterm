@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.Scripting;
 using SemanticDocuments;
 using System.Text;
+using TrueColor;
 
 namespace ConsoleApp;
 
@@ -35,6 +36,11 @@ string msg = $"Value = {x} ";
 Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
 """;
 
+        
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.BackgroundColor = ConsoleColor.Red;
+        Console.WriteLine("This should be in Yellow against Red background"); 
+
         // 2) Compile the script
         Script<object> script = CSharpScript.Create(
             scriptText,
@@ -48,7 +54,14 @@ Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
 
         // 4) Render to console using rich semantic information
         SemanticDocumentConsoleRenderer.Render(document);
-
         Console.WriteLine();
+        AnsiConsole.Reset();
+
+        Console.WriteLine("Current Console foreground: " + Console.ForegroundColor.ToString());
+        Console.WriteLine("Current Console background: " + Console.BackgroundColor.ToString());
+        Console.WriteLine(Console.BackgroundColor.ToString());
+
+        Console.WriteLine("This should be in Yellow against Red background");
+
     }
 }

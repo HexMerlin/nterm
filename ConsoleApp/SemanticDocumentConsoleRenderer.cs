@@ -38,9 +38,9 @@ public static class SemanticDocumentConsoleRenderer
     /// </remarks>
     public static void Render(SemanticDocument document)
     {
-       // (ConsoleColor, ConsoleColor) initColors = (Console.ForegroundColor, Console.BackgroundColor);
-          
-        
+        // (ConsoleColor, ConsoleColor) initColors = (Console.ForegroundColor, Console.BackgroundColor);
+
+      
         foreach ((char character, SemanticCharStyle style) in document)
         {
             AnsiConsole.Write(character, AnsiConsole.ToRgb(style.Color), AnsiConsole.ToRgb(style.BackColor));
@@ -49,7 +49,7 @@ public static class SemanticDocumentConsoleRenderer
             //Console.BackgroundColor = style.BackColor;
             //Console.Write(character);
         }
-        
+      
         //(Console.ForegroundColor, Console.BackgroundColor) = initColors;
     }
 }

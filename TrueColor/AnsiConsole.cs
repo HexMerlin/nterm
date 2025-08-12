@@ -8,31 +8,17 @@ public static class AnsiConsole
 {
     private static readonly Stream Stdout = Console.OpenStandardOutput();
 
-    /// <summary>
-    /// Default foreground color for character output.
-    /// </summary>
-    public static Rgb ForegroundColor { get; set; }
-
-    /// <summary>
-    /// Default background color for character output.
-    /// </summary>
-    public static Rgb BackgroundColor { get; set; }
+    private static ConsoleColor OriginalForeground { get; }
+    private static ConsoleColor OriginalBackground { get; }
 
     static AnsiConsole()
     {
+        OriginalForeground = Console.ForegroundColor;
+        OriginalBackground = Console.BackgroundColor;
         TryEnableVirtualTerminalOnWindows();
-        ForegroundColor = ToRgb(Console.ForegroundColor);
-        BackgroundColor = ToRgb(Console.BackgroundColor);
     }
 
-    /// <summary>
-    /// Writes a single character to standard output using the default foreground and background colors.
-    /// </summary>
-    /// <param name="ch">Character to write</param>
-    /// <seealso cref="ForegroundColor"/>
-    /// <seealso cref="BackgroundColor"/>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write(char ch) => Write(ch, ForegroundColor, BackgroundColor);
+
 
     /// <summary>
     /// Writes a single character to standard output with the specified foreground and background colors.
@@ -73,14 +59,13 @@ public static class AnsiConsole
     }
 
     /// <summary>
-    /// Resets SGR to defaults (optional utility).
+    /// Restores terminal colors to the originally set <see cref="Console.ForegroundColor"/> and <see cref="Console.BackgroundColor"/>.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Reset()
     {
-        Span<byte> buf = stackalloc byte[4];
-        buf[0] = 0x1B; buf[1] = (byte)'['; buf[2] = (byte)'0'; buf[3] = (byte)'m';
-        Stdout.Write(buf);
+        Console.ForegroundColor = OriginalForeground;
+        Console.BackgroundColor = OriginalBackground;
     }
 
     // --- Helpers ---
