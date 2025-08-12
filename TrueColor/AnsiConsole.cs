@@ -122,7 +122,7 @@ public static class AnsiConsole
 
     private static void TryEnableVirtualTerminalOnWindows()
     {
-        if (!OperatingSystem.IsWindows()) return;
+        if (!OperatingSystem.IsWindows()) return; //this stuff is only required on Windows
 
         const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
         const int STD_OUTPUT_HANDLE = -11;
