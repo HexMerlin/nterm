@@ -73,7 +73,34 @@ public static class AnsiConsole
         Console.BackgroundColor = OriginalBackground;
     }
 
-    // --- Helpers ---
+    /// <summary>
+    /// Converts <see cref="ConsoleColor"/> to <see cref="Rgb"/>.
+    /// </summary>
+    /// <param name="c">Console color to convert</param>
+    /// <remarks>The conversion is not guaranteed to be exact.</remarks>
+    /// <returns>RGB color value</returns>
+    public static Rgb ToRgb(ConsoleColor c) => c switch
+    {
+        ConsoleColor.Black => new(0, 0, 0),
+        ConsoleColor.DarkBlue => new(0, 0, 128),
+        ConsoleColor.DarkGreen => new(0, 128, 0),
+        ConsoleColor.DarkCyan => new(0, 128, 128),
+        ConsoleColor.DarkRed => new(128, 0, 0),
+        ConsoleColor.DarkMagenta => new(128, 0, 128),
+        ConsoleColor.DarkYellow => new(255, 204, 0),
+        ConsoleColor.Gray => new(192, 192, 192),
+        ConsoleColor.DarkGray => new(128, 128, 128),
+        ConsoleColor.Blue => new(0, 0, 255),
+        ConsoleColor.Green => new(0, 255, 0),
+        ConsoleColor.Cyan => new(0, 255, 255),
+        ConsoleColor.Red => new(255, 0, 0),
+        ConsoleColor.Magenta => new(255, 0, 255),
+        ConsoleColor.Yellow => new(255, 255, 0),
+        _ => new(255, 255, 255) // ConsoleColor.White
+    };
+
+
+    #region Private Methods
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteAscii(string s, Span<byte> dest)
@@ -134,32 +161,9 @@ public static class AnsiConsole
         _ = SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     }
 
-    /// <summary>
-    /// Converts <see cref="ConsoleColor"/> to <see cref="Rgb"/>.
-    /// </summary>
-    /// <param name="c">Console color to convert</param>
-    /// <returns>RGB color value</returns>
-    public static Rgb ToRgb(ConsoleColor c) => c switch
-    {
-        ConsoleColor.Black => new(0, 0, 0),
-        ConsoleColor.DarkBlue => new(0, 0, 128),
-        ConsoleColor.DarkGreen => new(0, 128, 0),
-        ConsoleColor.DarkCyan => new(0, 128, 128),
-        ConsoleColor.DarkRed => new(128, 0, 0),
-        ConsoleColor.DarkMagenta => new(128, 0, 128),
-        ConsoleColor.DarkYellow => new(255, 204,0),
-        ConsoleColor.Gray => new(192, 192, 192),
-        ConsoleColor.DarkGray => new(128, 128, 128),
-        ConsoleColor.Blue => new(0, 0, 255),
-        ConsoleColor.Green => new(0, 255, 0),
-        ConsoleColor.Cyan => new(0, 255, 255),
-        ConsoleColor.Red => new(255, 0, 0),
-        ConsoleColor.Magenta => new(255, 0, 255),
-        ConsoleColor.Yellow => new(255, 255, 0),
-        _ => new(255, 255, 255) // ConsoleColor.White
-    };
-
     [DllImport("kernel32.dll", SetLastError = true)] private static extern nint GetStdHandle(int nStdHandle);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
+
+    #endregion Private Methods
 }
