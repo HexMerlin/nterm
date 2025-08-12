@@ -10,21 +10,43 @@ public static class AnsiConsole
 {
     private static readonly Stream Stdout = Console.OpenStandardOutput();
 
-    private static readonly ConsoleColor OriginalForegroundColor = Console.ForegroundColor;
-
-    private static readonly ConsoleColor OriginalBackground = Console.BackgroundColor;
+    /// <summary>
+    /// 24-bit foreground color of the console. Setting this property immediately
+    /// writes the corresponding ANSI escape sequence to stdout.
+    /// </summary>
+    /// <remarks>
+    /// Changing this property affects all subsequent console output, including
+    /// standard Console.Write() and Console.WriteLine() operations.
+    /// </remarks>
+    public static Color ForegroundColor
+    {
+        get => field;
+        set
+        {
+            if (field == value) return;
+            field = value;
+            WriteForegroundColorToStdout(value);
+        }
+    }
 
     /// <summary>
-    /// Current foreground color of the console. Reflects the 24-bit RGB equivalent
-    /// of the last ANSI foreground color sequence written to the console.
+    /// 24-bit background color of the console. Setting this property immediately
+    /// writes the corresponding ANSI escape sequence to stdout.
     /// </summary>
-    public static Color ForegroundColor { get; private set; }
-
-    /// <summary>
-    /// Current background color of the console. Reflects the 24-bit RGB equivalent
-    /// of the last ANSI background color sequence written to the console.
-    /// </summary>
-    public static Color BackgroundColor { get; private set; }
+    /// <remarks>
+    /// Changing this property affects all subsequent console output, including
+    /// standard Console.Write() and Console.WriteLine() operations.
+    /// </remarks>
+    public static Color BackgroundColor
+    {
+        get => field;
+        set
+        {
+            if (field == value) return;
+            field = value;
+            WriteBackgroundColorToStdout(value);
+        }
+    }
 
     /// <summary>
     /// Pre-computed byte sequences for common ANSI color prefixes.
@@ -34,29 +56,30 @@ public static class AnsiConsole
 
     static AnsiConsole()
     {
+        TryEnableVirtualTerminalOnWindows();
         // Initialize color tracking with current console colors converted to 24-bit RGB
+        // Use backing fields to avoid writing ANSI codes during initialization
         ForegroundColor = Colors.FromConsoleColor(Console.ForegroundColor);
         BackgroundColor = Colors.FromConsoleColor(Console.BackgroundColor);
-        TryEnableVirtualTerminalOnWindows();
     }
 
-    /// <summary>
-    /// Current 24-bit foreground color of the console.
-    /// </summary>
-    /// <remarks>
-    /// Reflects the actual console foreground color state. Writing ANSI color sequences
-    /// affects all subsequent Console.Write operations, not just AnsiConsole output.
-    /// </remarks>
-    public static Color CurrentForegroundColor => ForegroundColor;
+
 
     /// <summary>
-    /// Current 24-bit background color of the console.
+    /// Writes a character using current foreground and background colors.
     /// </summary>
+    /// <param name="ch">Character to write</param>
     /// <remarks>
-    /// Reflects the actual console background color state. Writing ANSI color sequences
-    /// affects all subsequent Console.Write operations, not just AnsiConsole output.
+    /// Uses the current ForegroundColor and BackgroundColor properties.
+    /// No ANSI escape sequences are written since colors are already set.
     /// </remarks>
-    public static Color CurrentBackgroundColor => BackgroundColor;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(char ch)
+    {
+        Span<byte> charBuf = stackalloc byte[4]; // Max UTF-8 char length
+        int charLen = EncodeCharUtf8(ch, charBuf);
+        Stdout.Write(charBuf[..charLen]);
+    }
 
     /// <summary>
     /// Writes a character with specified colors using optimized color caching.
@@ -66,92 +89,62 @@ public static class AnsiConsole
     /// <param name="background">Background color</param>
     /// <remarks>
     /// Ultra-optimized implementation avoids redundant color escape sequences when colors haven't changed.
-    /// Uses pre-computed lookup tables and minimal memory operations for maximum throughput.
+    /// Updates the ForegroundColor and BackgroundColor properties if colors have changed.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(char ch, Color foreground, Color background)
     {
-        // Check if colors have changed to avoid redundant escape sequences
-        bool foregroundChanged = ForegroundColor != foreground;
-        bool backgroundChanged = BackgroundColor != background;
+        // Set colors using properties (which handle ANSI output automatically)
+        ForegroundColor = foreground;
+        BackgroundColor = background;
+        
+        // Write the character
+        Write(ch);
+    }
 
-        if (!foregroundChanged && !backgroundChanged)
-        {
-            // Only write the character - colors haven't changed
-            Span<byte> charBuf = stackalloc byte[4]; // Max UTF-8 char length
-            int charLen = EncodeCharUtf8(ch, charBuf);
-            Stdout.Write(charBuf[..charLen]);
-            return;
-        }
+    #region Private Methods
 
-        // Worst-case length: ESC[38;2;255;255;255mESC[48;2;255;255;255m + 4-byte UTF-8 char
-        Span<byte> buf = stackalloc byte[64];
+    /// <summary>
+    /// Writes ANSI foreground color escape sequence to stdout.
+    /// </summary>
+    /// <param name="color">Foreground color to set</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void WriteForegroundColorToStdout(Color color)
+    {
+        Span<byte> buf = stackalloc byte[32]; // ESC[38;2;255;255;255m = max 19 bytes
         int i = 0;
-
-        // Write foreground color if changed
-        if (foregroundChanged)
-        {
-            buf[i++] = 0x1B; 
-            buf[i++] = (byte)'[';
-            ForegroundPrefix.CopyTo(buf[i..]);
-            i += 5; // "38;2;" is 5 bytes
-            i += WriteUInt8(foreground.R, buf[i..]); buf[i++] = (byte)';';
-            i += WriteUInt8(foreground.G, buf[i..]); buf[i++] = (byte)';';
-            i += WriteUInt8(foreground.B, buf[i..]); buf[i++] = (byte)'m';
-            ForegroundColor = foreground;
-        }
-
-        // Write background color if changed
-        if (backgroundChanged)
-        {
-            buf[i++] = 0x1B; 
-            buf[i++] = (byte)'[';
-            BackgroundPrefix.CopyTo(buf[i..]);             
-            i += 5; // "48;2;" is 5 bytes
-            i += WriteUInt8(background.R, buf[i..]); buf[i++] = (byte)';';
-            i += WriteUInt8(background.G, buf[i..]); buf[i++] = (byte)';';
-            i += WriteUInt8(background.B, buf[i..]); buf[i++] = (byte)'m';
-            BackgroundColor = background;
-        }
-
-        // char (UTF-8)
-        i += EncodeCharUtf8(ch, buf[i..]);
-
+        
+        buf[i++] = 0x1B; // ESC
+        buf[i++] = (byte)'[';
+        ForegroundPrefix.CopyTo(buf[i..]);
+        i += 5; // "38;2;" is 5 bytes
+        i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
+        i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
+        i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
+        
         Stdout.Write(buf[..i]);
     }
 
     /// <summary>
-    /// Restores colors of the standard Console to their initial values.
+    /// Writes ANSI background color escape sequence to stdout.
     /// </summary>
-    /// <remarks>
-    /// The standard Console does not keep an explicit memory for its set color, but depend on last ANSI codes written.
-    /// Since this class writes ANSI codes to standard output, the color settings of the Console are inadvertently modified.
-    /// This method restores them to their original colors.
-    /// </remarks>
+    /// <param name="color">Background color to set</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void RestoreOriginalColors()
+    private static void WriteBackgroundColorToStdout(Color color)
     {
-        Console.ForegroundColor = OriginalForegroundColor;
-        Console.BackgroundColor = OriginalBackground;
-        SyncWithConsoleColors();
+        Span<byte> buf = stackalloc byte[32]; // ESC[48;2;255;255;255m = max 19 bytes
+        int i = 0;
+        
+        buf[i++] = 0x1B; // ESC
+        buf[i++] = (byte)'[';
+        BackgroundPrefix.CopyTo(buf[i..]);
+        i += 5; // "48;2;" is 5 bytes
+        i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
+        i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
+        i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
+        
+        Stdout.Write(buf[..i]);
     }
-
-    /// <summary>
-    /// Synchronizes color tracking with current Console color state.
-    /// </summary>
-    /// <remarks>
-    /// Call when Console colors have been modified externally (e.g., Console.ForegroundColor = ConsoleColor.Red).
-    /// Converts current ConsoleColor values to 24-bit RGB equivalents and updates tracking state.
-    /// Forces next Write operation to output complete color escape sequences.
-    /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void SyncWithConsoleColors()
-    {
-        ForegroundColor = Colors.FromConsoleColor(Console.ForegroundColor);
-        BackgroundColor = Colors.FromConsoleColor(Console.BackgroundColor);
-    }
-
-    #region Private Methods
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUInt8(byte value, Span<byte> dest)
