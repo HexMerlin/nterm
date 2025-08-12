@@ -48,11 +48,7 @@ public static class AnsiConsole
         }
     }
 
-    /// <summary>
-    /// Pre-computed byte sequences for common ANSI color prefixes.
-    /// </summary>
-    private static ReadOnlySpan<byte> ForegroundPrefix => "38;2;"u8;
-    private static ReadOnlySpan<byte> BackgroundPrefix => "48;2;"u8;
+
 
     static AnsiConsole()
     {
@@ -112,12 +108,11 @@ public static class AnsiConsole
     private static void WriteForegroundColorToStdout(Color color)
     {
         Span<byte> buf = stackalloc byte[32]; // ESC[38;2;255;255;255m = max 19 bytes
+        ReadOnlySpan<byte> prefix = "\x1B[38;2;"u8; // ESC[38;2; in single operation
         int i = 0;
         
-        buf[i++] = 0x1B; // ESC
-        buf[i++] = (byte)'[';
-        ForegroundPrefix.CopyTo(buf[i..]);
-        i += 5; // "38;2;" is 5 bytes
+        prefix.CopyTo(buf);
+        i += prefix.Length;
         i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
         i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
         i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
@@ -133,12 +128,11 @@ public static class AnsiConsole
     private static void WriteBackgroundColorToStdout(Color color)
     {
         Span<byte> buf = stackalloc byte[32]; // ESC[48;2;255;255;255m = max 19 bytes
+        ReadOnlySpan<byte> prefix = "\x1B[48;2;"u8; // ESC[48;2; in single operation
         int i = 0;
         
-        buf[i++] = 0x1B; // ESC
-        buf[i++] = (byte)'[';
-        BackgroundPrefix.CopyTo(buf[i..]);
-        i += 5; // "48;2;" is 5 bytes
+        prefix.CopyTo(buf);
+        i += prefix.Length;
         i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
         i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
         i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
