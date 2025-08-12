@@ -51,6 +51,5 @@ Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
         // 4) Render to console using rich semantic information
         SemanticDocumentConsoleRenderer.Render(document);
         Console.WriteLine();
-   
     }
 }

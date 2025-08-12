@@ -6,6 +6,32 @@
 /// </summary>
 public static class Colors
 {
+    /// <summary>
+    /// Converts <see cref="ConsoleColor"/> to <see cref="Rgb"/>.
+    /// </summary>
+    /// <param name="c">Console color to convert</param>
+    /// <remarks>The conversion is not guaranteed to be exact.</remarks>
+    /// <returns>RGB color value</returns>
+    public static Rgb FromConsoleColor(ConsoleColor c) => c switch
+    {
+        ConsoleColor.Black => Black,
+        ConsoleColor.DarkBlue => DarkBlue,
+        ConsoleColor.DarkGreen => DarkGreen,
+        ConsoleColor.DarkCyan => DarkCyan,
+        ConsoleColor.DarkRed => DarkRed,
+        ConsoleColor.DarkMagenta => DarkMagenta,
+        ConsoleColor.DarkYellow => Goldenrod,
+        ConsoleColor.Gray => Gray,
+        ConsoleColor.DarkGray => DarkGray,
+        ConsoleColor.Blue => Blue,
+        ConsoleColor.Green => Green,
+        ConsoleColor.Cyan => Cyan,
+        ConsoleColor.Red => Red,
+        ConsoleColor.Magenta => Magenta,
+        ConsoleColor.Yellow => Yellow,
+        _ => White // ConsoleColor.White
+    };
+
     public static Rgb ActiveBorder => new(180, 180, 180);
     public static Rgb ActiveCaption => new(153, 180, 209);
     public static Rgb ActiveCaptionText => new(0, 0, 0);
@@ -181,4 +207,5 @@ public static class Colors
     public static Rgb WindowText => new(0, 0, 0);
     public static Rgb Yellow => new(255, 255, 0);
     public static Rgb YellowGreen => new(154, 205, 50);
+
 }
