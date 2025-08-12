@@ -48,8 +48,6 @@ public static class AnsiConsole
         }
     }
 
-
-
     static AnsiConsole()
     {
         TryEnableVirtualTerminalOnWindows();
@@ -58,7 +56,6 @@ public static class AnsiConsole
         ForegroundColor = Colors.FromConsoleColor(Console.ForegroundColor);
         BackgroundColor = Colors.FromConsoleColor(Console.BackgroundColor);
     }
-
 
 
     /// <summary>
@@ -140,6 +137,27 @@ public static class AnsiConsole
         Stdout.Write(buf[..i]);
     }
 
+    /// <summary>
+    /// Converts a byte value to ASCII decimal representation for ANSI escape sequences.
+    /// </summary>
+    /// <param name="value">Byte value (0-255) to convert to decimal ASCII</param>
+    /// <param name="dest">Destination span to write ASCII digits</param>
+    /// <returns>Number of ASCII bytes written (1-3 digits)</returns>
+    /// <remarks>
+    /// <para>
+    /// Uses base-10 arithmetic (constants 10, 100) because ANSI color escape sequences 
+    /// require decimal RGB values, not binary or hexadecimal representation.
+    /// </para>
+    /// <para>
+    /// ANSI protocol example: ESC[38;2;255;128;64m where 255, 128, 64 are decimal.
+    /// </para>
+    /// <para>
+    /// Handles three ranges efficiently:
+    /// • 0-9: Single digit → "0" to "9" (1 byte)
+    /// • 10-99: Two digits → "10" to "99" (2 bytes)  
+    /// • 100-255: Three digits → "100" to "255" (3 bytes)
+    /// </para>
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUInt8(byte value, Span<byte> dest)
     {
