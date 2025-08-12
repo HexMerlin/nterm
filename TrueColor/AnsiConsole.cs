@@ -15,14 +15,16 @@ public static class AnsiConsole
     private static readonly ConsoleColor OriginalBackground = Console.BackgroundColor;
 
     /// <summary>
-    /// Cached foreground color to avoid redundant escape sequences.
+    /// Current foreground color of the console. Reflects the 24-bit RGB equivalent
+    /// of the last ANSI foreground color sequence written to the console.
     /// </summary>
-    private static Color? _cachedForeground;
+    public static Color ForegroundColor { get; private set; }
 
     /// <summary>
-    /// Cached background color to avoid redundant escape sequences.
+    /// Current background color of the console. Reflects the 24-bit RGB equivalent
+    /// of the last ANSI background color sequence written to the console.
     /// </summary>
-    private static Color? _cachedBackground;
+    public static Color BackgroundColor { get; private set; }
 
     /// <summary>
     /// Pre-computed byte sequences for common ANSI color prefixes.
@@ -32,8 +34,29 @@ public static class AnsiConsole
 
     static AnsiConsole()
     {
+        // Initialize color tracking with current console colors converted to 24-bit RGB
+        ForegroundColor = Colors.FromConsoleColor(Console.ForegroundColor);
+        BackgroundColor = Colors.FromConsoleColor(Console.BackgroundColor);
         TryEnableVirtualTerminalOnWindows();
     }
+
+    /// <summary>
+    /// Current 24-bit foreground color of the console.
+    /// </summary>
+    /// <remarks>
+    /// Reflects the actual console foreground color state. Writing ANSI color sequences
+    /// affects all subsequent Console.Write operations, not just AnsiConsole output.
+    /// </remarks>
+    public static Color CurrentForegroundColor => ForegroundColor;
+
+    /// <summary>
+    /// Current 24-bit background color of the console.
+    /// </summary>
+    /// <remarks>
+    /// Reflects the actual console background color state. Writing ANSI color sequences
+    /// affects all subsequent Console.Write operations, not just AnsiConsole output.
+    /// </remarks>
+    public static Color CurrentBackgroundColor => BackgroundColor;
 
     /// <summary>
     /// Writes a character with specified colors using optimized color caching.
@@ -49,8 +72,8 @@ public static class AnsiConsole
     public static void Write(char ch, Color foreground, Color background)
     {
         // Check if colors have changed to avoid redundant escape sequences
-        bool foregroundChanged = _cachedForeground != foreground;
-        bool backgroundChanged = _cachedBackground != background;
+        bool foregroundChanged = ForegroundColor != foreground;
+        bool backgroundChanged = BackgroundColor != background;
 
         if (!foregroundChanged && !backgroundChanged)
         {
@@ -68,25 +91,27 @@ public static class AnsiConsole
         // Write foreground color if changed
         if (foregroundChanged)
         {
-            buf[i++] = 0x1B; buf[i++] = (byte)'[';
+            buf[i++] = 0x1B; 
+            buf[i++] = (byte)'[';
             ForegroundPrefix.CopyTo(buf[i..]);
             i += 5; // "38;2;" is 5 bytes
             i += WriteUInt8(foreground.R, buf[i..]); buf[i++] = (byte)';';
             i += WriteUInt8(foreground.G, buf[i..]); buf[i++] = (byte)';';
             i += WriteUInt8(foreground.B, buf[i..]); buf[i++] = (byte)'m';
-            _cachedForeground = foreground;
+            ForegroundColor = foreground;
         }
 
         // Write background color if changed
         if (backgroundChanged)
         {
-            buf[i++] = 0x1B; buf[i++] = (byte)'[';
+            buf[i++] = 0x1B; 
+            buf[i++] = (byte)'[';
             BackgroundPrefix.CopyTo(buf[i..]);             
             i += 5; // "48;2;" is 5 bytes
             i += WriteUInt8(background.R, buf[i..]); buf[i++] = (byte)';';
             i += WriteUInt8(background.G, buf[i..]); buf[i++] = (byte)';';
             i += WriteUInt8(background.B, buf[i..]); buf[i++] = (byte)'m';
-            _cachedBackground = background;
+            BackgroundColor = background;
         }
 
         // char (UTF-8)
@@ -108,21 +133,22 @@ public static class AnsiConsole
     {
         Console.ForegroundColor = OriginalForegroundColor;
         Console.BackgroundColor = OriginalBackground;
-        InvalidateColorCache();
+        SyncWithConsoleColors();
     }
 
     /// <summary>
-    /// Invalidates cached color state. Call when external operations may have changed console colors.
+    /// Synchronizes color tracking with current Console color state.
     /// </summary>
     /// <remarks>
-    /// Forces next Write operation to output complete color escape sequences regardless of cached state.
-    /// Use when Console colors have been modified outside of this class.
+    /// Call when Console colors have been modified externally (e.g., Console.ForegroundColor = ConsoleColor.Red).
+    /// Converts current ConsoleColor values to 24-bit RGB equivalents and updates tracking state.
+    /// Forces next Write operation to output complete color escape sequences.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void InvalidateColorCache()
+    public static void SyncWithConsoleColors()
     {
-        _cachedForeground = null;
-        _cachedBackground = null;
+        ForegroundColor = Colors.FromConsoleColor(Console.ForegroundColor);
+        BackgroundColor = Colors.FromConsoleColor(Console.BackgroundColor);
     }
 
     #region Private Methods

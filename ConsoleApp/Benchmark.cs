@@ -53,7 +53,7 @@ public static class Benchmark
         Console.WriteLine();
         
         // Warm up
-        AnsiConsole.InvalidateColorCache();
+        AnsiConsole.SyncWithConsoleColors();
         for (int i = 0; i < 1000; i++)
         {
             char ch = testText[i % testText.Length];
@@ -62,7 +62,7 @@ public static class Benchmark
         }
         
         // Reset cache and measure performance
-        AnsiConsole.InvalidateColorCache();
+        AnsiConsole.SyncWithConsoleColors();
         
         Stopwatch sw = Stopwatch.StartNew();
         
@@ -93,7 +93,7 @@ public static class Benchmark
         Color sameColor = new(100, 150, 200);
         
         // Test with same colors (should benefit from caching)
-        AnsiConsole.InvalidateColorCache();
+        AnsiConsole.SyncWithConsoleColors();
         sw.Restart();
         
         for (int i = 0; i < sameColorIterations; i++)
