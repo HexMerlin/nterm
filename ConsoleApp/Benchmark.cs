@@ -10,6 +10,18 @@ namespace ConsoleApp;
 public static class Benchmark
 {
     /// <summary>
+    /// Results from full AnsiConsole performance benchmark.
+    /// </summary>
+    public record AnsiConsoleBenchmarkResults(
+        long CharactersWritten,
+        double TotalTimeMs,
+        double CharsPerSecond,
+        double MicrosecondsPerChar,
+        long SameColorChars,
+        double SameColorTimeMs,
+        double SameColorCharsPerSec);
+
+    /// <summary>
     /// Executes performance benchmark measuring optimized AnsiConsole throughput.
     /// </summary>
     /// <remarks>
@@ -18,7 +30,7 @@ public static class Benchmark
     /// 2. Lookup table performance for RGB component conversion
     /// 3. Optimized ANSI sequence construction
     /// </remarks>
-    public static void RunPerformanceBenchmark()
+    public static AnsiConsoleBenchmarkResults RunPerformanceBenchmark()
     {
         const int iterations = 50_000;
         const string testText = "Hello, World! This is a performance test for AnsiConsole optimization.";
@@ -63,10 +75,14 @@ public static class Benchmark
         
         sw.Stop();
         
+        double totalTimeMs = sw.Elapsed.TotalMilliseconds;
+        double charsPerSecond = iterations / sw.Elapsed.TotalSeconds;
+        double microsecondsPerChar = sw.Elapsed.TotalMicroseconds / iterations;
+        
         Console.WriteLine();
-        Console.WriteLine($"Completed: {iterations:N0} characters in {sw.ElapsedMilliseconds:N0} ms");
-        Console.WriteLine($"Throughput: {iterations / sw.Elapsed.TotalSeconds:N0} characters/second");
-        Console.WriteLine($"Average: {sw.Elapsed.TotalMicroseconds / iterations:F2} μs per character");
+        Console.WriteLine($"Completed: {iterations:N0} characters in {totalTimeMs:N0} ms");
+        Console.WriteLine($"Throughput: {charsPerSecond:N0} characters/second");
+        Console.WriteLine($"Average: {microsecondsPerChar:F2} μs per character");
         
         // Demonstrate color caching efficiency
         Console.WriteLine();
@@ -86,8 +102,21 @@ public static class Benchmark
         }
         
         sw.Stop();
-        Console.WriteLine($"Same colors: {sameColorIterations:N0} chars in {sw.ElapsedMilliseconds:N0} ms ({sameColorIterations / sw.Elapsed.TotalSeconds:N0} chars/sec)");
+        
+        double sameColorTimeMs = sw.Elapsed.TotalMilliseconds;
+        double sameColorCharsPerSec = sameColorIterations / sw.Elapsed.TotalSeconds;
+        
+        Console.WriteLine($"Same colors: {sameColorIterations:N0} chars in {sameColorTimeMs:N0} ms ({sameColorCharsPerSec:N0} chars/sec)");
         
         AnsiConsole.RestoreOriginalColors();
+
+        return new AnsiConsoleBenchmarkResults(
+            CharactersWritten: iterations,
+            TotalTimeMs: totalTimeMs,
+            CharsPerSecond: charsPerSecond,
+            MicrosecondsPerChar: microsecondsPerChar,
+            SameColorChars: sameColorIterations,
+            SameColorTimeMs: sameColorTimeMs,
+            SameColorCharsPerSec: sameColorCharsPerSec);
     }
 }

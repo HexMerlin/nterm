@@ -25,16 +25,10 @@ public static class AnsiConsole
     private static Color? _cachedBackground;
 
     /// <summary>
-    /// Pre-computed ASCII representations for bytes 0-255. Each entry contains the byte representation
-    /// followed by length information for ultra-fast lookup without division operations.
+    /// Pre-computed byte sequences for common ANSI color prefixes.
     /// </summary>
-    private static readonly byte[][] ByteToAsciiLookup = InitializeByteLookup();
-
-    /// <summary>
-    /// Pre-computed lengths for each byte value 0-255 to avoid repeated calculations.
-    /// </summary>
-    private static readonly byte[] ByteLengthLookup = InitializeLengthLookup();
-
+    private static ReadOnlySpan<byte> ForegroundPrefix => "38;2;"u8;
+    private static ReadOnlySpan<byte> BackgroundPrefix => "48;2;"u8;
 
     static AnsiConsole()
     {
@@ -75,7 +69,8 @@ public static class AnsiConsole
         if (foregroundChanged)
         {
             buf[i++] = 0x1B; buf[i++] = (byte)'[';
-            WriteForegroundPrefix(buf[i..]); i += 5; // "38;2;" is 5 bytes
+            ForegroundPrefix.CopyTo(buf[i..]);
+            i += 5; // "38;2;" is 5 bytes
             i += WriteUInt8(foreground.R, buf[i..]); buf[i++] = (byte)';';
             i += WriteUInt8(foreground.G, buf[i..]); buf[i++] = (byte)';';
             i += WriteUInt8(foreground.B, buf[i..]); buf[i++] = (byte)'m';
@@ -86,7 +81,8 @@ public static class AnsiConsole
         if (backgroundChanged)
         {
             buf[i++] = 0x1B; buf[i++] = (byte)'[';
-            WriteBackgroundPrefix(buf[i..]); i += 5; // "48;2;" is 5 bytes
+            BackgroundPrefix.CopyTo(buf[i..]);             
+            i += 5; // "48;2;" is 5 bytes
             i += WriteUInt8(background.R, buf[i..]); buf[i++] = (byte)';';
             i += WriteUInt8(background.G, buf[i..]); buf[i++] = (byte)';';
             i += WriteUInt8(background.B, buf[i..]); buf[i++] = (byte)'m';
@@ -131,81 +127,22 @@ public static class AnsiConsole
 
     #region Private Methods
 
-    private static byte[][] InitializeByteLookup()
-    {
-        byte[][] lookup = new byte[256][];
-        for (int i = 0; i <= 255; i++)
-        {
-            if (i < 10)
-            {
-                lookup[i] = [(byte)('0' + i)];
-            }
-            else if (i < 100)
-            {
-                lookup[i] = [(byte)('0' + (i / 10)), (byte)('0' + (i % 10))];
-            }
-            else
-            {
-                int hundreds = i / 100;
-                int rem = i - hundreds * 100;
-                lookup[i] = [(byte)('0' + hundreds), (byte)('0' + (rem / 10)), (byte)('0' + (rem % 10))];
-            }
-        }
-        return lookup;
-    }
-
-    private static byte[] InitializeLengthLookup()
-    {
-        byte[] lookup = new byte[256];
-        for (int i = 0; i <= 255; i++)
-        {
-            lookup[i] = i < 10 ? (byte)1 : i < 100 ? (byte)2 : (byte)3;
-        }
-        return lookup;
-    }
-
-    /// <summary>
-    /// Pre-computed byte sequences for common ANSI color prefixes.
-    /// </summary>
-    private static ReadOnlySpan<byte> ForegroundPrefix => "38;2;"u8;
-    private static ReadOnlySpan<byte> BackgroundPrefix => "48;2;"u8;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteAscii(string s, Span<byte> dest)
-    {
-        // Optimized for small ASCII strings using unsafe operations
-        unsafe
-        {
-            fixed (char* src = s)
-            fixed (byte* dst = dest)
-            {
-                for (int i = 0; i < s.Length; i++)
-                {
-                    dst[i] = (byte)src[i];
-                }
-            }
-        }
-        return s.Length;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteForegroundPrefix(Span<byte> dest)
-    {
-        ForegroundPrefix.CopyTo(dest);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteBackgroundPrefix(Span<byte> dest)
-    {
-        BackgroundPrefix.CopyTo(dest);
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUInt8(byte value, Span<byte> dest)
     {
-        ReadOnlySpan<byte> bytes = ByteToAsciiLookup[value];
-        bytes.CopyTo(dest);
-        return ByteLengthLookup[value];
+        if (value < 10) { dest[0] = (byte)('0' + value); return 1; }
+        if (value < 100)
+        {
+            dest[0] = (byte)('0' + (value / 10));
+            dest[1] = (byte)('0' + (value % 10));
+            return 2;
+        }
+        int hundreds = value / 100;
+        int rem = value - hundreds * 100;
+        dest[0] = (byte)('0' + hundreds);
+        dest[1] = (byte)('0' + (rem / 10));
+        dest[2] = (byte)('0' + (rem % 10));
+        return 3;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
