@@ -95,6 +95,106 @@ public static class AnsiConsole
         Write(ch);
     }
 
+    /// <summary>
+    /// Writes a string using current foreground and background colors.
+    /// </summary>
+    /// <param name="str">String to write</param>
+    /// <remarks>
+    /// Optimized for both short and long strings using bulk UTF-8 encoding.
+    /// Uses current ForegroundColor and BackgroundColor properties.
+    /// </remarks>
+    public static void Write(ReadOnlySpan<char> str)
+    {
+        if (str.IsEmpty) return;
+        
+        // Optimize for common short strings with stack allocation
+        if (str.Length <= 256)
+        {
+            Span<byte> buffer = stackalloc byte[str.Length * 4]; // Max UTF-8 expansion
+            int bytesWritten = EncodeStringUtf8(str, buffer);
+            Stdout.Write(buffer[..bytesWritten]);
+        }
+        else
+        {
+            // For longer strings, use chunked processing to avoid large stack allocation
+            const int chunkSize = 256;
+            Span<byte> buffer = stackalloc byte[chunkSize * 4];
+            
+            for (int i = 0; i < str.Length; i += chunkSize)
+            {
+                ReadOnlySpan<char> chunk = str.Slice(i, Math.Min(chunkSize, str.Length - i));
+                int bytesWritten = EncodeStringUtf8(chunk, buffer);
+                Stdout.Write(buffer[..bytesWritten]);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes a string with specified colors.
+    /// </summary>
+    /// <param name="str">String to write</param>
+    /// <param name="foreground">Foreground color</param>
+    /// <param name="background">Background color</param>
+    /// <remarks>
+    /// Sets colors using properties then delegates to non-colored Write method.
+    /// </remarks>
+    public static void Write(ReadOnlySpan<char> str, Color foreground, Color background)
+    {
+        ForegroundColor = foreground;
+        BackgroundColor = background;
+        Write(str);
+    }
+
+    /// <summary>
+    /// Writes a string followed by a line terminator using current colors.
+    /// </summary>
+    /// <param name="str">String to write (empty string writes just newline)</param>
+    /// <remarks>
+    /// Uses LF (\n) line terminator only, never CRLF (\r\n).
+    /// Optimized for both short and long strings using bulk UTF-8 encoding.
+    /// </remarks>
+    public static void WriteLine(ReadOnlySpan<char> str = "")
+    {
+        if (str.IsEmpty)
+        {
+            // Just write LF
+            Stdout.Write("\n"u8);
+            return;
+        }
+        
+        // Optimize for common short strings with stack allocation
+        if (str.Length <= 255) // Reserve 1 char for \n
+        {
+            Span<byte> buffer = stackalloc byte[(str.Length + 1) * 4]; // +1 for \n, max UTF-8 expansion
+            int bytesWritten = EncodeStringUtf8(str, buffer);
+            buffer[bytesWritten++] = (byte)'\n'; // Add LF
+            Stdout.Write(buffer[..bytesWritten]);
+        }
+        else
+        {
+            // For longer strings, write string then newline separately
+            Write(str);
+            Stdout.Write("\n"u8);
+        }
+    }
+
+    /// <summary>
+    /// Writes a string followed by a line terminator with specified colors.
+    /// </summary>
+    /// <param name="str">String to write</param>
+    /// <param name="foreground">Foreground color</param>
+    /// <param name="background">Background color</param>
+    /// <remarks>
+    /// Sets colors using properties then delegates to non-colored WriteLine method.
+    /// Uses LF (\n) line terminator only, never CRLF (\r\n).
+    /// </remarks>
+    public static void WriteLine(ReadOnlySpan<char> str, Color foreground, Color background)
+    {
+        ForegroundColor = foreground;
+        BackgroundColor = background;
+        WriteLine(str);
+    }
+
     #region Private Methods
 
     /// <summary>
@@ -135,6 +235,57 @@ public static class AnsiConsole
         i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
         
         Stdout.Write(buf[..i]);
+    }
+
+    /// <summary>
+    /// Encodes a string span to UTF-8 bytes optimized for console output.
+    /// </summary>
+    /// <param name="chars">Characters to encode</param>
+    /// <param name="dest">Destination buffer for UTF-8 bytes</param>
+    /// <returns>Number of UTF-8 bytes written</returns>
+    /// <remarks>
+    /// Optimized bulk UTF-8 encoding using the same logic as EncodeCharUtf8.
+    /// Handles ASCII fast path and full Unicode character ranges efficiently.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int EncodeStringUtf8(ReadOnlySpan<char> chars, Span<byte> dest)
+    {
+        int bytesWritten = 0;
+        
+        for (int i = 0; i < chars.Length; i++)
+        {
+            char ch = chars[i];
+            
+            // ASCII fast path - most common case
+            if (ch <= 0x7F)
+            {
+                dest[bytesWritten++] = (byte)ch;
+                continue;
+            }
+            
+            // Non-ASCII character - use existing encoding logic
+            if (ch < 0xD800 || ch > 0xDFFF)
+            {
+                if (ch <= 0x7FF)
+                {
+                    dest[bytesWritten++] = (byte)(0xC0 | (ch >> 6));
+                    dest[bytesWritten++] = (byte)(0x80 | (ch & 0x3F));
+                }
+                else
+                {
+                    dest[bytesWritten++] = (byte)(0xE0 | (ch >> 12));
+                    dest[bytesWritten++] = (byte)(0x80 | ((ch >> 6) & 0x3F));
+                    dest[bytesWritten++] = (byte)(0x80 | (ch & 0x3F));
+                }
+            }
+            else
+            {
+                // Invalid surrogate pair - replace with ?
+                dest[bytesWritten++] = (byte)'?';
+            }
+        }
+        
+        return bytesWritten;
     }
 
     /// <summary>

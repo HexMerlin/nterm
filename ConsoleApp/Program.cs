@@ -16,8 +16,8 @@ internal static class Program
 
     private static void Main()
     {
-        Console.WriteLine("=== Testing New AnsiConsole API ===");
-        Console.WriteLine();
+        AnsiConsole.WriteLine("=== Testing New AnsiConsole API ===");
+        AnsiConsole.WriteLine();
 
         // Test 1: Traditional Console API
         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -26,10 +26,10 @@ internal static class Program
         // Test 2: New AnsiConsole property-based API
         AnsiConsole.ForegroundColor = Color.Red;
         AnsiConsole.BackgroundColor = Color.Blue;
-        Console.WriteLine("This is RED on BLUE using AnsiConsole properties!");
-        
-        Console.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
-        Console.WriteLine($"Current Console.BackgroundColor : {Console.BackgroundColor}");
+        AnsiConsole.WriteLine("This is RED on BLUE using AnsiConsole properties!");
+
+        AnsiConsole.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
+        AnsiConsole.WriteLine($"Current Console.BackgroundColor : {Console.BackgroundColor}");
         
         // Test 3: New Write(char) overload using current colors
         AnsiConsole.Write('X');
@@ -40,18 +40,18 @@ internal static class Program
         // Test 4: 24-bit color that doesn't exist in ConsoleColor enum
         AnsiConsole.ForegroundColor = Color.Chocolate;
         AnsiConsole.BackgroundColor = Color.Black;
-        Console.WriteLine("This is CHOCOLATE colored text!");
-        Console.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
+        AnsiConsole.WriteLine("This is CHOCOLATE colored text!");
+        AnsiConsole.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
         //Yes, Console outputs nearest matching color DarkYellow
 
         // Test 5: Show our current 24-bit color properties
-        Console.WriteLine();
-        Console.WriteLine($"AnsiConsole.ForegroundColor: R={AnsiConsole.ForegroundColor.R}, G={AnsiConsole.ForegroundColor.G}, B={AnsiConsole.ForegroundColor.B}");
-        Console.WriteLine($"AnsiConsole.BackgroundColor: R={AnsiConsole.BackgroundColor.R}, G={AnsiConsole.BackgroundColor.G}, B={AnsiConsole.BackgroundColor.B}");
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine($"AnsiConsole.ForegroundColor: R={AnsiConsole.ForegroundColor.R}, G={AnsiConsole.ForegroundColor.G}, B={AnsiConsole.ForegroundColor.B}");
+        AnsiConsole.WriteLine($"AnsiConsole.BackgroundColor: R={AnsiConsole.BackgroundColor.R}, G={AnsiConsole.BackgroundColor.G}, B={AnsiConsole.BackgroundColor.B}");
 
         // Test 6: Rapid color changes
-        Console.WriteLine();
-        Console.WriteLine("Rapid color changes test:");
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine("Rapid color changes test:");
         Color[] colors = [Color.Red, Color.Green, Color.Blue, Color.Yellow, Color.Magenta, Color.Cyan];
         for (int i = 0; i < colors.Length; i++)
         {
@@ -61,7 +61,28 @@ internal static class Program
         }
         AnsiConsole.Write('\n');
 
-        Console.WriteLine();
+
+        // Test 7: New string writing methods
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine("=== Testing String Writing Methods ===");
+        
+        AnsiConsole.ForegroundColor = Color.Green;
+        AnsiConsole.Write("Short string test");
+        AnsiConsole.WriteLine(" with WriteLine!");
+        
+        AnsiConsole.WriteLine("This is a complete line in green");
+        
+        // Test with colors
+        AnsiConsole.Write("Colored string: ", Color.Yellow, Color.DarkBlue);
+        AnsiConsole.WriteLine("Yellow on dark blue!", Color.Yellow, Color.DarkBlue);
+        
+        // Test longer string
+        string longText = "This is a longer string to test chunked processing with more than 256 characters. ".PadRight(300, 'x');
+        AnsiConsole.WriteLine(longText, Color.Magenta, Color.Black);
+        
+        // Test empty WriteLine
+        AnsiConsole.WriteLine(); // Just newline
+
     }
 
     /// <summary>
