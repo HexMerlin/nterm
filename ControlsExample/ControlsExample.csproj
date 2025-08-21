@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Controls/Controls.csproj" />
+    <ProjectReference Include="../TrueColor/TrueColor.csproj" />
   </ItemGroup>
 
 </Project>

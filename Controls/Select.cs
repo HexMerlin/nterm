@@ -60,6 +60,7 @@ public static class Select
 
         // Store original console state
         var originalForegroundColor = AnsiConsole.ForegroundColor;
+        var originalBackgroundColor = AnsiConsole.BackgroundColor;
         var originalCursorLeft = Console.CursorLeft;
         var originalCursorTop = Console.CursorTop;
         bool originalCursorVisible = false;
@@ -93,11 +94,13 @@ public static class Select
             int currentIndex = 0;
             bool selectionMade = false;
             SelectItem selectedItem = SelectItem.Empty;
+            int displayStartColumn = originalCursorLeft;
+            int displayStartRow = originalCursorTop;
 
             while (!selectionMade)
             {
-                // Display current item
-                DisplayItem(itemList[currentIndex], true);
+                // Display current item at the original cursor position
+                DisplayItem(itemList[currentIndex], true, displayStartColumn, displayStartRow);
 
                 // Wait for key input
                 var key = Console.ReadKey(true);
@@ -136,7 +139,8 @@ public static class Select
         }
         finally
         {
-            // Restore original console state
+            // Reset any ANSI color codes and restore original console state
+            AnsiConsole.BackgroundColor = originalBackgroundColor;
             AnsiConsole.ForegroundColor = originalForegroundColor;
             try
             {
@@ -154,16 +158,21 @@ public static class Select
     /// </summary>
     /// <param name="item">The item to display.</param>
     /// <param name="isSelected">Whether the item is currently selected.</param>
-    private static void DisplayItem(SelectItem item, bool isSelected)
+    /// <param name="startColumn">The column position to start displaying the item.</param>
+    /// <param name="startRow">The row position to display the item.</param>
+    private static void DisplayItem(SelectItem item, bool isSelected, int startColumn, int startRow)
     {
-        // Clear the current line
-        Console.Write("\r");
-        Console.Write(new string(' ', Console.WindowWidth - 1));
-        Console.Write("\r");
+        // Position cursor at the specified location
+        Console.SetCursorPosition(startColumn, startRow);
 
-        // Truncate text if it's longer than console width
+        // Clear from current position to end of line
+        var clearLength = Console.WindowWidth - startColumn;
+        Console.Write(new string(' ', clearLength));
+        Console.SetCursorPosition(startColumn, startRow);
+
+        // Truncate text if it's longer than available space
         var displayText = item.Text;
-        var maxWidth = Console.WindowWidth - 1; // Leave space for cursor
+        var maxWidth = Console.WindowWidth - startColumn; // Available space from cursor position
         if (displayText.Length > maxWidth)
         {
             displayText = displayText[..maxWidth];

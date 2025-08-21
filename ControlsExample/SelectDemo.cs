@@ -1,4 +1,5 @@
 using Controls;
+using TrueColor;
 
 namespace ControlsExample;
 
@@ -9,12 +10,12 @@ public static class SelectDemo
 {
     public static void Run()
     {
-        Console.WriteLine("Select Control Demo");
-        Console.WriteLine("==================");
-        Console.WriteLine();
+        AnsiConsole.WriteLine("Select Control Demo");
+        AnsiConsole.WriteLine("==================");
+        AnsiConsole.WriteLine();
 
         // Test 1: Basic selection
-        Console.WriteLine(
+        AnsiConsole.WriteLine(
             "Test 1: Basic selection (use arrow keys, Enter to select, Escape to cancel)"
         );
         var items = new List<SelectItem>
@@ -24,41 +25,41 @@ public static class SelectDemo
             new() { Text = "Item 3", Action = () => Console.WriteLine("Item 3 selected") }
         };
 
-        Console.Write("Select an item: ");
+        AnsiConsole.Write("Select an item: ");
         var selectedItem = Select.Show(items);
 
         if (!selectedItem.IsEmpty())
         {
-            Console.WriteLine($"Selected: {selectedItem.Text}");
+            AnsiConsole.WriteLine($"Selected: {selectedItem.Text}");
             selectedItem.Action?.Invoke();
         }
         else
         {
-            Console.WriteLine("Selection cancelled or no items available");
+            AnsiConsole.WriteLine("Selection cancelled or no items available");
         }
 
-        Console.WriteLine();
-        Console.WriteLine("Press any key to continue...");
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine("Press any key to continue...");
         Console.ReadKey();
-        Console.Clear();
+        AnsiConsole.Clear();
 
         // Test 2: Empty list
-        Console.WriteLine("Test 2: Empty list");
+        AnsiConsole.WriteLine("Test 2: Empty list");
         var emptyItems = new List<SelectItem>();
         var emptyResult = Select.Show(emptyItems);
 
         if (emptyResult.IsEmpty())
         {
-            Console.WriteLine("Correctly returned empty item for empty list");
+            AnsiConsole.WriteLine("Correctly returned empty item for empty list");
         }
 
-        Console.WriteLine();
-        Console.WriteLine("Press any key to continue...");
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine("Press any key to continue...");
         Console.ReadKey();
-        Console.Clear();
+        AnsiConsole.Clear();
 
         // Test 3: Single item
-        Console.WriteLine("Test 3: Single item");
+        AnsiConsole.WriteLine("Test 3: Single item");
         var singleItem = new List<SelectItem>
         {
             new() { Text = "Only Option", Action = () => Console.WriteLine("Only option selected") }
@@ -68,14 +69,14 @@ public static class SelectDemo
 
         if (!singleResult.IsEmpty())
         {
-            Console.WriteLine($"Selected: {singleResult.Text}");
+            AnsiConsole.WriteLine($"Selected: {singleResult.Text}");
             singleResult.Action?.Invoke();
         }
 
-        Console.WriteLine();
-        Console.WriteLine("Press any key to continue...");
+        AnsiConsole.WriteLine();
+        AnsiConsole.WriteLine("Press any key to continue...");
         Console.ReadKey();
-        Console.Clear();
+        AnsiConsole.Clear();
 
         // Test 4: Long text items
         Console.WriteLine("Test 4: Long text items");
