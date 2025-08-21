@@ -3,42 +3,6 @@ using TrueColor;
 namespace Controls;
 
 /// <summary>
-/// Represents an item in a select control with text and an associated action.
-/// </summary>
-public class SelectItem
-{
-    /// <summary>
-    /// The text that is visible in the list.
-    /// </summary>
-    public string Text { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The function (callback) that is triggered when the item is selected.
-    /// </summary>
-    public Action? Action { get; set; }
-
-    /// <summary>
-    /// Gets an empty select item with no text and a no-op action.
-    /// </summary>
-    public static SelectItem Empty { get; } =
-        new SelectItem { Text = string.Empty, Action = () => { } };
-}
-
-/// <summary>
-/// Extension methods for SelectItem.
-/// </summary>
-public static class SelectItemExtensions
-{
-    /// <summary>
-    /// Determines if a select item is empty.
-    /// </summary>
-    /// <param name="item">The item to check.</param>
-    /// <returns>True if the item is empty or has no text.</returns>
-    public static bool IsEmpty(this SelectItem item) =>
-        item == SelectItem.Empty || string.IsNullOrEmpty(item.Text);
-}
-
-/// <summary>
 /// A CLI select control that allows users to choose from a list of items.
 /// </summary>
 public static class Select
