@@ -184,20 +184,20 @@ public static class Select
             try
             {
                 AnsiConsole.ForegroundColor = Color.Yellow;
-                Console.Write(displayText);
+                AnsiConsole.Write(displayText);
             }
             catch
             {
                 // Fallback to bold if color fails
-                Console.Write("\x1b[1m"); // Bold
-                Console.Write(displayText);
-                Console.Write("\x1b[0m"); // Reset
+                AnsiConsole.Write("\x1b[1m"); // Bold
+                AnsiConsole.Write(displayText);
+                AnsiConsole.Write("\x1b[0m"); // Reset
             }
         }
         else
         {
-            // Display normal text
-            Console.Write(displayText);
+            // Display normal text using AnsiConsole to respect current colors
+            AnsiConsole.Write(displayText);
         }
     }
 }

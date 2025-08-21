@@ -41,7 +41,7 @@ public static class SelectDemo
         AnsiConsole.WriteLine();
         AnsiConsole.WriteLine("Press any key to continue...");
         Console.ReadKey();
-        AnsiConsole.Clear();
+        Console.Clear();
 
         // Test 2: Empty list
         AnsiConsole.WriteLine("Test 2: Empty list");
@@ -56,7 +56,7 @@ public static class SelectDemo
         AnsiConsole.WriteLine();
         AnsiConsole.WriteLine("Press any key to continue...");
         Console.ReadKey();
-        AnsiConsole.Clear();
+        Console.Clear();
 
         // Test 3: Single item
         AnsiConsole.WriteLine("Test 3: Single item");
@@ -76,7 +76,7 @@ public static class SelectDemo
         AnsiConsole.WriteLine();
         AnsiConsole.WriteLine("Press any key to continue...");
         Console.ReadKey();
-        AnsiConsole.Clear();
+        Console.Clear();
 
         // Test 4: Long text items
         Console.WriteLine("Test 4: Long text items");
