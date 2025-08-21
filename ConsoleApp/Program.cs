@@ -17,6 +17,19 @@ internal static class Program
     private static void Main()
     {
         AnsiConsole.WriteLine("=== Testing New AnsiConsole API ===");
+
+        Console.OutputEncoding = Encoding.UTF8;
+        
+        AnsiConsole.ForegroundColor = Color.White;
+
+        //Testing to string conversion to known color "00FFEBCD" (Blanched Almond)
+        Color color1 = 0x00FFEBCDu;
+        AnsiConsole.WriteLine(color1.ToString());
+
+        //Testing to string conversion to non-named color - outputs RGB values instead "R:255, G:235, B:206"
+        Color color2 = 0x00FFEBCEu;
+        AnsiConsole.WriteLine(color2.ToString());
+
         AnsiConsole.WriteLine();
 
         // Test 1: Traditional Console API
