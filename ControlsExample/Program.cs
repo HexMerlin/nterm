@@ -1,3 +1,4 @@
+using System.Text;
 using Controls;
 using TrueColor;
 
@@ -7,6 +8,12 @@ class Program
 {
     static void Main(string[] args)
     {
+        Console.OutputEncoding = Encoding.UTF8;
+        Console.InputEncoding = Encoding.UTF8;
+
+        AnsiConsole.ForegroundColor = Color.White;
+        AnsiConsole.BackgroundColor = Color.Black;
+
         AnsiConsole.WriteLine("SemanticTokens Controls Example");
         AnsiConsole.WriteLine("==============================");
         AnsiConsole.WriteLine();
