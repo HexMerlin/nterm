@@ -51,10 +51,6 @@ public static class AnsiConsole
     static AnsiConsole()
     {
         TryEnableVirtualTerminalOnWindows();
-        // Initialize color tracking with current console colors converted to 24-bit RGB
-        // Use backing fields to avoid writing ANSI codes during initialization
-        ForegroundColor = Color.FromConsoleColor(Console.ForegroundColor);
-        BackgroundColor = Color.FromConsoleColor(Console.BackgroundColor);
     }
 
 
