@@ -50,6 +50,8 @@ public static class AnsiConsole
 
     static AnsiConsole()
     {
+        ForegroundColor = Color.FromConsoleColor(Console.ForegroundColor);
+        BackgroundColor = Color.FromConsoleColor(Console.BackgroundColor);
         TryEnableVirtualTerminalOnWindows();
     }
 

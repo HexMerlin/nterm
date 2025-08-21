@@ -36,6 +36,25 @@ public readonly partial struct Color : IEquatable<Color>
     public Color(byte r, byte g, byte b) => (R, G, B) = (r, g, b);
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="Color"/> struct from a 32-bit uint (0xAARRGGBB).
+    /// The alpha byte is ignored.
+    /// </summary>
+    /// <param name="value">The 32-bit unsigned integer in ARGB or RGB form.</param>
+    public Color(uint value)
+    {
+        R = (byte)((value >> 16) & 0xFF);
+        G = (byte)((value >> 8) & 0xFF);
+        B = (byte)(value & 0xFF);
+    }
+
+    /// <summary>
+    /// Implicitly converts an 32-bit unsigned integer (0xAARRGGBB) to a <see cref="Color"/>.
+    /// </summary>
+    /// <param name="uint">The color value to convert.</param>
+    /// <returns>A color with the designated value.</returns>
+    public static implicit operator Color(uint value) => new(value);
+
+    /// <summary>
     /// Indicates whether this color is equal to another color.
     /// </summary>
     /// <param name="other">The color to compare with this color.</param>
@@ -94,4 +113,15 @@ public readonly partial struct Color : IEquatable<Color>
         ConsoleColor.Yellow => Yellow,
         _ => White // ConsoleColor.White
     };
+
+    public uint ToUint() => ((uint) R << 16) | ((uint) G << 8) | B;
+
+    public override string ToString()
+    {
+        if (TryGetKnownColorName(this, out string name))
+            return name;
+        return $"R:{R}, G:{G}, B:{B}";
+    }
+
+
 }
