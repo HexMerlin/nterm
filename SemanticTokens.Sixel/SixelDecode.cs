@@ -7,7 +7,7 @@ using SixLabors.ImageSharp.Processing;
 
 namespace SemanticTokens.Sixel;
 
-public static partial class Sixel
+public static class SixelDecode
 {
     /// <summary>
     /// Decode Sixel string to <see cref="SixLabors.ImageSharp.Image"/>

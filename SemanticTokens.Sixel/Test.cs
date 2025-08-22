@@ -44,8 +44,7 @@ public sealed class Test
 
     public void Run()
     {
-        WriteRgbLine("Embedded SIXEL Chat Demo — 24-bit text + avatar images",
-                     fg: (160, 220, 255), bg: (30, 30, 40));
+        
         Console.WriteLine();
 
         PrintChatMessage(
@@ -188,7 +187,7 @@ Either way, your 24-bit colors continue to work everywhere."
         using var stream = asm.GetManifestResourceStream(resName)
                        ?? throw new FileNotFoundException($"Embedded resource stream is null: {resName}");
 
-        ReadOnlySpan<char> sixel = Sixel.Encode(stream); // stream -> SIXEL (includes DCS/ST)
+        ReadOnlySpan<char> sixel = SixelEncode.Encode(stream); // stream -> SIXEL (includes DCS/ST)
         return sixel.ToString();
     }
 

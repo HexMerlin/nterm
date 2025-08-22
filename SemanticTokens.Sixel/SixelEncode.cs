@@ -15,18 +15,8 @@ public enum Transparency
     None        // No transparency
 }
 
-public static partial class Sixel
+public static class SixelEncode
 {
-    public const char ESC = '\x1b';
-    public const string SixelStart  = "P7;1;q\"1;1";
-    public const string SyncBegin   = "[?2026h";
-    public const string SyncEnd     = "[?2026l";
-    public const string CursorOff   = "[?25l";
-    public const string CursorOn    = "[?25h";
-    public const string End = "\\";
-
-    private const byte specialChNr = 0x6d;
-    private const byte specialChCr = 0x64;
 
     /// <summary>
     /// Create an encoder instance to convert <paramref name="image"/> to Sixel string
@@ -227,7 +217,7 @@ public static partial class Sixel
         var sb = new StringBuilder();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
 
-        sb.Append(ESC + SixelStart)
+        sb.Append(Constants.ESC + Constants.SixelStart)
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
         int colorPaletteLength = colorPalette.Length;
@@ -241,7 +231,7 @@ public static partial class Sixel
         var buffer = new byte[canvasWidth * colorPaletteLength];
         // Flag to indicate whether there is a color palette to display
         var cset = new bool[colorPaletteLength];
-        var ch0 = specialChNr;
+        var ch0 = Constants.specialChNr;
         for (var (z, y) = (0, 0); z < (canvasHeight + 5) / 6; z++, y = z * 6)
         {
             if (z > 0)
@@ -277,7 +267,7 @@ public static partial class Sixel
                 if (!cset[n]) continue;
 
                 cset[n] = false;
-                if (ch0 == specialChCr && !first)
+                if (ch0 == Constants.specialChCr && !first)
                 {
                     // DECGCR ($): Graphics Carriage Return
                     sb.Append('$');
@@ -345,10 +335,10 @@ public static partial class Sixel
                             break;
                     }
                 }
-                ch0 = specialChCr;
+                ch0 = Constants.specialChCr;
             }
         }
-        sb.Append(ESC + End);
+        sb.Append(Constants.ESC + Constants.End);
         return sb.ToString();
     }
 

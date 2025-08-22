@@ -26,7 +26,7 @@ public class GifEncoder : SixelEncoder
     {
         var meta = frame.Metadata.GetGifMetadata();
         var bgColor = meta.LocalColorTable?.Span[meta.TransparencyIndex].ToPixel<Rgba32>() ?? BackgroundColor;
-        return Sixel.EncodeFrame(frame,
+        return SixelEncode.EncodeFrame(frame,
                                  GetColorPalette(frame),
                                  CanvasSize,
                                  TransparencyMode,
