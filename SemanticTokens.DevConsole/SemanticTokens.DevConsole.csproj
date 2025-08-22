@@ -16,6 +16,7 @@
     <ProjectReference Include="..\SemanticTokens.Core\SemanticTokens.Core.csproj" />
     <ProjectReference Include="..\SemanticTokens.Document\SemanticTokens.Document.csproj" />
     <ProjectReference Include="..\SemanticTokens.Examples\SemanticTokens.Examples.csproj" />
+    <ProjectReference Include="..\SemanticTokens.Sixel\SemanticTokens.Sixel.csproj" />
   </ItemGroup>
 
 </Project>

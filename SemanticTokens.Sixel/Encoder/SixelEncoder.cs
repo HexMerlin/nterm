@@ -319,7 +319,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
         bool isOpaque = TransparencyMode == Transparency.None;
 
-        var cursorSize = Sixel.GetCellSize();
+        var cursorSize = SixelCapabilities.CellSize;
         int lines = (int)Math.Ceiling((double)Image.Height / cursorSize.Height);
         // Allocate rows for the image height
         Console.Write(new string('\n', lines));
@@ -328,7 +328,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         // Save the cursor position
         Console.Write($"{Constants.ESC}[s");
         string beginSync = "", endSync = "";
-        if (Sixel.IsSyncSupported())
+        if (SixelCapabilities.IsSyncSupported)
         {
             beginSync = Constants.ESC + Constants.SyncBegin;
             endSync = Constants.ESC + Constants.SyncEnd;

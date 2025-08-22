@@ -212,6 +212,20 @@ public static class Console
         WriteLine(str);
     }
 
+    /// <summary>
+    /// Writes pre-encoded image data to console.
+    /// </summary>
+    /// <param name="imageData">Complete image data including all control sequences</param>
+    /// <remarks>
+    /// Ultra-optimized direct image output. Image data must be complete and ready for terminal consumption.
+    /// Leverages existing optimized UTF-8 encoding infrastructure for maximum performance.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteImage(ReadOnlySpan<char> imageData)
+    {
+        Write(imageData);
+    }
+
     #region Private Methods
 
     /// <summary>

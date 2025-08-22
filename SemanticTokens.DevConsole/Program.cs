@@ -5,6 +5,7 @@ using SemanticTokens.Document;
 using SemanticTokens.Examples;
 using SemanticTokens.Core;
 using System.Text;
+using SemanticTokens.Sixel;
 
 namespace SemanticTokens.DevConsole;
 
@@ -14,9 +15,13 @@ namespace SemanticTokens.DevConsole;
 /// </summary>
 internal static class Program
 {
-
-
     private static void Main()
+    {
+        ConsoleImageDemo demo = new();    
+        demo.Run();
+    }
+
+    private static void Main2()
     {
         Console.WriteLine("=== Testing New Console API ===");
 
@@ -106,7 +111,7 @@ internal static class Program
     /// resolves semantic styling, and renders to console with colors.
     /// </summary>
     /// <returns>Task representing the asynchronous operation.</returns>
-    private static async Task Main2()
+    private static async Task Main3()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
 

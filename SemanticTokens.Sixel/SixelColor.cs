@@ -109,8 +109,8 @@ public record struct SixelColor
         {
             color = transp switch
             {
-                Transparency.None => FromRgba32(Sixel.BackgroundColor.ToPixel<Rgba32>()),
-                Transparency.TopLeft => FromRgba32(Sixel.BackgroundColor.ToPixel<Rgba32>()),
+                Transparency.None => FromRgba32(Color.Black.ToPixel<Rgba32>()),
+                Transparency.TopLeft => FromRgba32(Color.Black.ToPixel<Rgba32>()),
                 Transparency.Background => bg is not null
                                            ? FromRgba32(bg.Value)
                                            : default,
@@ -127,9 +127,7 @@ public record struct SixelColor
         if (color.A is > 0 and < 100)
         {
             // Blend the background color to create opaque color
-            color.Blend(transp == Transparency.None
-                        ? Sixel.BackgroundColor
-                        : Sixel.TerminalBackgroundColor);
+            color.Blend(Color.Black);
         }
         return color;
     }

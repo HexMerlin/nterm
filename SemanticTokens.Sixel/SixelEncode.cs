@@ -170,9 +170,15 @@ public static class SixelEncode
                 break;
         }
 
-        if (canvasWidth > 1 && canvasHeight > 1 && img.Width != canvasWidth && img.Height != canvasHeight)
+        if (canvasWidth > 1 && canvasHeight > 1 && (img.Width != canvasWidth || img.Height != canvasHeight))
         {
-            img.Mutate(x => x.Resize(canvasWidth, canvasHeight));
+            // Force exact dimensions without aspect ratio preservation
+            img.Mutate(x => x.Resize(new ResizeOptions
+            {
+                Size = new Size(canvasWidth, canvasHeight),
+                Mode = ResizeMode.Stretch  // Force exact dimensions, ignore aspect ratio
+            }));
+            // Console.WriteLine($"[DEBUG] Resized image from {img.Width}x{img.Height} to target {canvasWidth}x{canvasHeight}");
         }
 
         // 減色処理
@@ -184,9 +190,12 @@ public static class SixelEncode
 
         var imageFrame = img.Frames.RootFrame;
 
+        // Debug: Check actual frame dimensions after processing
+        // Console.WriteLine($"[DEBUG] After processing - Expected: {canvasWidth}x{canvasHeight}, Actual frame: {imageFrame.Width}x{imageFrame.Height}");
+
         // Building a color palette
         ReadOnlySpan<SixelColor> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
-        Size frameSize = new(canvasWidth, canvasHeight);
+        Size frameSize = new(imageFrame.Width, imageFrame.Height);  // Use actual frame dimensions
 
         return EncodeFrame(imageFrame, colorPalette, frameSize, transp, tc, bg);
     }
