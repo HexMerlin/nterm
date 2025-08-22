@@ -1,10 +1,9 @@
-using System.Text;
+using SemanticTokens.Sixel.Encoder;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using SemanticTokens.Core;
-using SemanticTokens.Sixel.Encoder;
+using System.Text;
 
 namespace SemanticTokens.Sixel;
 

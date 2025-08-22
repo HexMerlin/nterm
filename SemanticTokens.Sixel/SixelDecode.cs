@@ -3,7 +3,6 @@ using System.Numerics;
 #endif
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SemanticTokens.Core;
 using SixLabors.ImageSharp.Processing;
 
 namespace SemanticTokens.Sixel;

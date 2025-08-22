@@ -9,17 +9,14 @@ namespace SemanticTokens.Sixel;
 /// </summary>
 public sealed class ConsoleImageBuilder
 {
-    private readonly IImageSource _source;
+    private IImageSource Source { get; }
     private Size? _targetPixelSize;
     private Size? _targetCharacterSize;
     private string _fallbackText = "[image]";
     private Transparency _transparency = Transparency.Default;
     private bool _keepAspectRatio = true;
 
-    internal ConsoleImageBuilder(IImageSource source)
-    {
-        _source = source;
-    }
+    internal ConsoleImageBuilder(IImageSource source) => Source = source;
 
     /// <summary>
     /// Target size in pixels.
@@ -106,7 +103,7 @@ public sealed class ConsoleImageBuilder
     {
         try
         {
-            using Stream imageStream = _source.OpenStream();
+            using Stream imageStream = Source.OpenStream();
             return BuildFromStream(imageStream);
         }
         catch (Exception ex) when (ex is not FileNotFoundException and not InvalidOperationException)
@@ -118,7 +115,7 @@ public sealed class ConsoleImageBuilder
     private ConsoleImage BuildFromStream(Stream imageStream)
     {
         Size targetSize = ComputeTargetSize();
-        SemanticTokens.Core.Console.WriteLine($"[DEBUG] Target size calculated: {targetSize.Width}x{targetSize.Height}");
+        Console.WriteLine($"[DEBUG] Target size calculated: {targetSize.Width}x{targetSize.Height}");
         
         // Ultra-optimized single execution path
         if (SixelCapabilities.IsSupported)
@@ -138,12 +135,12 @@ public sealed class ConsoleImageBuilder
             catch (Exception ex)
             {
                 // Fail-fast to fallback on any encoding error
-                SemanticTokens.Core.Console.WriteLine($"[DEBUG] SIXEL encoding failed: {ex.Message}");
+                Console.WriteLine($"[DEBUG] SIXEL encoding failed: {ex.Message}");
             }
         }
         else
         {
-            SemanticTokens.Core.Console.WriteLine("[DEBUG] SIXEL not supported by terminal");
+            Console.WriteLine("[DEBUG] SIXEL not supported by terminal");
         }
 
         // Fallback path - terminal doesn't support SIXEL or encoding failed
@@ -172,29 +169,29 @@ public sealed class ConsoleImageBuilder
                     );
                     
                     Size result = new Size(targetPixelDimension, targetPixelDimension);
-                    SemanticTokens.Core.Console.WriteLine($"[DEBUG] Character-based sizing with aspect ratio preservation:");
-                    SemanticTokens.Core.Console.WriteLine($"[DEBUG]   Requested: {charSize.Width}x{charSize.Height} chars * {cellSize.Width}x{cellSize.Height} px/cell");
-                    SemanticTokens.Core.Console.WriteLine($"[DEBUG]   Would give: {charSize.Width * cellSize.Width}x{charSize.Height * cellSize.Height} px");
-                    SemanticTokens.Core.Console.WriteLine($"[DEBUG]   Adjusted to square: {result.Width}x{result.Height} px");
+                    Console.WriteLine($"[DEBUG] Character-based sizing with aspect ratio preservation:");
+                    Console.WriteLine($"[DEBUG]   Requested: {charSize.Width}x{charSize.Height} chars * {cellSize.Width}x{cellSize.Height} px/cell");
+                    Console.WriteLine($"[DEBUG]   Would give: {charSize.Width * cellSize.Width}x{charSize.Height * cellSize.Height} px");
+                    Console.WriteLine($"[DEBUG]   Adjusted to square: {result.Width}x{result.Height} px");
                     return result;
                 }
             }
             
             // Standard character-based sizing (no aspect ratio adjustment)
             Size standardResult = new Size(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
-            SemanticTokens.Core.Console.WriteLine($"[DEBUG] Character-based sizing: {charSize.Width}x{charSize.Height} chars * {cellSize.Width}x{cellSize.Height} px/cell = {standardResult.Width}x{standardResult.Height} px");
+            Console.WriteLine($"[DEBUG] Character-based sizing: {charSize.Width}x{charSize.Height} chars * {cellSize.Width}x{cellSize.Height} px/cell = {standardResult.Width}x{standardResult.Height} px");
             return standardResult;
         }
 
         // Use explicit pixel size if provided
         if (_targetPixelSize.HasValue)
         {
-            SemanticTokens.Core.Console.WriteLine($"[DEBUG] Using explicit pixel size: {_targetPixelSize.Value.Width}x{_targetPixelSize.Value.Height}");
+            Console.WriteLine($"[DEBUG] Using explicit pixel size: {_targetPixelSize.Value.Width}x{_targetPixelSize.Value.Height}");
             return _targetPixelSize.Value;
         }
 
         // Default: reasonable console image size
-        SemanticTokens.Core.Console.WriteLine("[DEBUG] Using default size: 320x240");
+        Console.WriteLine("[DEBUG] Using default size: 320x240");
         return new Size(320, 240);
     }
 }
@@ -246,8 +243,8 @@ internal sealed class EmbeddedResourceImageSource(string resourceSuffix) : IImag
         var allResources = assembly.GetManifestResourceNames();
         
         // Debug: show all available resources
-        SemanticTokens.Core.Console.WriteLine($"[DEBUG] Looking for resource ending with: {_resourceSuffix}");
-        SemanticTokens.Core.Console.WriteLine($"[DEBUG] Available resources: {string.Join(", ", allResources)}");
+        Console.WriteLine($"[DEBUG] Looking for resource ending with: {_resourceSuffix}");
+        Console.WriteLine($"[DEBUG] Available resources: {string.Join(", ", allResources)}");
         
         string? resourceName = allResources
             .FirstOrDefault(n => n.EndsWith(_resourceSuffix, StringComparison.OrdinalIgnoreCase));

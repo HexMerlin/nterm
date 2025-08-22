@@ -24,31 +24,31 @@ public sealed class ConsoleImageDemo
     /// </summary>
     public ConsoleImageDemo()
     {
-        SemanticTokens.Core.Console.WriteLine("[DEBUG] ===== BUILDING CONSOLE IMAGES =====");
+        Console.WriteLine("[DEBUG] ===== BUILDING CONSOLE IMAGES =====");
         
         // Build perfect console images once during construction
-        SemanticTokens.Core.Console.WriteLine($"[DEBUG] Building User Avatar with 8x8 character size...");
+        Console.WriteLine($"[DEBUG] Building User Avatar with 8x8 character size...");
         _userAvatar = ConsoleImage.FromEmbeddedResource(ImageUser)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[👤]")
             .WithTransparency(Transparency.Default)
             .Build();
 
-        SemanticTokens.Core.Console.WriteLine($"[DEBUG] Building Bot Avatar with 8x8 character size...");
+        Console.WriteLine($"[DEBUG] Building Bot Avatar with 8x8 character size...");
         _botAvatar = ConsoleImage.FromEmbeddedResource(ImageBot)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[🤖]")
             .WithTransparency(Transparency.Default)
             .Build();
 
-        SemanticTokens.Core.Console.WriteLine($"[DEBUG] Building AI Avatar with 8x8 character size...");
+        Console.WriteLine($"[DEBUG] Building AI Avatar with 8x8 character size...");
         _aiAvatar = ConsoleImage.FromEmbeddedResource(ImageAI)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[🧠]")
             .WithTransparency(Transparency.Default)
             .Build();
             
-        SemanticTokens.Core.Console.WriteLine("[DEBUG] ===== ALL CONSOLE IMAGES BUILT =====");
+        Console.WriteLine("[DEBUG] ===== ALL CONSOLE IMAGES BUILT =====");
     }
 
     /// <summary>
@@ -61,9 +61,9 @@ public sealed class ConsoleImageDemo
     /// </remarks>
     public void Run()
     {
-        SemanticTokens.Core.Console.WriteLine();
-        SemanticTokens.Core.Console.WriteLine("=== Perfect Console Image Demo ===");
-        SemanticTokens.Core.Console.WriteLine();
+        Console.WriteLine();
+        Console.WriteLine("=== Perfect Console Image Demo ===");
+        Console.WriteLine();
 
         PrintChatMessage(
             avatar: _userAvatar,
@@ -89,12 +89,12 @@ If your terminal supports SIXEL, you should see avatars on the left."
 Either way, your 24-bit colors continue to work everywhere."
         );
 
-        SemanticTokens.Core.Console.WriteLine();
-        SemanticTokens.Core.Console.WriteLine("=== Terminal Capabilities ===");
-        SemanticTokens.Core.Console.WriteLine($"SIXEL Support: {SixelCapabilities.IsSupported}");
-        SemanticTokens.Core.Console.WriteLine($"Cell Size: {SixelCapabilities.CellSize.Width}x{SixelCapabilities.CellSize.Height}px");
-        SemanticTokens.Core.Console.WriteLine($"Window Size: {SixelCapabilities.WindowCharacterSize.Width}x{SixelCapabilities.WindowCharacterSize.Height} chars");
-        SemanticTokens.Core.Console.WriteLine();
+        Console.WriteLine();
+        Console.WriteLine("=== Terminal Capabilities ===");
+        Console.WriteLine($"SIXEL Support: {SixelCapabilities.IsSupported}");
+        Console.WriteLine($"Cell Size: {SixelCapabilities.CellSize.Width}x{SixelCapabilities.CellSize.Height}px");
+        Console.WriteLine($"Window Size: {SixelCapabilities.WindowCharacterSize.Width}x{SixelCapabilities.WindowCharacterSize.Height} chars");
+        Console.WriteLine();
     }
 
     /// <summary>
@@ -111,16 +111,16 @@ Either way, your 24-bit colors continue to work everywhere."
     private static void PrintChatMessage(ConsoleImage avatar, string speakerLabel, SemanticTokens.Core.Color speakerColor, string text)
     {
         // Perfect single-line image output
-        SemanticTokens.Core.Console.WriteImage(avatar.ConsoleData);
-        SemanticTokens.Core.Console.Write(" ");
+        Console.WriteImage(avatar.ConsoleData);
+        Console.Write(" ");
         
         // Perfect colored speaker label
-        SemanticTokens.Core.Console.Write(speakerLabel, speakerColor, SemanticTokens.Core.Color.Black);
-        SemanticTokens.Core.Console.Write(": ");
+        Console.Write(speakerLabel, speakerColor, SemanticTokens.Core.Color.Black);
+        Console.Write(": ");
         
         // Perfect text output
-        SemanticTokens.Core.Console.WriteLine(text);
-        SemanticTokens.Core.Console.WriteLine();
+        Console.WriteLine(text);
+        Console.WriteLine();
     }
 
 }

@@ -36,8 +36,8 @@ public static class SixelCapabilities
     /// </summary>
     /// <returns>Window dimensions in character cells</returns>
     public static Size WindowCharacterSize => new(
-        SemanticTokens.Core.Console.WindowWidth, 
-        SemanticTokens.Core.Console.WindowHeight
+        Console.WindowWidth, 
+        Console.WindowHeight
     );
 
     /// <summary>
@@ -56,7 +56,7 @@ public static class SixelCapabilities
         string? forceSupport = Environment.GetEnvironmentVariable("FORCE_SIXEL_SUPPORT");
         if (!string.IsNullOrEmpty(forceSupport) && bool.TryParse(forceSupport, out bool forced))
         {
-            SemanticTokens.Core.Console.WriteLine($"[DEBUG] SIXEL support forced via environment: {forced}");
+            Console.WriteLine($"[DEBUG] SIXEL support forced via environment: {forced}");
             return forced;
         }
 
@@ -66,7 +66,7 @@ public static class SixelCapabilities
             ReadOnlySpan<char> response = QueryTerminal(Constants.DeviceAttributesQuery);
             
             // Debug: show what we got back
-            SemanticTokens.Core.Console.WriteLine($"[DEBUG] Terminal device attributes response: '{response.ToString()}'");
+            Console.WriteLine($"[DEBUG] Terminal device attributes response: '{response.ToString()}'");
             
             // Traditional SIXEL support indicated by parameter "4" in response
             bool hasTraditionalSupport = response.Contains(";4;", StringComparison.Ordinal) ||
@@ -79,12 +79,12 @@ public static class SixelCapabilities
             
             bool hasSupport = hasTraditionalSupport || hasModernSupport;
             
-            SemanticTokens.Core.Console.WriteLine($"[DEBUG] SIXEL support detected: {hasSupport} (traditional: {hasTraditionalSupport}, modern: {hasModernSupport})");
+            Console.WriteLine($"[DEBUG] SIXEL support detected: {hasSupport} (traditional: {hasTraditionalSupport}, modern: {hasModernSupport})");
             return hasSupport;
         }
         catch (Exception ex)
         {
-            SemanticTokens.Core.Console.WriteLine($"[DEBUG] SIXEL detection failed: {ex.Message}");
+            Console.WriteLine($"[DEBUG] SIXEL detection failed: {ex.Message}");
             return false; // Assume no SIXEL support on any query failure
         }
     }
@@ -99,7 +99,7 @@ public static class SixelCapabilities
         {
             // Query cell size: ESC[16t
             ReadOnlySpan<char> response = QueryTerminal("[16t");
-            SemanticTokens.Core.Console.WriteLine($"[DEBUG] Cell size query response: '{response.ToString()}'");
+            Console.WriteLine($"[DEBUG] Cell size query response: '{response.ToString()}'");
             
             // Expected format: [6;height;width;t
             Span<Range> ranges = stackalloc Range[4];
@@ -108,18 +108,18 @@ public static class SixelCapabilities
                 int height = int.Parse(response[ranges[1]], CultureInfo.InvariantCulture);
                 int width = int.Parse(response[ranges[2]], CultureInfo.InvariantCulture);
                 Size detectedSize = new Size(width, height);
-                SemanticTokens.Core.Console.WriteLine($"[DEBUG] Cell size detected from terminal: {width}x{height} pixels");
+                Console.WriteLine($"[DEBUG] Cell size detected from terminal: {width}x{height} pixels");
                 return detectedSize;
             }
         }
         catch (Exception ex)
         {
-            SemanticTokens.Core.Console.WriteLine($"[DEBUG] Cell size detection failed: {ex.Message}");
+            Console.WriteLine($"[DEBUG] Cell size detection failed: {ex.Message}");
         }
 
         // Default Windows Terminal cell size
         Size defaultSize = new Size(10, 20);
-        SemanticTokens.Core.Console.WriteLine($"[DEBUG] Using default cell size: {defaultSize.Width}x{defaultSize.Height} pixels");
+        Console.WriteLine($"[DEBUG] Using default cell size: {defaultSize.Width}x{defaultSize.Height} pixels");
         return defaultSize;
     }
 
@@ -193,19 +193,19 @@ public static class SixelCapabilities
             // Send query with 100ms timeout
             using var cts = new CancellationTokenSource(100);
             
-            SemanticTokens.Core.Console.Write($"\x1B{query}");
+            Console.Write($"\x1B{query}");
             
             // Collect response until terminator or timeout
             DateTime start = DateTime.UtcNow;
             while ((DateTime.UtcNow - start).TotalMilliseconds < 100)
             {
-                if (!SemanticTokens.Core.Console.KeyAvailable)
+                if (!Console.KeyAvailable)
                 {
                     Thread.Sleep(1);
                     continue;
                 }
 
-                char ch = SemanticTokens.Core.Console.ReadKey(intercept: true).KeyChar;
+                char ch = Console.ReadKey(intercept: true).KeyChar;
                 
                 if (Array.IndexOf(terminators, ch) >= 0)
                     break;
