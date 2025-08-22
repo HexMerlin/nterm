@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using SixLabors.ImageSharp;
 
@@ -65,8 +66,18 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// </summary>
     /// <param name="resourceSuffix">Resource name suffix for lookup</param>
     /// <returns>Builder for fluent configuration</returns>
+    /// <remarks>Uses the calling assembly to resolve embedded resources.</remarks>
     public static ConsoleImageBuilder FromEmbeddedResource(string resourceSuffix) => 
         new(new EmbeddedResourceImageSource(resourceSuffix));
+
+    /// <summary>
+    /// Factory: Create ConsoleImage from embedded resource in specific assembly.
+    /// </summary>
+    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
+    /// <param name="assembly">Assembly containing the embedded resources</param>
+    /// <returns>Builder for fluent configuration</returns>
+    public static ConsoleImageBuilder FromEmbeddedResource(string resourceSuffix, Assembly assembly) => 
+        new(new EmbeddedResourceImageSource(resourceSuffix, assembly));
 
     /// <summary>
     /// Indicates whether this console image is equal to another console image.

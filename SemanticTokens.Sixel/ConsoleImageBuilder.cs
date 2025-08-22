@@ -231,27 +231,48 @@ internal sealed class StreamImageSource(Stream stream) : IImageSource
 
 /// <summary>
 /// Embedded resource image source with optimized resource resolution.
+/// Supports loading from any assembly for maximum flexibility.
 /// </summary>
-internal sealed class EmbeddedResourceImageSource(string resourceSuffix) : IImageSource
+internal sealed class EmbeddedResourceImageSource : IImageSource
 {
-    private readonly string _resourceSuffix = resourceSuffix;
+    private readonly string _resourceSuffix;
+    private readonly Assembly _assembly;
+
+    /// <summary>
+    /// Creates embedded resource source using the calling assembly.
+    /// </summary>
+    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
+    public EmbeddedResourceImageSource(string resourceSuffix) 
+        : this(resourceSuffix, Assembly.GetCallingAssembly())
+    {
+    }
+
+    /// <summary>
+    /// Creates embedded resource source using specified assembly.
+    /// </summary>
+    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
+    /// <param name="assembly">Assembly containing the embedded resources</param>
+    public EmbeddedResourceImageSource(string resourceSuffix, Assembly assembly)
+    {
+        _resourceSuffix = resourceSuffix;
+        _assembly = assembly;
+    }
 
     public Stream OpenStream()
     {
-        // Get the assembly containing the embedded resources (SemanticTokens.Sixel)
-        Assembly assembly = typeof(ConsoleImage).Assembly;
-        var allResources = assembly.GetManifestResourceNames();
+        string[] allResources = _assembly.GetManifestResourceNames();
         
         // Debug: show all available resources
         Console.WriteLine($"[DEBUG] Looking for resource ending with: {_resourceSuffix}");
+        Console.WriteLine($"[DEBUG] Assembly: {_assembly.GetName().Name}");
         Console.WriteLine($"[DEBUG] Available resources: {string.Join(", ", allResources)}");
         
         string? resourceName = allResources
             .FirstOrDefault(n => n.EndsWith(_resourceSuffix, StringComparison.OrdinalIgnoreCase));
         
         return resourceName != null
-            ? assembly.GetManifestResourceStream(resourceName) 
+            ? _assembly.GetManifestResourceStream(resourceName) 
               ?? throw new FileNotFoundException($"Embedded resource stream is null: {resourceName}")
-            : throw new FileNotFoundException($"Embedded resource not found: {_resourceSuffix}");
+            : throw new FileNotFoundException($"Embedded resource not found: {_resourceSuffix} in assembly {_assembly.GetName().Name}");
     }
 }
