@@ -49,6 +49,23 @@ public static class Console
         }
     }
 
+    public static int WindowTop => System.Console.WindowTop;
+
+    public static int WindowLeft => System.Console.WindowLeft;
+
+    public static int WindowWidth => System.Console.WindowWidth;
+
+    public static int WindowHeight => System.Console.WindowHeight;
+    public static int BufferWidth => System.Console.BufferWidth;
+
+    public static int Read() => System.Console.Read();
+
+    public static ConsoleKeyInfo ReadKey(bool intercept = false) => System.Console.ReadKey(intercept); 
+
+    public static string? ReadLine() => System.Console.ReadLine();
+
+    public static bool KeyAvailable => System.Console.KeyAvailable;
+
     static Console()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
