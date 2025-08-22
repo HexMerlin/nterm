@@ -39,7 +39,7 @@ public sealed class Test
                     : Math.Max(1, (int)Math.Ceiling((double)avatarPx / cellHpx));
 
         textStartCol = avatarCols + 2; // a little padding between avatar & text
-        sixelOk = true; 
+        sixelOk = Sixel.IsSupported(); 
     }
 
     public void Run()
@@ -189,20 +189,6 @@ Either way, your 24-bit colors continue to work everywhere."
 
         ReadOnlySpan<char> sixel = SixelEncode.Encode(stream); // stream -> SIXEL (includes DCS/ST)
         return sixel.ToString();
-    }
-
-    // ---- capability ------------------------------------------------------
-    private bool SupportsSixel()
-    {
-        var force = Environment.GetEnvironmentVariable("FORCE_SIXEL");
-        if (!string.IsNullOrEmpty(force) && force != "0") return true;
-
-        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WT_SESSION"))) return true;
-
-        var term = Environment.GetEnvironmentVariable("TERM") ?? "";
-        if (term.IndexOf("sixel", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-
-        return false;
     }
 
     // ---- ANSI helpers ----------------------------------------------------
