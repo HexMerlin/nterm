@@ -1,14 +1,15 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
-namespace TrueColor;
+namespace SemanticTokens.Core;
 
 /// <summary>
 /// Optimized 24-bit color console writer.
 /// </summary>
-public static class AnsiConsole
+public static class Console
 {
-    private static readonly Stream Stdout = Console.OpenStandardOutput();
+    private static readonly Stream Stdout = System.Console.OpenStandardOutput();
 
     /// <summary>
     /// 24-bit foreground color of the console. Setting this property immediately
@@ -48,10 +49,11 @@ public static class AnsiConsole
         }
     }
 
-    static AnsiConsole()
+    static Console()
     {
-        ForegroundColor = Color.FromConsoleColor(Console.ForegroundColor);
-        BackgroundColor = Color.FromConsoleColor(Console.BackgroundColor);
+        System.Console.OutputEncoding = Encoding.UTF8;
+        ForegroundColor = Color.FromConsoleColor(System.Console.ForegroundColor);
+        BackgroundColor = Color.FromConsoleColor(System.Console.BackgroundColor);
         TryEnableVirtualTerminalOnWindows();
     }
 

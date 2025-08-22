@@ -1,10 +1,12 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
+﻿
+using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
-using SemanticDocuments;
+using SemanticTokens.Document;
+using SemanticTokens.Examples;
+using SemanticTokens.Core;
 using System.Text;
-using TrueColor;
 
-namespace ConsoleApp;
+namespace SemanticTokens.DevConsole;
 
 /// <summary>
 /// Test program demonstrating <see cref="SemanticDocumentCSharp"/> creation and console rendering.
@@ -16,85 +18,85 @@ internal static class Program
 
     private static void Main()
     {
-        AnsiConsole.WriteLine("=== Testing New AnsiConsole API ===");
+        Console.WriteLine("=== Testing New Console API ===");
 
-        Console.OutputEncoding = Encoding.UTF8;
-        
-        AnsiConsole.ForegroundColor = Color.White;
+        System.Console.OutputEncoding = Encoding.UTF8;
+
+        Console.ForegroundColor = Color.White;
 
         //Testing to string conversion to known color "00FFEBCD" (Blanched Almond)
         Color color1 = 0x00FFEBCDu;
-        AnsiConsole.WriteLine(color1.ToString());
+        Console.WriteLine($"Named color code 0x00FFEBCDu ToString: " + color1.ToString());
 
         //Testing to string conversion to non-named color - outputs RGB values instead "R:255, G:235, B:206"
         Color color2 = 0x00FFEBCEu;
-        AnsiConsole.WriteLine(color2.ToString());
+        Console.WriteLine("Unnamed color code 0x00FFEBCEu ToString" + color2.ToString());
 
-        AnsiConsole.WriteLine();
+        Console.WriteLine();
 
         // Test 1: Traditional Console API
-        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.ForegroundColor = Color.Yellow;
         Console.WriteLine("This is in YELLOW using Console.ForegroundColor");
 
-        // Test 2: New AnsiConsole property-based API
-        AnsiConsole.ForegroundColor = Color.Red;
-        AnsiConsole.BackgroundColor = Color.Blue;
-        AnsiConsole.WriteLine("This is RED on BLUE using AnsiConsole properties!");
+        // Test 2: New Console property-based API
+        Console.ForegroundColor = Color.Red;
+        Console.BackgroundColor = Color.Blue;
+        Console.WriteLine("This is RED on BLUE using Console properties!");
 
-        AnsiConsole.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
-        AnsiConsole.WriteLine($"Current Console.BackgroundColor : {Console.BackgroundColor}");
-        
+        Console.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
+        Console.WriteLine($"Current Console.BackgroundColor : {Console.BackgroundColor}");
+
         // Test 3: New Write(char) overload using current colors
-        AnsiConsole.Write('X');
-        AnsiConsole.Write('Y');
-        AnsiConsole.Write('Z');
-        AnsiConsole.Write('\n');
+        Console.Write('X');
+        Console.Write('Y');
+        Console.Write('Z');
+        Console.Write('\n');
 
         // Test 4: 24-bit color that doesn't exist in ConsoleColor enum
-        AnsiConsole.ForegroundColor = Color.Chocolate;
-        AnsiConsole.BackgroundColor = Color.Black;
-        AnsiConsole.WriteLine("This is CHOCOLATE colored text!");
-        AnsiConsole.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
+        Console.ForegroundColor = Color.Chocolate;
+        Console.BackgroundColor = Color.Black;
+        Console.WriteLine("This is CHOCOLATE colored text!");
+        Console.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
         //Yes, Console outputs nearest matching color DarkYellow
 
         // Test 5: Show our current 24-bit color properties
-        AnsiConsole.WriteLine();
-        AnsiConsole.WriteLine($"AnsiConsole.ForegroundColor: R={AnsiConsole.ForegroundColor.R}, G={AnsiConsole.ForegroundColor.G}, B={AnsiConsole.ForegroundColor.B}");
-        AnsiConsole.WriteLine($"AnsiConsole.BackgroundColor: R={AnsiConsole.BackgroundColor.R}, G={AnsiConsole.BackgroundColor.G}, B={AnsiConsole.BackgroundColor.B}");
+        Console.WriteLine();
+        Console.WriteLine($"Console.ForegroundColor: R={Console.ForegroundColor.R}, G={Console.ForegroundColor.G}, B={Console.ForegroundColor.B}");
+        Console.WriteLine($"Console.BackgroundColor: R={Console.BackgroundColor.R}, G={Console.BackgroundColor.G}, B={Console.BackgroundColor.B}");
 
         // Test 6: Rapid color changes
-        AnsiConsole.WriteLine();
-        AnsiConsole.WriteLine("Rapid color changes test:");
+        Console.WriteLine();
+        Console.WriteLine("Rapid color changes test:");
         Color[] colors = [Color.Red, Color.Green, Color.Blue, Color.Yellow, Color.Magenta, Color.Cyan];
         for (int i = 0; i < colors.Length; i++)
         {
-            AnsiConsole.ForegroundColor = colors[i];
-            AnsiConsole.Write((char)('1' + i));
-            AnsiConsole.Write(' ');
+            Console.ForegroundColor = colors[i];
+            Console.Write((char)('1' + i));
+            Console.Write(' ');
         }
-        AnsiConsole.Write('\n');
+        Console.Write('\n');
 
 
         // Test 7: New string writing methods
-        AnsiConsole.WriteLine();
-        AnsiConsole.WriteLine("=== Testing String Writing Methods ===");
-        
-        AnsiConsole.ForegroundColor = Color.Green;
-        AnsiConsole.Write("Short string test");
-        AnsiConsole.WriteLine(" with WriteLine!");
-        
-        AnsiConsole.WriteLine("This is a complete line in green");
-        
+        Console.WriteLine();
+        Console.WriteLine("=== Testing String Writing Methods ===");
+
+        Console.ForegroundColor = Color.Green;
+        Console.Write("Short string test");
+        Console.WriteLine(" with WriteLine!");
+
+        Console.WriteLine("This is a complete line in green");
+
         // Test with colors
-        AnsiConsole.Write("Colored string: ", Color.Yellow, Color.DarkBlue);
-        AnsiConsole.WriteLine("Yellow on dark blue!", Color.Yellow, Color.DarkBlue);
-        
+        Console.Write("Colored string: ", Color.Yellow, Color.DarkBlue);
+        Console.WriteLine("Yellow on dark blue!", Color.Yellow, Color.DarkBlue);
+
         // Test longer string
         string longText = "This is a longer string to test chunked processing with more than 256 characters. ".PadRight(300, 'x');
-        AnsiConsole.WriteLine(longText, Color.Magenta, Color.Black);
-        
+        Console.WriteLine(longText, Color.Magenta, Color.Black);
+
         // Test empty WriteLine
-        AnsiConsole.WriteLine(); // Just newline
+        Console.WriteLine(); // Just newline
 
     }
 
@@ -106,7 +108,7 @@ internal static class Program
     /// <returns>Task representing the asynchronous operation.</returns>
     private static async Task Main2()
     {
-        Console.OutputEncoding = Encoding.UTF8;
+        System.Console.OutputEncoding = Encoding.UTF8;
 
         //A simple C# script
         string scriptText = """
@@ -122,7 +124,7 @@ string msg = $"Value = {x} ";
 Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
 """;
 
-    
+
         // 2) Compile the script
         Script<object> script = CSharpScript.Create(
             scriptText,
@@ -135,7 +137,7 @@ Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
         SemanticDocument document = await SemanticDocumentCSharp.CreateAsync(compilation);
 
         // 4) Render to console using rich semantic information
-        SemanticDocumentConsoleRenderer.Render(document);
+        ConsoleRenderer.Render(document);
         Console.WriteLine();
 
     }

@@ -1,7 +1,6 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
-namespace TrueColor;
+namespace SemanticTokens.Core;
 
 /// <summary>
 /// Immutable platform-independent struct for 24-bit true colors.

@@ -1,7 +1,9 @@
-using Microsoft.CodeAnalysis.Classification;
-using C = System.ConsoleColor;
 
-namespace SemanticDocuments;
+using Microsoft.CodeAnalysis.Classification;
+using SemanticTokens.Document;
+using C = SemanticTokens.Core.Color;
+
+namespace SemanticTokens.Examples;
 
 /// <summary>
 /// Default theme for semantic classifications.
@@ -13,7 +15,7 @@ public static class Theme
     private static SemanticCharStyle Keyword => Default with { Color = C.Blue };
     private static SemanticCharStyle Type => Default with { Color = C.DarkCyan };
     private static SemanticCharStyle Member => Default with { Color = C.Magenta };
-    private static SemanticCharStyle String => Default with { Color = C.DarkYellow };
+    private static SemanticCharStyle String => Default with { Color = C.Orange };
     private static SemanticCharStyle Number => Default with { Color = C.Cyan };
     private static SemanticCharStyle Comment => Default with { Color = C.DarkGreen };
     private static SemanticCharStyle Operator => Default with { Color = C.DarkGray };
@@ -54,7 +56,7 @@ public static class Theme
         ClassificationTypeNames.MethodName => Member,
         ClassificationTypeNames.ExtensionMethodName => Member with { Color = C.DarkMagenta },
         ClassificationTypeNames.PropertyName => Member with { Color = C.Yellow },
-        ClassificationTypeNames.EventName => Member with { Color = C.DarkYellow },
+        ClassificationTypeNames.EventName => Member with { Color = C.DarkGoldenrod },
 
 
         // Literals and values

@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Xml.Linq;
-
-namespace TrueColor;
+﻿namespace SemanticTokens.Core;
 
 public readonly partial struct Color
 {

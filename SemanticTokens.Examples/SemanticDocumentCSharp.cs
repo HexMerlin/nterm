@@ -2,10 +2,10 @@
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
+using SemanticTokens.Document;
 using System.Collections.Immutable;
 
-
-namespace SemanticDocuments;
+namespace SemanticTokens.Examples;
 
 /// <summary>
 /// Immutable document format containing styled characters ready for rendering.
@@ -61,7 +61,7 @@ public record SemanticDocumentCSharp : SemanticDocument
 
         AdhocWorkspace workspace = new(); // in-memory workspace
         Project project = workspace.AddProject("Scratch", LanguageNames.CSharp);
-        Document document = workspace.AddDocument(project.Id, documentName, text);
+        Microsoft.CodeAnalysis.Document document = workspace.AddDocument(project.Id, documentName, text);
 
         IEnumerable<ClassifiedSpan> spans = await Classifier.GetClassifiedSpansAsync(
             document, new TextSpan(0, text.Length), ct).ConfigureAwait(false);

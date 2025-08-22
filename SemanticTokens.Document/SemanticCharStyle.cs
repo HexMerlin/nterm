@@ -1,4 +1,6 @@
-namespace SemanticDocuments;
+using SemanticTokens.Core;
+
+namespace SemanticTokens.Document;
 
 /// <summary>
 /// Descriptor for semantic and visual properties for rendering characters.
@@ -8,4 +10,4 @@ namespace SemanticDocuments;
 /// <remarks>
 /// <para>Used in <see cref="SemanticDocumentCSharp"/> to pair each character with its style.</para>
 /// </remarks>
-public readonly record struct SemanticCharStyle(ConsoleColor Color, ConsoleColor BackColor);
+public readonly record struct SemanticCharStyle(Color Color, Color BackColor);

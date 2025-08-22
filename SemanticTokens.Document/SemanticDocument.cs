@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Immutable;
 
-namespace SemanticDocuments;
+namespace SemanticTokens.Document;
 
 /// <summary>
 /// Abstract record for a semantic document .

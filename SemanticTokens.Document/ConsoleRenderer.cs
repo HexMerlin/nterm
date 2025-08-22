@@ -1,7 +1,4 @@
-﻿using SemanticDocuments;
-using TrueColor;
-
-namespace ConsoleApp;
+﻿namespace SemanticTokens.Document;
 
 /// <summary>
 /// Ultra-simple console renderer for <see cref="ISemanticDocument"/>.
@@ -20,7 +17,7 @@ namespace ConsoleApp;
 /// <para><strong>Other Renderer Examples:</strong></para>
 /// <para>HTML export, RTF documents, terminal emulators, code editors, etc.</para>
 /// </remarks>
-public static class SemanticDocumentConsoleRenderer
+public static class ConsoleRenderer
 {
     /// <summary>
     /// Renders <see cref="ISemanticDocument"/> to console using pre-computed character visual properties.
@@ -38,14 +35,14 @@ public static class SemanticDocumentConsoleRenderer
     /// </remarks>
     public static void Render(SemanticDocument document)
     {
-        (ConsoleColor, ConsoleColor) initColors = (Console.ForegroundColor, Console.BackgroundColor);
+        (ConsoleColor, ConsoleColor) initColors = (System.Console.ForegroundColor, System.Console.BackgroundColor);
 
       
         foreach ((char character, SemanticCharStyle style) in document)
         {
-            AnsiConsole.Write(character, Color.FromConsoleColor(style.Color), Color.FromConsoleColor(style.BackColor));
+            Console.Write(character, style.Color, style.BackColor);
         }
 
-        (Console.ForegroundColor, Console.BackgroundColor) = initColors;
+        (System.Console.ForegroundColor, System.Console.BackgroundColor) = initColors;
     }
 }
