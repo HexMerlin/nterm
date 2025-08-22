@@ -3,529 +3,529 @@
 public readonly partial struct Color
 {
     public static Color ActiveBorder => new(activeBorder);
-    private const uint activeBorder = 0x00B4B4B4u;
+    private const uint activeBorder = 0xFFB4B4B4u;
 
     public static Color ActiveCaption => new(activeCaption);
-    private const uint activeCaption = 0x0099B4D1u;
+    private const uint activeCaption = 0xFF99B4D1u;
 
     public static Color ActiveCaptionText => new(activeCaptionText);
-    private const uint activeCaptionText = 0x00000000u;
+    private const uint activeCaptionText = 0xFF000000u;
 
     public static Color AliceBlue => new(aliceBlue);
-    private const uint aliceBlue = 0x00F0F8FFu;
+    private const uint aliceBlue = 0xFFF0F8FFu;
 
     public static Color AntiqueWhite => new(antiqueWhite);
-    private const uint antiqueWhite = 0x00FAEBD7u;
+    private const uint antiqueWhite = 0xFFFAEBD7u;
 
     public static Color AppWorkspace => new(appWorkspace);
-    private const uint appWorkspace = 0x00ABABABu;
+    private const uint appWorkspace = 0xFFABABABu;
 
     public static Color Aqua => new(aqua);
-    private const uint aqua = 0x0000FFFFu;
+    private const uint aqua = 0xFF00FFFFu;
 
     public static Color Aquamarine => new(aquamarine);
-    private const uint aquamarine = 0x007FFFD4u;
+    private const uint aquamarine = 0xFF7FFFD4u;
 
     public static Color Azure => new(azure);
-    private const uint azure = 0x00F0FFFFu;
+    private const uint azure = 0xFFF0FFFFu;
 
     public static Color Beige => new(beige);
-    private const uint beige = 0x00F5F5DCu;
+    private const uint beige = 0xFFF5F5DCu;
 
     public static Color Bisque => new(bisque);
-    private const uint bisque = 0x00FFE4C4u;
+    private const uint bisque = 0xFFFFE4C4u;
 
     public static Color Black => new(black);
-    private const uint black = 0x00000000u;
+    private const uint black = 0xFF000000u;
 
     public static Color BlanchedAlmond => new(blanchedAlmond);
-    private const uint blanchedAlmond = 0x00FFEBCDu;
+    private const uint blanchedAlmond = 0xFFFFEBCDu;
 
     public static Color Blue => new(blue);
-    private const uint blue = 0x000000FFu;
+    private const uint blue = 0xFF0000FFu;
 
     public static Color BlueViolet => new(blueViolet);
-    private const uint blueViolet = 0x008A2BE2u;
+    private const uint blueViolet = 0xFF8A2BE2u;
 
     public static Color Brown => new(brown);
-    private const uint brown = 0x00A52A2Au;
+    private const uint brown = 0xFFA52A2Au;
 
     public static Color BurlyWood => new(burlyWood);
-    private const uint burlyWood = 0x00DEB887u;
+    private const uint burlyWood = 0xFFDEB887u;
 
     public static Color ButtonFace => new(buttonFace);
-    private const uint buttonFace = 0x00F0F0F0u;
+    private const uint buttonFace = 0xFFF0F0F0u;
 
     public static Color ButtonHighlight => new(buttonHighlight);
-    private const uint buttonHighlight = 0x00FFFFFFu;
+    private const uint buttonHighlight = 0xFFFFFFFFu;
 
     public static Color ButtonShadow => new(buttonShadow);
-    private const uint buttonShadow = 0x00A0A0A0u;
+    private const uint buttonShadow = 0xFFA0A0A0u;
 
     public static Color CadetBlue => new(cadetBlue);
-    private const uint cadetBlue = 0x005F9EA0u;
+    private const uint cadetBlue = 0xFF5F9EA0u;
 
     public static Color Chartreuse => new(chartreuse);
-    private const uint chartreuse = 0x007FFF00u;
+    private const uint chartreuse = 0xFF7FFF00u;
 
     public static Color Chocolate => new(chocolate);
-    private const uint chocolate = 0x00D2691Eu;
+    private const uint chocolate = 0xFFD2691Eu;
 
     public static Color Control => new(control);
-    private const uint control = 0x00F0F0F0u;
+    private const uint control = 0xFFF0F0F0u;
 
     public static Color ControlDark => new(controlDark);
-    private const uint controlDark = 0x00A0A0A0u;
+    private const uint controlDark = 0xFFA0A0A0u;
 
     public static Color ControlDarkDark => new(controlDarkDark);
-    private const uint controlDarkDark = 0x00696969u;
+    private const uint controlDarkDark = 0xFF696969u;
 
     public static Color ControlLight => new(controlLight);
-    private const uint controlLight = 0x00E3E3E3u;
+    private const uint controlLight = 0xFFE3E3E3u;
 
     public static Color ControlLightLight => new(controlLightLight);
-    private const uint controlLightLight = 0x00FFFFFFu;
+    private const uint controlLightLight = 0xFFFFFFFFu;
 
     public static Color ControlText => new(controlText);
-    private const uint controlText = 0x00000000u;
+    private const uint controlText = 0xFF000000u;
 
     public static Color Coral => new(coral);
-    private const uint coral = 0x00FF7F50u;
+    private const uint coral = 0xFFFF7F50u;
 
     public static Color CornflowerBlue => new(cornflowerBlue);
-    private const uint cornflowerBlue = 0x006495EDu;
+    private const uint cornflowerBlue = 0xFF6495EDu;
 
     public static Color Cornsilk => new(cornsilk);
-    private const uint cornsilk = 0x00FFF8DCu;
+    private const uint cornsilk = 0xFFFFF8DCu;
 
     public static Color Crimson => new(crimson);
-    private const uint crimson = 0x00DC143Cu;
+    private const uint crimson = 0xFFDC143Cu;
 
     public static Color Cyan => new(cyan);
-    private const uint cyan = 0x0000FFFFu;
+    private const uint cyan = 0xFF00FFFFu;
 
     public static Color DarkBlue => new(darkBlue);
-    private const uint darkBlue = 0x0000008Bu;
+    private const uint darkBlue = 0xFF00008Bu;
 
     public static Color DarkCyan => new(darkCyan);
-    private const uint darkCyan = 0x00008B8Bu;
+    private const uint darkCyan = 0xFF008B8Bu;
 
     public static Color DarkGoldenrod => new(darkGoldenrod);
-    private const uint darkGoldenrod = 0x00B8860Bu;
+    private const uint darkGoldenrod = 0xFFB8860Bu;
 
     public static Color DarkGray => new(darkGray);
-    private const uint darkGray = 0x00A9A9A9u;
+    private const uint darkGray = 0xFFA9A9A9u;
 
     public static Color DarkGreen => new(darkGreen);
-    private const uint darkGreen = 0x00006400u;
+    private const uint darkGreen = 0xFF006400u;
 
     public static Color DarkKhaki => new(darkKhaki);
-    private const uint darkKhaki = 0x00BDB76Bu;
+    private const uint darkKhaki = 0xFFBDB76Bu;
 
     public static Color DarkMagenta => new(darkMagenta);
-    private const uint darkMagenta = 0x008B008Bu;
+    private const uint darkMagenta = 0xFF8B008Bu;
 
     public static Color DarkOliveGreen => new(darkOliveGreen);
-    private const uint darkOliveGreen = 0x00556B2Fu;
+    private const uint darkOliveGreen = 0xFF556B2Fu;
 
     public static Color DarkOrange => new(darkOrange);
-    private const uint darkOrange = 0x00FF8C00u;
+    private const uint darkOrange = 0xFFFF8C00u;
 
     public static Color DarkOrchid => new(darkOrchid);
-    private const uint darkOrchid = 0x009932CCu;
+    private const uint darkOrchid = 0xFF9932CCu;
 
     public static Color DarkRed => new(darkRed);
-    private const uint darkRed = 0x008B0000u;
+    private const uint darkRed = 0xFF8B0000u;
 
     public static Color DarkSalmon => new(darkSalmon);
-    private const uint darkSalmon = 0x00E9967Au;
+    private const uint darkSalmon = 0xFFE9967Au;
 
     public static Color DarkSeaGreen => new(darkSeaGreen);
-    private const uint darkSeaGreen = 0x008FBC8Fu;
+    private const uint darkSeaGreen = 0xFF8FBC8Fu;
 
     public static Color DarkSlateBlue => new(darkSlateBlue);
-    private const uint darkSlateBlue = 0x00483D8Bu;
+    private const uint darkSlateBlue = 0xFF483D8Bu;
 
     public static Color DarkSlateGray => new(darkSlateGray);
-    private const uint darkSlateGray = 0x002F4F4Fu;
+    private const uint darkSlateGray = 0xFF2F4F4Fu;
 
     public static Color DarkTurquoise => new(darkTurquoise);
-    private const uint darkTurquoise = 0x0000CED1u;
+    private const uint darkTurquoise = 0xFF00CED1u;
 
     public static Color DarkViolet => new(darkViolet);
-    private const uint darkViolet = 0x009400D3u;
+    private const uint darkViolet = 0xFF9400D3u;
 
     public static Color DeepPink => new(deepPink);
-    private const uint deepPink = 0x00FF1493u;
+    private const uint deepPink = 0xFFFF1493u;
 
     public static Color DeepSkyBlue => new(deepSkyBlue);
-    private const uint deepSkyBlue = 0x0000BFFFu;
+    private const uint deepSkyBlue = 0xFF00BFFFu;
 
     public static Color Desktop => new(desktop);
-    private const uint desktop = 0x00000000u;
+    private const uint desktop = 0xFF000000u;
 
     public static Color DimGray => new(dimGray);
-    private const uint dimGray = 0x00696969u;
+    private const uint dimGray = 0xFF696969u;
 
     public static Color DodgerBlue => new(dodgerBlue);
-    private const uint dodgerBlue = 0x001E90FFu;
+    private const uint dodgerBlue = 0xFF1E90FFu;
 
     public static Color Firebrick => new(firebrick);
-    private const uint firebrick = 0x00B22222u;
+    private const uint firebrick = 0xFFB22222u;
 
     public static Color FloralWhite => new(floralWhite);
-    private const uint floralWhite = 0x00FFFAF0u;
+    private const uint floralWhite = 0xFFFFFAF0u;
 
     public static Color ForestGreen => new(forestGreen);
-    private const uint forestGreen = 0x00228B22u;
+    private const uint forestGreen = 0xFF228B22u;
 
     public static Color Fuchsia => new(fuchsia);
-    private const uint fuchsia = 0x00FF00FFu;
+    private const uint fuchsia = 0xFFFF00FFu;
 
     public static Color Gainsboro => new(gainsboro);
-    private const uint gainsboro = 0x00DCDCDCu;
+    private const uint gainsboro = 0xFFDCDCDCu;
 
     public static Color GhostWhite => new(ghostWhite);
-    private const uint ghostWhite = 0x00F8F8FFu;
+    private const uint ghostWhite = 0xFFF8F8FFu;
 
     public static Color Gold => new(gold);
-    private const uint gold = 0x00FFD700u;
+    private const uint gold = 0xFFFFD700u;
 
     public static Color Goldenrod => new(goldenrod);
-    private const uint goldenrod = 0x00DAA520u;
+    private const uint goldenrod = 0xFFDAA520u;
 
     public static Color GradientActiveCaption => new(gradientActiveCaption);
-    private const uint gradientActiveCaption = 0x00B9D1EAu;
+    private const uint gradientActiveCaption = 0xFFB9D1EAu;
 
     public static Color GradientInactiveCaption => new(gradientInactiveCaption);
-    private const uint gradientInactiveCaption = 0x00D7E4F2u;
+    private const uint gradientInactiveCaption = 0xFFD7E4F2u;
 
     public static Color Gray => new(gray);
-    private const uint gray = 0x00808080u;
+    private const uint gray = 0xFF808080u;
 
     public static Color GrayText => new(grayText);
-    private const uint grayText = 0x006D6D6Du;
+    private const uint grayText = 0xFF6D6D6Du;
 
     public static Color Green => new(green);
-    private const uint green = 0x00008000u;
+    private const uint green = 0xFF008000u;
 
     public static Color GreenYellow => new(greenYellow);
-    private const uint greenYellow = 0x00ADFF2Fu;
+    private const uint greenYellow = 0xFFADFF2Fu;
 
     public static Color Highlight => new(highlight);
-    private const uint highlight = 0x000078D7u;
+    private const uint highlight = 0xFF0078D7u;
 
     public static Color HighlightText => new(highlightText);
-    private const uint highlightText = 0x00FFFFFFu;
+    private const uint highlightText = 0xFFFFFFFFu;
 
     public static Color Honeydew => new(honeydew);
-    private const uint honeydew = 0x00F0FFF0u;
+    private const uint honeydew = 0xFFF0FFF0u;
 
     public static Color HotPink => new(hotPink);
-    private const uint hotPink = 0x00FF69B4u;
+    private const uint hotPink = 0xFFFF69B4u;
 
     public static Color HotTrack => new(hotTrack);
-    private const uint hotTrack = 0x000066CCu;
+    private const uint hotTrack = 0xFF0066CCu;
 
     public static Color InactiveBorder => new(inactiveBorder);
-    private const uint inactiveBorder = 0x00F4F7FCu;
+    private const uint inactiveBorder = 0xFFF4F7FCu;
 
     public static Color InactiveCaption => new(inactiveCaption);
-    private const uint inactiveCaption = 0x00BFCDDBu;
+    private const uint inactiveCaption = 0xFFBFCDDBu;
 
     public static Color InactiveCaptionText => new(inactiveCaptionText);
-    private const uint inactiveCaptionText = 0x00000000u;
+    private const uint inactiveCaptionText = 0xFF000000u;
 
     public static Color IndianRed => new(indianRed);
-    private const uint indianRed = 0x00CD5C5Cu;
+    private const uint indianRed = 0xFFCD5C5Cu;
 
     public static Color Indigo => new(indigo);
-    private const uint indigo = 0x004B0082u;
+    private const uint indigo = 0xFF4B0082u;
 
     public static Color Info => new(info);
-    private const uint info = 0x00FFFFE1u;
+    private const uint info = 0xFFFFFFE1u;
 
     public static Color InfoText => new(infoText);
-    private const uint infoText = 0x00000000u;
+    private const uint infoText = 0xFF000000u;
 
     public static Color Ivory => new(ivory);
-    private const uint ivory = 0x00FFFFF0u;
+    private const uint ivory = 0xFFFFFFF0u;
 
     public static Color Khaki => new(khaki);
-    private const uint khaki = 0x00F0E68Cu;
+    private const uint khaki = 0xFFF0E68Cu;
 
     public static Color Lavender => new(lavender);
-    private const uint lavender = 0x00E6E6FAu;
+    private const uint lavender = 0xFFE6E6FAu;
 
     public static Color LavenderBlush => new(lavenderBlush);
-    private const uint lavenderBlush = 0x00FFF0F5u;
+    private const uint lavenderBlush = 0xFFFFF0F5u;
 
     public static Color LawnGreen => new(lawnGreen);
-    private const uint lawnGreen = 0x007CFC00u;
+    private const uint lawnGreen = 0xFF7CFC00u;
 
     public static Color LemonChiffon => new(lemonChiffon);
-    private const uint lemonChiffon = 0x00FFFACDu;
+    private const uint lemonChiffon = 0xFFFFFACDu;
 
     public static Color LightBlue => new(lightBlue);
-    private const uint lightBlue = 0x00ADD8E6u;
+    private const uint lightBlue = 0xFFADD8E6u;
 
     public static Color LightCoral => new(lightCoral);
-    private const uint lightCoral = 0x00F08080u;
+    private const uint lightCoral = 0xFFF08080u;
 
     public static Color LightCyan => new(lightCyan);
-    private const uint lightCyan = 0x00E0FFFFu;
+    private const uint lightCyan = 0xFFE0FFFFu;
 
     public static Color LightGoldenrodYellow => new(lightGoldenrodYellow);
-    private const uint lightGoldenrodYellow = 0x00FAFAD2u;
+    private const uint lightGoldenrodYellow = 0xFFFAFAD2u;
 
     public static Color LightGray => new(lightGray);
-    private const uint lightGray = 0x00D3D3D3u;
+    private const uint lightGray = 0xFFD3D3D3u;
 
     public static Color LightGreen => new(lightGreen);
-    private const uint lightGreen = 0x0090EE90u;
+    private const uint lightGreen = 0xFF90EE90u;
 
     public static Color LightPink => new(lightPink);
-    private const uint lightPink = 0x00FFB6C1u;
+    private const uint lightPink = 0xFFFFB6C1u;
 
     public static Color LightSalmon => new(lightSalmon);
-    private const uint lightSalmon = 0x00FFA07Au;
+    private const uint lightSalmon = 0xFFFFA07Au;
 
     public static Color LightSeaGreen => new(lightSeaGreen);
-    private const uint lightSeaGreen = 0x0020B2AAu;
+    private const uint lightSeaGreen = 0xFF20B2AAu;
 
     public static Color LightSkyBlue => new(lightSkyBlue);
-    private const uint lightSkyBlue = 0x0087CEFAu;
+    private const uint lightSkyBlue = 0xFF87CEFAu;
 
     public static Color LightSlateGray => new(lightSlateGray);
-    private const uint lightSlateGray = 0x00778899u;
+    private const uint lightSlateGray = 0xFF778899u;
 
     public static Color LightSteelBlue => new(lightSteelBlue);
-    private const uint lightSteelBlue = 0x00B0C4DEu;
+    private const uint lightSteelBlue = 0xFFB0C4DEu;
 
     public static Color LightYellow => new(lightYellow);
-    private const uint lightYellow = 0x00FFFFE0u;
+    private const uint lightYellow = 0xFFFFFFE0u;
 
     public static Color Lime => new(lime);
-    private const uint lime = 0x0000FF00u;
+    private const uint lime = 0xFF00FF00u;
 
     public static Color LimeGreen => new(limeGreen);
-    private const uint limeGreen = 0x0032CD32u;
+    private const uint limeGreen = 0xFF32CD32u;
 
     public static Color Linen => new(linen);
-    private const uint linen = 0x00FAF0E6u;
+    private const uint linen = 0xFFFAF0E6u;
 
     public static Color Magenta => new(magenta);
-    private const uint magenta = 0x00FF00FFu;
+    private const uint magenta = 0xFFFF00FFu;
 
     public static Color Maroon => new(maroon);
-    private const uint maroon = 0x00800000u;
+    private const uint maroon = 0xFF800000u;
 
     public static Color MediumAquamarine => new(mediumAquamarine);
-    private const uint mediumAquamarine = 0x0066CDAAu;
+    private const uint mediumAquamarine = 0xFF66CDAAu;
 
     public static Color MediumBlue => new(mediumBlue);
-    private const uint mediumBlue = 0x000000CDu;
+    private const uint mediumBlue = 0xFF0000CDu;
 
     public static Color MediumOrchid => new(mediumOrchid);
-    private const uint mediumOrchid = 0x00BA55D3u;
+    private const uint mediumOrchid = 0xFFBA55D3u;
 
     public static Color MediumPurple => new(mediumPurple);
-    private const uint mediumPurple = 0x009370DBu;
+    private const uint mediumPurple = 0xFF9370DBu;
 
     public static Color MediumSeaGreen => new(mediumSeaGreen);
-    private const uint mediumSeaGreen = 0x003CB371u;
+    private const uint mediumSeaGreen = 0xFF3CB371u;
 
     public static Color MediumSlateBlue => new(mediumSlateBlue);
-    private const uint mediumSlateBlue = 0x007B68EEu;
+    private const uint mediumSlateBlue = 0xFF7B68EEu;
 
     public static Color MediumSpringGreen => new(mediumSpringGreen);
-    private const uint mediumSpringGreen = 0x0000FA9Au;
+    private const uint mediumSpringGreen = 0xFF00FA9Au;
 
     public static Color MediumTurquoise => new(mediumTurquoise);
-    private const uint mediumTurquoise = 0x0048D1CCu;
+    private const uint mediumTurquoise = 0xFF48D1CCu;
 
     public static Color MediumVioletRed => new(mediumVioletRed);
-    private const uint mediumVioletRed = 0x00C71585u;
+    private const uint mediumVioletRed = 0xFFC71585u;
 
     public static Color Menu => new(menu);
-    private const uint menu = 0x00F0F0F0u;
+    private const uint menu = 0xFFF0F0F0u;
 
     public static Color MenuBar => new(menuBar);
-    private const uint menuBar = 0x00F0F0F0u;
+    private const uint menuBar = 0xFFF0F0F0u;
 
     public static Color MenuHighlight => new(menuHighlight);
-    private const uint menuHighlight = 0x000078D7u;
+    private const uint menuHighlight = 0xFF0078D7u;
 
     public static Color MenuText => new(menuText);
-    private const uint menuText = 0x00000000u;
+    private const uint menuText = 0xFF000000u;
 
     public static Color MidnightBlue => new(midnightBlue);
-    private const uint midnightBlue = 0x00191970u;
+    private const uint midnightBlue = 0xFF191970u;
 
     public static Color MintCream => new(mintCream);
-    private const uint mintCream = 0x00F5FFFAu;
+    private const uint mintCream = 0xFFF5FFFAu;
 
     public static Color MistyRose => new(mistyRose);
-    private const uint mistyRose = 0x00FFE4E1u;
+    private const uint mistyRose = 0xFFFFE4E1u;
 
     public static Color Moccasin => new(moccasin);
-    private const uint moccasin = 0x00FFE4B5u;
+    private const uint moccasin = 0xFFFFE4B5u;
 
     public static Color NavajoWhite => new(navajoWhite);
-    private const uint navajoWhite = 0x00FFDEADu;
+    private const uint navajoWhite = 0xFFFFDEADu;
 
     public static Color Navy => new(navy);
-    private const uint navy = 0x00000080u;
+    private const uint navy = 0xFF000080u;
 
     public static Color OldLace => new(oldLace);
-    private const uint oldLace = 0x00FDF5E6u;
+    private const uint oldLace = 0xFFFDF5E6u;
 
     public static Color Olive => new(olive);
-    private const uint olive = 0x00808000u;
+    private const uint olive = 0xFF808000u;
 
     public static Color OliveDrab => new(oliveDrab);
-    private const uint oliveDrab = 0x006B8E23u;
+    private const uint oliveDrab = 0xFF6B8E23u;
 
     public static Color Orange => new(orange);
-    private const uint orange = 0x00FFA500u;
+    private const uint orange = 0xFFFFA500u;
 
     public static Color OrangeRed => new(orangeRed);
-    private const uint orangeRed = 0x00FF4500u;
+    private const uint orangeRed = 0xFFFF4500u;
 
     public static Color Orchid => new(orchid);
-    private const uint orchid = 0x00DA70D6u;
+    private const uint orchid = 0xFFDA70D6u;
 
     public static Color PaleGoldenrod => new(paleGoldenrod);
-    private const uint paleGoldenrod = 0x00EEE8AAu;
+    private const uint paleGoldenrod = 0xFFEEE8AAu;
 
     public static Color PaleGreen => new(paleGreen);
-    private const uint paleGreen = 0x0098FB98u;
+    private const uint paleGreen = 0xFF98FB98u;
 
     public static Color PaleTurquoise => new(paleTurquoise);
-    private const uint paleTurquoise = 0x00AFEEEEu;
+    private const uint paleTurquoise = 0xFFAFEEEEu;
 
     public static Color PaleVioletRed => new(paleVioletRed);
-    private const uint paleVioletRed = 0x00DB7093u;
+    private const uint paleVioletRed = 0xFFDB7093u;
 
     public static Color PapayaWhip => new(papayaWhip);
-    private const uint papayaWhip = 0x00FFEFD5u;
+    private const uint papayaWhip = 0xFFFFEFD5u;
 
     public static Color PeachPuff => new(peachPuff);
-    private const uint peachPuff = 0x00FFDAB9u;
+    private const uint peachPuff = 0xFFFFDAB9u;
 
     public static Color Peru => new(peru);
-    private const uint peru = 0x00CD853Fu;
+    private const uint peru = 0xFFCD853Fu;
 
     public static Color Pink => new(pink);
-    private const uint pink = 0x00FFC0CBu;
+    private const uint pink = 0xFFFFC0CBu;
 
     public static Color Plum => new(plum);
-    private const uint plum = 0x00DDA0DDu;
+    private const uint plum = 0xFFDDA0DDu;
 
     public static Color PowderBlue => new(powderBlue);
-    private const uint powderBlue = 0x00B0E0E6u;
+    private const uint powderBlue = 0xFFB0E0E6u;
 
     public static Color Purple => new(purple);
-    private const uint purple = 0x00800080u;
+    private const uint purple = 0xFF800080u;
 
     public static Color RebeccaPurple => new(rebeccaPurple);
-    private const uint rebeccaPurple = 0x00663399u;
+    private const uint rebeccaPurple = 0xFF663399u;
 
     public static Color Red => new(red);
-    private const uint red = 0x00FF0000u;
+    private const uint red = 0xFFFF0000u;
 
     public static Color RosyBrown => new(rosyBrown);
-    private const uint rosyBrown = 0x00BC8F8Fu;
+    private const uint rosyBrown = 0xFFBC8F8Fu;
 
     public static Color RoyalBlue => new(royalBlue);
-    private const uint royalBlue = 0x004169E1u;
+    private const uint royalBlue = 0xFF4169E1u;
 
     public static Color SaddleBrown => new(saddleBrown);
-    private const uint saddleBrown = 0x008B4513u;
+    private const uint saddleBrown = 0xFF8B4513u;
 
     public static Color Salmon => new(salmon);
-    private const uint salmon = 0x00FA8072u;
+    private const uint salmon = 0xFFFA8072u;
 
     public static Color SandyBrown => new(sandyBrown);
-    private const uint sandyBrown = 0x00F4A460u;
+    private const uint sandyBrown = 0xFFF4A460u;
 
     public static Color ScrollBar => new(scrollBar);
-    private const uint scrollBar = 0x00C8C8C8u;
+    private const uint scrollBar = 0xFFC8C8C8u;
 
     public static Color SeaGreen => new(seaGreen);
-    private const uint seaGreen = 0x002E8B57u;
+    private const uint seaGreen = 0xFF2E8B57u;
 
     public static Color SeaShell => new(seaShell);
-    private const uint seaShell = 0x00FFF5EEu;
+    private const uint seaShell = 0xFFFFF5EEu;
 
     public static Color Sienna => new(sienna);
-    private const uint sienna = 0x00A0522Du;
+    private const uint sienna = 0xFFA0522Du;
 
     public static Color Silver => new(silver);
-    private const uint silver = 0x00C0C0C0u;
+    private const uint silver = 0xFFC0C0C0u;
 
     public static Color SkyBlue => new(skyBlue);
-    private const uint skyBlue = 0x0087CEEBu;
+    private const uint skyBlue = 0xFF87CEEBu;
 
     public static Color SlateBlue => new(slateBlue);
-    private const uint slateBlue = 0x006A5ACDu;
+    private const uint slateBlue = 0xFF6A5ACDu;
 
     public static Color SlateGray => new(slateGray);
-    private const uint slateGray = 0x00708090u;
+    private const uint slateGray = 0xFF708090u;
 
     public static Color Snow => new(snow);
-    private const uint snow = 0x00FFFAFAu;
+    private const uint snow = 0xFFFFFAFAu;
 
     public static Color SpringGreen => new(springGreen);
-    private const uint springGreen = 0x0000FF7Fu;
+    private const uint springGreen = 0xFF00FF7Fu;
 
     public static Color SteelBlue => new(steelBlue);
-    private const uint steelBlue = 0x004682B4u;
+    private const uint steelBlue = 0xFF4682B4u;
 
     public static Color Tan => new(tan);
-    private const uint tan = 0x00D2B48Cu;
+    private const uint tan = 0xFFD2B48Cu;
 
     public static Color Teal => new(teal);
-    private const uint teal = 0x00008080u;
+    private const uint teal = 0xFF008080u;
 
     public static Color Thistle => new(thistle);
-    private const uint thistle = 0x00D8BFD8u;
+    private const uint thistle = 0xFFD8BFD8u;
 
     public static Color Tomato => new(tomato);
-    private const uint tomato = 0x00FF6347u;
+    private const uint tomato = 0xFFFF6347u;
 
     public static Color Transparent => new(transparent);
-    private const uint transparent = 0x00FFFFFFu;
+    private const uint transparent = 0xFFFFFFFFu;
 
     public static Color Turquoise => new(turquoise);
-    private const uint turquoise = 0x0040E0D0u;
+    private const uint turquoise = 0xFF40E0D0u;
 
     public static Color Violet => new(violet);
-    private const uint violet = 0x00EE82EEu;
+    private const uint violet = 0xFFEE82EEu;
     
     public static Color Wheat => new(wheat);
-    private const uint wheat = 0x00F5DEB3u;
+    private const uint wheat = 0xFFF5DEB3u;
 
     public static Color White => new(white);
-    private const uint white = 0x00FFFFFFu;
+    private const uint white = 0xFFFFFFFFu;
 
     public static Color WhiteSmoke => new(whiteSmoke);
-    private const uint whiteSmoke = 0x00F5F5F5u;
+    private const uint whiteSmoke = 0xFFF5F5F5u;
 
     public static Color Window => new(window);
-    private const uint window = 0x00FFFFFFu;
+    private const uint window = 0xFFFFFFFFu;
 
     public static Color WindowFrame => new(windowFrame);
-    private const uint windowFrame = 0x00646464u;
+    private const uint windowFrame = 0xFF646464u;
 
     public static Color WindowText => new(windowText);
-    private const uint windowText = 0x00000000u;
+    private const uint windowText = 0xFF000000u;
 
     public static Color Yellow => new(yellow);
-    private const uint yellow = 0x00FFFF00u;
+    private const uint yellow = 0xFFFFFF00u;
 
     public static Color YellowGreen => new(yellowGreen);
-    private const uint yellowGreen = 0x009ACD32u;
+    private const uint yellowGreen = 0xFF9ACD32u;
 
 
     /// <summary>

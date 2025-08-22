@@ -3,7 +3,7 @@
 namespace SemanticTokens.Core;
 
 /// <summary>
-/// Immutable platform-independent struct for 24-bit true colors.
+/// Immutable platform-independent struct for 32-bit true colors with alpha channel.
 /// Also provides set of predefined named colors.
 /// </summary>
 /// <remarks>
@@ -27,20 +27,37 @@ public readonly partial struct Color : IEquatable<Color>
     public byte B { get; }
 
     /// <summary>
+    /// Alpha component value of this color (0-255).
+    /// </summary>
+    /// <remarks>
+    /// Value of 255 indicates fully opaque, 0 indicates fully transparent.
+    /// </remarks>
+    public byte A { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="Color"/> struct with the specified component values.
     /// </summary>
     /// <param name="r">The red component value (0-255).</param>
     /// <param name="g">The green component value (0-255).</param>
     /// <param name="b">The blue component value (0-255).</param>
-    public Color(byte r, byte g, byte b) => (R, G, B) = (r, g, b);
+    /// <param name="a">The alpha component value (0-255). Defaults to 255 (fully opaque).</param>
+    public Color(byte r, byte g, byte b, byte a = 255) => (R, G, B, A) = (r, g, b, a);
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Color"/> struct with the specified RGB component values and full opacity.
+    /// </summary>
+    /// <param name="r">The red component value (0-255).</param>
+    /// <param name="g">The green component value (0-255).</param>
+    /// <param name="b">The blue component value (0-255).</param>
+    public Color(byte r, byte g, byte b) => (R, G, B, A) = (r, g, b, 255);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Color"/> struct from a 32-bit uint (0xAARRGGBB).
-    /// The alpha byte is ignored.
     /// </summary>
-    /// <param name="value">The 32-bit unsigned integer in ARGB or RGB form.</param>
+    /// <param name="value">The 32-bit unsigned integer in ARGB format.</param>
     public Color(uint value)
     {
+        A = (byte)((value >> 24) & 0xFF);
         R = (byte)((value >> 16) & 0xFF);
         G = (byte)((value >> 8) & 0xFF);
         B = (byte)(value & 0xFF);
@@ -59,7 +76,7 @@ public readonly partial struct Color : IEquatable<Color>
     /// <param name="other">The color to compare with this color.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified color is equal to this color.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Equals(Color other) => R == other.R && G == other.G && B == other.B;
+    public bool Equals(Color other) => R == other.R && G == other.G && B == other.B && A == other.A;
 
     /// <summary>
     /// Determines whether this color is equal to the specified object.
@@ -69,7 +86,7 @@ public readonly partial struct Color : IEquatable<Color>
     public override bool Equals(object? obj) => obj is Color o && Equals(o);
 
     ///<inheritdoc/>
-    public override int GetHashCode() => (R << 16) | (G << 8) | B;
+    public override int GetHashCode() => (A << 24) | (R << 16) | (G << 8) | B;
 
     /// <summary>
     /// Determines whether two specified colors have the same value.
@@ -113,13 +130,17 @@ public readonly partial struct Color : IEquatable<Color>
         _ => White // ConsoleColor.White
     };
 
-    public uint ToUint() => ((uint) R << 16) | ((uint) G << 8) | B;
+    /// <summary>
+    /// Converts this color to a 32-bit unsigned integer in ARGB format.
+    /// </summary>
+    /// <returns>32-bit unsigned integer representation (0xAARRGGBB).</returns>
+    public uint ToUint() => ((uint)A << 24) | ((uint)R << 16) | ((uint)G << 8) | B;
 
     public override string ToString()
     {
         if (TryGetKnownColorName(this, out string name))
             return name;
-        return $"R:{R}, G:{G}, B:{B}";
+        return A == 255 ? $"R:{R}, G:{G}, B:{B}" : $"R:{R}, G:{G}, B:{B}, A:{A}";
     }
 
 
