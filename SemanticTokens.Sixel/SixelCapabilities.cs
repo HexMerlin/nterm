@@ -55,12 +55,18 @@ public static class SixelCapabilities
         // Manual override for testing - check environment variable
         string? forceSupport = Environment.GetEnvironmentVariable("FORCE_SIXEL_SUPPORT");
         if (!string.IsNullOrEmpty(forceSupport) && bool.TryParse(forceSupport, out bool forced))
+        {
+            SemanticTokens.Core.Console.WriteLine($"[DEBUG] SIXEL support forced via environment: {forced}");
             return forced;
+        }
 
         try
         {
             // Query device attributes: ESC[c
             ReadOnlySpan<char> response = QueryTerminal("[c");
+            
+            // Debug: show what we got back
+            SemanticTokens.Core.Console.WriteLine($"[DEBUG] Terminal device attributes response: '{response.ToString()}'");
             
             // Traditional SIXEL support indicated by parameter "4" in response
             bool hasTraditionalSupport = response.Contains(";4;", StringComparison.Ordinal) ||
@@ -71,10 +77,14 @@ public static class SixelCapabilities
             bool hasModernSupport = response.Contains("61", StringComparison.Ordinal) && 
                                    response.Contains("24", StringComparison.Ordinal); // Common in modern terminals
             
-            return hasTraditionalSupport || hasModernSupport;
+            bool hasSupport = hasTraditionalSupport || hasModernSupport;
+            
+            SemanticTokens.Core.Console.WriteLine($"[DEBUG] SIXEL support detected: {hasSupport} (traditional: {hasTraditionalSupport}, modern: {hasModernSupport})");
+            return hasSupport;
         }
-        catch
+        catch (Exception ex)
         {
+            SemanticTokens.Core.Console.WriteLine($"[DEBUG] SIXEL detection failed: {ex.Message}");
             return false; // Assume no SIXEL support on any query failure
         }
     }
@@ -89,6 +99,7 @@ public static class SixelCapabilities
         {
             // Query cell size: ESC[16t
             ReadOnlySpan<char> response = QueryTerminal("[16t");
+            SemanticTokens.Core.Console.WriteLine($"[DEBUG] Cell size query response: '{response.ToString()}'");
             
             // Expected format: [6;height;width;t
             Span<Range> ranges = stackalloc Range[4];
@@ -96,16 +107,20 @@ public static class SixelCapabilities
             {
                 int height = int.Parse(response[ranges[1]], CultureInfo.InvariantCulture);
                 int width = int.Parse(response[ranges[2]], CultureInfo.InvariantCulture);
-                return new Size(width, height);
+                Size detectedSize = new Size(width, height);
+                SemanticTokens.Core.Console.WriteLine($"[DEBUG] Cell size detected from terminal: {width}x{height} pixels");
+                return detectedSize;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Fall through to default
+            SemanticTokens.Core.Console.WriteLine($"[DEBUG] Cell size detection failed: {ex.Message}");
         }
 
         // Default Windows Terminal cell size
-        return new Size(10, 20);
+        Size defaultSize = new Size(10, 20);
+        SemanticTokens.Core.Console.WriteLine($"[DEBUG] Using default cell size: {defaultSize.Width}x{defaultSize.Height} pixels");
+        return defaultSize;
     }
 
     /// <summary>
