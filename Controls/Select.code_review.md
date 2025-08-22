@@ -206,7 +206,7 @@ private static void ValidateInput(IEnumerable<SelectItem> items)
 ```csharp
 public interface ISelectControl
 {
-    SelectItem Show(IEnumerable<SelectItem> items, SelectOptions? options = null);
+    SelectItem Show(IEnumerable<SelectItem> items);
 }
 
 public class SelectControl : ISelectControl
@@ -214,6 +214,8 @@ public class SelectControl : ISelectControl
     // Implementation
 }
 ```
+
+Keep the static class and the method `Show`, but use the `SelectControl` as static property. It makes it easier to test the control.
 
 ### 2. **Tight Coupling**
 **Issue**: Direct dependency on `Console` and `AnsiConsole` makes unit testing impossible.
