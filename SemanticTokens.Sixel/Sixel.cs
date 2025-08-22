@@ -4,7 +4,7 @@ namespace SemanticTokens.Sixel;
 
 public partial class Sixel
 {
-    [Conditional("SIXPIX_DEBUG")]
+    [Conditional("SIXEL_DEBUG")]
     private static void DebugPrint(ReadOnlySpan<char> msg, ConsoleColor fg = ConsoleColor.Magenta, bool lf = false)
     {
         ConsoleColor currentFg = Console.ForegroundColor;
