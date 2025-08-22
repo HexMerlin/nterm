@@ -1,11 +1,8 @@
-﻿// Program.cs
-using SixPix; // NuGet: SixPix
+﻿
 using System.Reflection;
 using System.Text;
 
 namespace SemanticTokens.Sixel;
-
-
 
 public sealed class Test
 {
@@ -191,7 +188,7 @@ Either way, your 24-bit colors continue to work everywhere."
         using var stream = asm.GetManifestResourceStream(resName)
                        ?? throw new FileNotFoundException($"Embedded resource stream is null: {resName}");
 
-        ReadOnlySpan<char> sixel = SixPix.Sixel.Encode(stream); // stream -> SIXEL (includes DCS/ST)
+        ReadOnlySpan<char> sixel = Sixel.Encode(stream); // stream -> SIXEL (includes DCS/ST)
         return sixel.ToString();
     }
 

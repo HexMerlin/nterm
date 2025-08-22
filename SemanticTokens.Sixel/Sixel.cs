@@ -1,0 +1,18 @@
+using System.Diagnostics;
+
+namespace SemanticTokens.Sixel;
+
+public partial class Sixel
+{
+    [Conditional("SIXPIX_DEBUG")]
+    private static void DebugPrint(ReadOnlySpan<char> msg, ConsoleColor fg = ConsoleColor.Magenta, bool lf = false)
+    {
+        ConsoleColor currentFg = Console.ForegroundColor;
+        Console.ForegroundColor = fg;
+        if (lf)
+            Console.Error.WriteLine(msg);
+        else
+            Console.Error.Write(msg);
+        Console.ForegroundColor = currentFg;
+    }
+}
