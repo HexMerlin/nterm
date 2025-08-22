@@ -5,15 +5,15 @@ The `Select.cs` file implements a CLI select control for choosing from a list of
 
 ## Critical Issues
 
-### 1. **Single Responsibility Principle Violation**
-**Issue**: The `Show` method is doing too many things:
+### 1. **Single Responsibility Principle Violation (Large Method)**
+**Issue**: The `Show` method is doing too many things and is over 80 lines long:
 - Input validation
 - Console state management
 - Input handling loop
 - Display rendering
 - State restoration
 
-**Impact**: Makes the code hard to test, maintain, and extend.
+**Impact**: Violates both SRP and the "large method" rule, making the code hard to test, maintain, debug, and extend.
 
 **Recommendation**: Break down into smaller, focused methods:
 - `ValidateInput(IEnumerable<SelectItem> items)`
@@ -21,57 +21,68 @@ The `Select.cs` file implements a CLI select control for choosing from a list of
 - `RestoreConsoleState(ConsoleState state)`
 - `HandleUserInput(IReadOnlyList<SelectItem> items, ref int currentIndex)`
 - `RenderSelection(IReadOnlyList<SelectItem> items, int currentIndex, int startColumn, int startRow)`
+- `RunSelectionLoop()` for the main input processing loop
 
-### 2. **Large Method (Show method is 80+ lines)**
-**Issue**: The `Show` method is too large and complex, making it difficult to understand and maintain.
-
-**Impact**: Violates the "large method" rule and makes debugging harder.
-
-**Recommendation**: Extract the main loop logic into a separate method like `RunSelectionLoop()`.
-
-### 3. **Magic Numbers and Hardcoded Values**
-**Issue**: Hardcoded values throughout the code:
-- `Color.Yellow` for selection highlighting
-- `"\x1b[1m"` and `"\x1b[0m"` ANSI codes
-- No configuration for colors or styling
-
-**Impact**: Makes the component inflexible and hard to customize.
-
-**Recommendation**: Create a `SelectOptions` class with configurable properties:
+### 2. **Unnecessary Try/Catch for Color Operations**
+**Issue**: The code has unnecessary try/catch blocks around color operations:
 ```csharp
-public class SelectOptions
+try
 {
-    public Color SelectedItemColor { get; set; } = Color.Yellow;
-    public Color NormalItemColor { get; set; } = Color.White;
-    public string SelectionIndicator { get; set; } = ">";
-    // ... other options
+    AnsiConsole.ForegroundColor = Color.Yellow;
+    AnsiConsole.Write(displayText);
 }
-```
-
-### 4. **Poor Error Handling**
-**Issue**: Generic try-catch blocks that catch all exceptions:
-```csharp
 catch
 {
     // Fallback to bold if color fails
+    AnsiConsole.Write("\x1b[1m"); // Bold
+    AnsiConsole.Write(displayText);
+    AnsiConsole.Write("\x1b[0m"); // Reset
+}
+```
+
+**Impact**: This violates the principle of separation of concerns. Color failure handling should be the responsibility of `AnsiConsole`, not the calling code.
+
+**Recommendation**: Remove the try/catch and let `AnsiConsole` handle color failures internally. The code should be simplified to:
+```csharp
+AnsiConsole.ForegroundColor = Color.Yellow;
+AnsiConsole.Write(displayText);
+```
+
+### 3. **Poor Error Handling**
+**Issue**: Generic try-catch blocks that catch all exceptions in console operations:
+```csharp
+catch (PlatformNotSupportedException)
+{
+    // Cursor visibility not supported on this platform
 }
 ```
 
 **Impact**: Masks real issues and makes debugging difficult.
 
-**Recommendation**: Use specific exception types and provide meaningful error handling:
+**Recommendation**: Either handle exceptions meaningfully or let them propagate naturally. Don't catch exceptions just to re-throw them with a different type:
 ```csharp
+// Option 1: Let the exception propagate naturally
+// Remove the try-catch entirely and let callers handle console failures
+
+// Option 2: Handle meaningfully if you can recover
 catch (PlatformNotSupportedException ex)
 {
-    // Handle platform-specific issues
+    // Log the issue but continue operation
+    Debug.WriteLine($"[Platform feature] not supported: {ex.Message}");
+    // Continue with degraded functionality
 }
+
+// Option 3: If you must catch, preserve the original exception
 catch (IOException ex)
 {
-    // Handle I/O errors
+    // Log the original exception
+    Debug.WriteLine($"Console I/O error: {ex.Message}");
+    // Re-throw the original exception to preserve context
+    throw;
 }
 ```
 
-### 5. **Console State Management Issues**
+### 4. **Console State Management Issues**
 **Issue**: Console state restoration is scattered and error-prone:
 - Multiple try-catch blocks for cursor visibility
 - Potential for state corruption if exceptions occur
@@ -95,7 +106,7 @@ public readonly struct ConsoleState : IDisposable
 }
 ```
 
-### 6. **Input Buffer Clearing Logic**
+### 5. **Input Buffer Clearing Logic**
 **Issue**: The input buffer clearing logic is problematic:
 ```csharp
 while (Console.KeyAvailable)
@@ -117,7 +128,7 @@ while (Console.KeyAvailable && clearedKeys < maxKeysToClear)
 }
 ```
 
-### 7. **Text Truncation Logic**
+### 6. **Text Truncation Logic**
 **Issue**: Text truncation doesn't account for multi-byte characters or ANSI escape sequences:
 ```csharp
 if (displayText.Length > maxWidth)
@@ -141,7 +152,7 @@ private static string TruncateText(string text, int maxWidth)
 }
 ```
 
-### 8. **Missing Input Validation**
+### 7. **Missing Input Validation**
 **Issue**: Limited validation of input parameters:
 - No null check for individual items in the collection
 - No validation of console window size
@@ -160,7 +171,7 @@ private static void ValidateInput(IEnumerable<SelectItem> items)
 }
 ```
 
-### 9. **Performance Issues**
+### 8. **Performance Issues**
 **Issue**: Inefficient operations:
 - Repeated `Console.WindowWidth` calls
 - String concatenation in display logic
@@ -169,20 +180,6 @@ private static void ValidateInput(IEnumerable<SelectItem> items)
 **Impact**: Poor performance with large lists or frequent updates.
 
 **Recommendation**: Cache frequently accessed values and optimize string operations.
-
-### 10. **Accessibility Issues**
-**Issue**: No support for:
-- Screen readers
-- Keyboard navigation beyond arrow keys
-- High contrast modes
-- Different input methods
-
-**Impact**: Makes the component inaccessible to users with disabilities.
-
-**Recommendation**: Add accessibility features:
-- Support for Home/End keys
-- Page Up/Down navigation
-- Configurable key bindings
 
 ## Design Pattern Issues
 
@@ -236,7 +233,6 @@ private const string ResetEscapeSequence = "\x1b[0m";
 ## Recommended Refactoring Steps
 
 1. **Create supporting classes**:
-   - `SelectOptions` for configuration
    - `ConsoleState` for state management
    - `IConsoleWrapper` for abstraction
 
@@ -269,10 +265,24 @@ private const string ResetEscapeSequence = "\x1b[0m";
 ## Priority Order for Fixes
 
 1. **High Priority**: Break down the large `Show` method
-2. **High Priority**: Add proper error handling
-3. **Medium Priority**: Create configuration options
+2. **High Priority**: Remove unnecessary try/catch for color operations
+3. **High Priority**: Add proper error handling
 4. **Medium Priority**: Improve testability
 5. **Low Priority**: Add accessibility features
+
+## Future Enhancements (Not Critical Issues)
+
+### **Configuration Options**
+Consider adding a `SelectOptions` class for future configurability:
+```csharp
+public class SelectOptions
+{
+    public Color SelectedItemColor { get; set; } = Color.Yellow;
+    public Color NormalItemColor { get; set; } = Color.White;
+    public string SelectionIndicator { get; set; } = ">";
+    // ... other options
+}
+```
 
 ## Testing Recommendations
 
