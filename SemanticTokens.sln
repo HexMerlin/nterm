@@ -14,7 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ControlsExample", "ControlsExample\ControlsExample.csproj", "{1BB98FCB-97CF-4C09-BEC4-05D29956A8B5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Controls.Example", "Controls.Example\Controls.Example.csproj", "{1BB98FCB-97CF-4C09-BEC4-05D29956A8B5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Controls", "Controls\Controls.csproj", "{41B34041-CC84-4ED5-AE1F-31FADD055E4F}"
 EndProject
