@@ -495,7 +495,7 @@ public readonly partial struct Color
     private const uint tomato = 0xFFFF6347u;
 
     public static Color Transparent => new(transparent);
-    private const uint transparent = 0xFFFFFFFFu;
+    private const uint transparent = 0x00000000u;
 
     public static Color Turquoise => new(turquoise);
     private const uint turquoise = 0xFF40E0D0u;

@@ -69,9 +69,9 @@ public static class SixelDecode
         };
 
 #if IMAGESHARP4 // ImageSharp v4.0
-        Image<Rgba32> image = new(new Configuration(), canvasSize.Width, canvasSize.Height, SemanticTokens.Core.Color.White.ToRgba32());
+        Image<Rgba32> image = new(new Configuration(), canvasSize.Width, canvasSize.Height, SemanticTokens.Core.Color.Transparent.ToRgba32());
 #else
-        Image<Rgba32> image = new(canvasSize.Width, canvasSize.Height, SemanticTokens.Core.Color.White.ToRgba32());
+        Image<Rgba32> image = new(canvasSize.Width, canvasSize.Height, SemanticTokens.Core.Color.Transparent.ToRgba32());
 #endif
 
 
