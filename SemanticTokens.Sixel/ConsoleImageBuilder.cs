@@ -115,7 +115,6 @@ public sealed class ConsoleImageBuilder
     private ConsoleImage BuildFromStream(Stream imageStream)
     {
         Size targetSize = ComputeTargetSize();
-        Console.WriteLine($"[DEBUG] Target size calculated: {targetSize.Width}x{targetSize.Height}");
         
         // Ultra-optimized single execution path
         if (SixelCapabilities.IsSupported)
@@ -132,15 +131,10 @@ public sealed class ConsoleImageBuilder
 
                 return new ConsoleImage(sixelData.ToString(), targetSize, hasSixelData: true);
             }
-            catch (Exception ex)
+            catch
             {
                 // Fail-fast to fallback on any encoding error
-                Console.WriteLine($"[DEBUG] SIXEL encoding failed: {ex.Message}");
             }
-        }
-        else
-        {
-            Console.WriteLine("[DEBUG] SIXEL not supported by terminal");
         }
 
         // Fallback path - terminal doesn't support SIXEL or encoding failed
@@ -169,29 +163,22 @@ public sealed class ConsoleImageBuilder
                     );
                     
                     Size result = new Size(targetPixelDimension, targetPixelDimension);
-                    Console.WriteLine($"[DEBUG] Character-based sizing with aspect ratio preservation:");
-                    Console.WriteLine($"[DEBUG]   Requested: {charSize.Width}x{charSize.Height} chars * {cellSize.Width}x{cellSize.Height} px/cell");
-                    Console.WriteLine($"[DEBUG]   Would give: {charSize.Width * cellSize.Width}x{charSize.Height * cellSize.Height} px");
-                    Console.WriteLine($"[DEBUG]   Adjusted to square: {result.Width}x{result.Height} px");
                     return result;
                 }
             }
             
             // Standard character-based sizing (no aspect ratio adjustment)
             Size standardResult = new Size(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
-            Console.WriteLine($"[DEBUG] Character-based sizing: {charSize.Width}x{charSize.Height} chars * {cellSize.Width}x{cellSize.Height} px/cell = {standardResult.Width}x{standardResult.Height} px");
             return standardResult;
         }
 
         // Use explicit pixel size if provided
         if (_targetPixelSize.HasValue)
         {
-            Console.WriteLine($"[DEBUG] Using explicit pixel size: {_targetPixelSize.Value.Width}x{_targetPixelSize.Value.Height}");
             return _targetPixelSize.Value;
         }
 
         // Default: reasonable console image size
-        Console.WriteLine("[DEBUG] Using default size: 320x240");
         return new Size(320, 240);
     }
 }
@@ -262,10 +249,7 @@ internal sealed class EmbeddedResourceImageSource : IImageSource
     {
         string[] allResources = _assembly.GetManifestResourceNames();
         
-        // Debug: show all available resources
-        Console.WriteLine($"[DEBUG] Looking for resource ending with: {_resourceSuffix}");
-        Console.WriteLine($"[DEBUG] Assembly: {_assembly.GetName().Name}");
-        Console.WriteLine($"[DEBUG] Available resources: {string.Join(", ", allResources)}");
+
         
         string? resourceName = allResources
             .FirstOrDefault(n => n.EndsWith(_resourceSuffix, StringComparison.OrdinalIgnoreCase));

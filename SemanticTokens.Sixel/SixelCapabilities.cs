@@ -56,7 +56,6 @@ public static class SixelCapabilities
         string? forceSupport = Environment.GetEnvironmentVariable("FORCE_SIXEL_SUPPORT");
         if (!string.IsNullOrEmpty(forceSupport) && bool.TryParse(forceSupport, out bool forced))
         {
-            Console.WriteLine($"[DEBUG] SIXEL support forced via environment: {forced}");
             return forced;
         }
 
@@ -64,9 +63,6 @@ public static class SixelCapabilities
         {
             // Query device attributes: ESC[c
             ReadOnlySpan<char> response = QueryTerminal(Constants.DeviceAttributesQuery);
-            
-            // Debug: show what we got back
-            Console.WriteLine($"[DEBUG] Terminal device attributes response: '{response.ToString()}'");
             
             // Traditional SIXEL support indicated by parameter "4" in response
             bool hasTraditionalSupport = response.Contains(";4;", StringComparison.Ordinal) ||
@@ -79,12 +75,10 @@ public static class SixelCapabilities
             
             bool hasSupport = hasTraditionalSupport || hasModernSupport;
             
-            Console.WriteLine($"[DEBUG] SIXEL support detected: {hasSupport} (traditional: {hasTraditionalSupport}, modern: {hasModernSupport})");
             return hasSupport;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[DEBUG] SIXEL detection failed: {ex.Message}");
             return false; // Assume no SIXEL support on any query failure
         }
     }
@@ -99,7 +93,6 @@ public static class SixelCapabilities
         {
             // Query cell size: ESC[16t
             ReadOnlySpan<char> response = QueryTerminal("[16t");
-            Console.WriteLine($"[DEBUG] Cell size query response: '{response.ToString()}'");
             
             // Expected format: [6;height;width;t
             Span<Range> ranges = stackalloc Range[4];
@@ -108,19 +101,15 @@ public static class SixelCapabilities
                 int height = int.Parse(response[ranges[1]], CultureInfo.InvariantCulture);
                 int width = int.Parse(response[ranges[2]], CultureInfo.InvariantCulture);
                 Size detectedSize = new Size(width, height);
-                Console.WriteLine($"[DEBUG] Cell size detected from terminal: {width}x{height} pixels");
                 return detectedSize;
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[DEBUG] Cell size detection failed: {ex.Message}");
         }
 
         // Default Windows Terminal cell size
-        Size defaultSize = new Size(10, 20);
-        Console.WriteLine($"[DEBUG] Using default cell size: {defaultSize.Width}x{defaultSize.Height} pixels");
-        return defaultSize;
+        return new Size(10, 20);
     }
 
     /// <summary>

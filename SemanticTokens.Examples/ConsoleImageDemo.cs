@@ -27,34 +27,27 @@ public sealed class ConsoleImageDemo
     /// </summary>
     public ConsoleImageDemo()
     {
-        Console.WriteLine("[DEBUG] ===== BUILDING CONSOLE IMAGES =====");
-        
         // Build perfect console images once during construction
         // Use Examples assembly since that's where the embedded resources are
         Assembly examplesAssembly = typeof(ConsoleImageDemo).Assembly;
         
-        Console.WriteLine($"[DEBUG] Building User Avatar with 8x8 character size...");
         _userAvatar = ConsoleImage.FromEmbeddedResource(ImageUser, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[👤]")
             .WithTransparency(Transparency.Default)
             .Build();
 
-        Console.WriteLine($"[DEBUG] Building Bot Avatar with 8x8 character size...");
         _botAvatar = ConsoleImage.FromEmbeddedResource(ImageBot, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[🤖]")
             .WithTransparency(Transparency.Default)
             .Build();
 
-        Console.WriteLine($"[DEBUG] Building AI Avatar with 8x8 character size...");
         _aiAvatar = ConsoleImage.FromEmbeddedResource(ImageAI, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[🧠]")
             .WithTransparency(Transparency.Default)
             .Build();
-            
-        Console.WriteLine("[DEBUG] ===== ALL CONSOLE IMAGES BUILT =====");
     }
 
     /// <summary>

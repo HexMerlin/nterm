@@ -59,7 +59,6 @@ public static class SixelEncode
     {
         // First load image without any target size to see original dimensions
         using var originalImg = Image.Load<Rgba32>(stream);
-        Console.WriteLine($"[DEBUG] Original source image dimensions: {originalImg.Width}x{originalImg.Height}");
         
         // Reset stream position for actual processing
         stream.Position = 0;
@@ -67,19 +66,13 @@ public static class SixelEncode
         DecoderOptions opt = new();
         if (size?.Width > 0 && size?.Height > 0)
         {
-            Console.WriteLine($"[DEBUG] Target size specified: {size?.Width}x{size?.Height}");
             opt = new()
             {
                 TargetSize = new(size?.Width ?? 1, size?.Height ?? 1),
             };
         }
-        else
-        {
-            Console.WriteLine("[DEBUG] No target size specified - using original dimensions");
-        }
         
         using var img = Image.Load<Rgba32>(opt, stream);
-        Console.WriteLine($"[DEBUG] Image loaded with target processing: {img.Width}x{img.Height}");
         return Encode(img, size, transp, frame);
     }
     /// <summary>
@@ -92,45 +85,34 @@ public static class SixelEncode
                                             Transparency transp = Transparency.Default,
                                             int frame = -1)
     {
-        Console.WriteLine($"[DEBUG] ===== ENCODE PROCESSING START =====");
-        Console.WriteLine($"[DEBUG] Input image dimensions: {img.Width}x{img.Height}");
-        Console.WriteLine($"[DEBUG] Requested target size: {(size?.Width ?? -1)}x{(size?.Height ?? -1)}");
-        
         int canvasWidth = -1, canvasHeight = -1;
         if (size?.Width < 1 && size?.Height > 0)
         {
             // Keep aspect ratio
             canvasHeight = size?.Height ?? 1;
             canvasWidth = canvasHeight * img.Width / img.Height;
-            Console.WriteLine($"[DEBUG] Aspect ratio mode (height specified): target height {canvasHeight} -> calculated width {canvasWidth}");
         }
         else if (size?.Height < 1 && size?.Width > 0)
         {
             // Keep aspect ratio
             canvasWidth = size?.Width ?? 1;
             canvasHeight = canvasWidth * img.Height / img.Width;
-            Console.WriteLine($"[DEBUG] Aspect ratio mode (width specified): target width {canvasWidth} -> calculated height {canvasHeight}");
         }
         else if (size?.Height > 0 && size?.Width > 0)
         {
             canvasWidth = size?.Width ?? 1;
             canvasHeight = size?.Height ?? 1;
-            Console.WriteLine($"[DEBUG] Explicit size mode: {canvasWidth}x{canvasHeight}");
         }
 
         // TODO: Use maximum size based on size of terminal window?
         if (canvasWidth < 1)
         {
             canvasWidth = img.Width;
-            Console.WriteLine($"[DEBUG] Canvas width defaulted to original: {canvasWidth}");
         }
         if (canvasHeight < 1)
         {
             canvasHeight = img.Height;
-            Console.WriteLine($"[DEBUG] Canvas height defaulted to original: {canvasHeight}");
         }
-        
-        Console.WriteLine($"[DEBUG] Final canvas size calculated: {canvasWidth}x{canvasHeight}");
 
         var meta = img.Metadata;
         Rgba32? bg = null, tc = null;
@@ -188,24 +170,12 @@ public static class SixelEncode
 
         if (canvasWidth > 1 && canvasHeight > 1 && (img.Width != canvasWidth || img.Height != canvasHeight))
         {
-            Console.WriteLine($"[DEBUG] ===== RESIZE OPERATION =====");
-            Console.WriteLine($"[DEBUG] Before resize: {img.Width}x{img.Height}");
-            Console.WriteLine($"[DEBUG] Target resize to: {canvasWidth}x{canvasHeight}");
-            Console.WriteLine($"[DEBUG] Aspect ratio change: {(double)img.Width/img.Height:F3} -> {(double)canvasWidth/canvasHeight:F3}");
-            
             // Force exact dimensions without aspect ratio preservation
             img.Mutate(x => x.Resize(new ResizeOptions
             {
                 Size = new Size(canvasWidth, canvasHeight),
                 Mode = ResizeMode.Stretch  // Force exact dimensions, ignore aspect ratio
             }));
-            
-            Console.WriteLine($"[DEBUG] After resize: {img.Width}x{img.Height}");
-            Console.WriteLine($"[DEBUG] ===== RESIZE COMPLETE =====");
-        }
-        else
-        {
-            Console.WriteLine($"[DEBUG] No resize needed - dimensions already match or invalid canvas size");
         }
 
         // 減色処理
@@ -217,19 +187,9 @@ public static class SixelEncode
 
         var imageFrame = img.Frames.RootFrame;
 
-        // Debug: Check actual frame dimensions after processing
-        Console.WriteLine($"[DEBUG] ===== FINAL PROCESSING =====");
-        Console.WriteLine($"[DEBUG] Expected canvas: {canvasWidth}x{canvasHeight}");
-        Console.WriteLine($"[DEBUG] Actual frame: {imageFrame.Width}x{imageFrame.Height}");
-        Console.WriteLine($"[DEBUG] Frame aspect ratio: {(double)imageFrame.Width/imageFrame.Height:F3}");
-
         // Building a color palette
         ReadOnlySpan<SemanticTokens.Core.Color> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
         Size frameSize = new(imageFrame.Width, imageFrame.Height);  // Use actual frame dimensions
-        
-        Console.WriteLine($"[DEBUG] Frame size for encoding: {frameSize.Width}x{frameSize.Height}");
-        Console.WriteLine($"[DEBUG] Color palette size: {colorPalette.Length} colors");
-        Console.WriteLine($"[DEBUG] ===== STARTING SIXEL ENCODING =====");
 
         return EncodeFrame(imageFrame, colorPalette, frameSize, transp, tc, bg);
     }
