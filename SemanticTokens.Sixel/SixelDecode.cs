@@ -3,6 +3,7 @@ using System.Numerics;
 #endif
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using CoreColor = SemanticTokens.Core.Color;
 using SixLabors.ImageSharp.Processing;
 
 namespace SemanticTokens.Sixel;
@@ -68,9 +69,9 @@ public static class SixelDecode
         };
 
 #if IMAGESHARP4 // ImageSharp v4.0
-        var image = new Image<Rgba32>(new Configuration(), canvasSize.Width, canvasSize.Height, Rgba32.FromScaledVector4(Color.White.ToScaledVector4()));
+        var image = new Image<Rgba32>(new Configuration(), canvasSize.Width, canvasSize.Height, CoreColor.White.ToRgba32());
 #else
-        var image = new Image<Rgba32>(canvasSize.Width, canvasSize.Height, Color.White);
+        var image = new Image<Rgba32>(canvasSize.Width, canvasSize.Height, CoreColor.White.ToRgba32());
 #endif
 
 
@@ -129,10 +130,13 @@ public static class SixelDecode
                         switch (cSys)
                         {
                             case 1: // HLS
-                                _colorMap.Add(SixelColor.FromHLS(c1, c2, c3).ToRgba32());
+                                _colorMap.Add(CoreColor.FromHLS(c1, c2, c3).ToRgba32());
                                 break;
-                            case 2: // RGB
-                                _colorMap.Add(SixelColor.FromRgb(c1, c2, c3).ToRgba32());
+                            case 2: // RGB (values are in 0-100 range in Sixel format)
+                                _colorMap.Add(new CoreColor(
+                                    (byte)Math.Round(c1 * 255.0 / 100.0), 
+                                    (byte)Math.Round(c2 * 255.0 / 100.0), 
+                                    (byte)Math.Round(c3 * 255.0 / 100.0)).ToRgba32());
                                 break;
                             default:
                                 throw new InvalidDataException($"Color map type should be 1 or 2: {cSys}");

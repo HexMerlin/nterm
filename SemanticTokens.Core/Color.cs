@@ -136,6 +136,75 @@ public readonly partial struct Color : IEquatable<Color>
     /// <returns>32-bit unsigned integer representation (0xAARRGGBB).</returns>
     public uint ToUint() => ((uint)A << 24) | ((uint)R << 16) | ((uint)G << 8) | B;
 
+    /// <summary>
+    /// Creates a color from HLS (Hue, Lightness, Saturation) values.
+    /// </summary>
+    /// <param name="h">Hue value (0-360 degrees)</param>
+    /// <param name="l">Lightness value (0-100)</param>
+    /// <param name="s">Saturation value (0-100)</param>
+    /// <returns>Color converted from HLS values</returns>
+    /// <remarks>
+    /// HLS color space conversion algorithm. Used primarily for Sixel color palette generation.
+    /// Producer guarantees valid input ranges - no defensive validation performed.
+    /// </remarks>
+    public static Color FromHLS(int h, int l, int s)
+    {
+        double r, g, b;
+        double max, min;
+
+        if (l > 50)
+        {
+            max = l + (s * (1.0 - (l / 100.0)));
+            min = l - (s * (1.0 - (l / 100.0)));
+        }
+        else
+        {
+            max = l + (s * l / 100.0);
+            min = l - (s * l / 100.0);
+        }
+
+        h = (h + 240) % 360;
+
+        (r, g, b) = h switch
+        {
+            < 60 => (max, min + ((max - min) * h / 60.0), min),
+            < 120 => (min + ((max - min) * (120 - h) / 60.0), max, min),
+            < 180 => (min, max, min + ((max - min) * (h - 120) / 60.0)),
+            < 240 => (min, min + ((max - min) * (240 - h) / 60.0), max),
+            < 300 => (min + ((max - min) * (h - 240) / 60.0), min, max),
+            _ => (max, min, min + ((max - min) * (360 - h) / 60.0))
+        };
+
+        return new((byte)Math.Round(r * 255.0 / 100.0),
+                   (byte)Math.Round(g * 255.0 / 100.0),
+                   (byte)Math.Round(b * 255.0 / 100.0));
+    }
+
+
+
+    /// <summary>
+    /// Blends this color with a background color to create a fully opaque result.
+    /// </summary>
+    /// <param name="background">Background color to blend with</param>
+    /// <returns>New blended color with alpha = 255</returns>
+    /// <remarks>
+    /// Standard alpha blending operation. If this color is fully opaque (A=255), returns unchanged.
+    /// If fully transparent (A=0), returns background. Otherwise performs alpha composition.
+    /// </remarks>
+    public Color BlendWith(Color background)
+    {
+        if (A == 255) return this;
+        if (A == 0) return new(background.R, background.G, background.B, 255);
+
+        double alpha = A / 255.0;
+        return new(
+            (byte)((R * alpha) + ((1.0 - alpha) * background.R)),
+            (byte)((G * alpha) + ((1.0 - alpha) * background.G)),
+            (byte)((B * alpha) + ((1.0 - alpha) * background.B)),
+            255
+        );
+    }
+
     public override string ToString()
     {
         if (TryGetKnownColorName(this, out string name))

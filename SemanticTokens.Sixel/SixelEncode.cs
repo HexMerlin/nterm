@@ -3,6 +3,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using CoreColor = SemanticTokens.Core.Color;
 using SemanticTokens.Sixel.Encoder;
 
 namespace SemanticTokens.Sixel;
@@ -237,7 +238,7 @@ public static class SixelEncode
         Console.WriteLine($"[DEBUG] Frame aspect ratio: {(double)imageFrame.Width/imageFrame.Height:F3}");
 
         // Building a color palette
-        ReadOnlySpan<SixelColor> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
+        ReadOnlySpan<CoreColor> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
         Size frameSize = new(imageFrame.Width, imageFrame.Height);  // Use actual frame dimensions
         
         Console.WriteLine($"[DEBUG] Frame size for encoding: {frameSize.Width}x{frameSize.Height}");
@@ -257,7 +258,7 @@ public static class SixelEncode
     /// <param name="bg">Background <see cref="Color"/> set for the image</param>
     /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
     public static string EncodeFrame(ImageFrame<Rgba32> frame,
-                                     ReadOnlySpan<SixelColor> colorPalette,
+                                     ReadOnlySpan<CoreColor> colorPalette,
                                      Size frameSize,
                                      Transparency transp = Transparency.Default,
                                      Rgba32? tc = null,
@@ -280,7 +281,7 @@ public static class SixelEncode
         for (var i = 0; i < colorPaletteLength; i++)
         {
             // DECGCI (#): Graphics Color Introducer
-            var colorValue = colorPalette[i].ToColorPalette();
+            var colorValue = colorPalette[i].ToSixelPalette();
             sb.Append($"#{i};2;{colorValue}".AsSpan());
         }
     
@@ -306,7 +307,7 @@ public static class SixelEncode
                     if (transp == Transparency.Background && rgba == bg)
                         continue;
 
-                    var sixelColor = SixelColor.FromRgba32(rgba, transp, tc, bg);
+                    var sixelColor = rgba.ToSixelColor(transp, tc, bg);
                     if (sixelColor.A == 0)
                         continue;
                     var idx = colorPalette.IndexOf(sixelColor);
@@ -459,12 +460,12 @@ public static class SixelEncode
     /// <summary>
     /// Build color palette for Sixel
     /// </summary>
-    public static SixelColor[] GetColorPalette(ImageFrame<Rgba32> frame,
+    public static CoreColor[] GetColorPalette(ImageFrame<Rgba32> frame,
                                                Transparency transp = Transparency.Default,
                                                Rgba32? tc = null,
                                                Rgba32? bg = null)
     {
-        var palette = new HashSet<SixelColor>();
+        var palette = new HashSet<CoreColor>();
         frame.ProcessPixelRows(accessor =>
         {
             var pixcelHash = new HashSet<Rgba32>();
@@ -475,7 +476,7 @@ public static class SixelEncode
                 {
                     if (pixcelHash.Add(row[x]))
                     {
-                        var c = SixelColor.FromRgba32(row[x], transp, tc, bg);
+                        var c = row[x].ToSixelColor(transp, tc, bg);
                         if (c.A == 0)
                             continue;
                         palette.Add(c);

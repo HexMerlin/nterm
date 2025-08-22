@@ -1,0 +1,88 @@
+using SixLabors.ImageSharp.PixelFormats;
+using SemanticTokens.Core;
+
+namespace SemanticTokens.Sixel;
+
+/// <summary>
+/// Extension methods for converting between SemanticTokens.Core.Color and ImageSharp types.
+/// </summary>
+internal static class ColorExtensions
+{
+    /// <summary>
+    /// Converts ImageSharp Rgba32 to SemanticTokens Color.
+    /// </summary>
+    /// <param name="rgba">ImageSharp pixel value</param>
+    /// <returns>Equivalent Color value</returns>
+    public static Core.Color ToColor(this Rgba32 rgba) => new(rgba.R, rgba.G, rgba.B, rgba.A);
+
+    /// <summary>
+    /// Converts SemanticTokens Color to ImageSharp Rgba32.
+    /// </summary>
+    /// <param name="color">SemanticTokens Color value</param>
+    /// <returns>Equivalent ImageSharp Rgba32 value</returns>
+    public static Rgba32 ToRgba32(this Core.Color color) => new(color.R, color.G, color.B, color.A);
+
+
+
+    /// <summary>
+    /// Converts ImageSharp Rgba32 to SemanticTokens Color with Sixel transparency handling.
+    /// </summary>
+    /// <param name="rgba">ImageSharp pixel value</param>
+    /// <param name="transparency">Transparency mode for Sixel processing</param>
+    /// <param name="transparentColor">Explicit transparent color (optional)</param>
+    /// <param name="backgroundColor">Background color for blending (optional)</param>
+    /// <returns>Color with transparency resolved for Sixel encoding</returns>
+    public static Core.Color ToSixelColor(this Rgba32 rgba, 
+                                          Transparency transparency = Transparency.Default,
+                                          Rgba32? transparentColor = null,
+                                          Rgba32? backgroundColor = null)
+    {
+        // Handle fully transparent pixels
+        if (rgba.A == 0)
+        {
+            return transparency switch
+            {
+                Transparency.None => Core.Color.Black,
+                Transparency.TopLeft => Core.Color.Black,
+                Transparency.Background when backgroundColor.HasValue => backgroundColor.Value.ToColor(),
+                _ => Core.Color.Transparent
+            };
+        }
+
+        // Handle explicit transparent color match
+        if (transparentColor.HasValue && transparentColor.Value.Equals(rgba))
+            return Core.Color.Transparent;
+
+        // Handle background transparency
+        if (transparency == Transparency.Background && backgroundColor.HasValue && backgroundColor.Value.Equals(rgba))
+            return Core.Color.Transparent;
+
+        var color = rgba.ToColor();
+
+        // Blend partial transparency with background
+        if (color.A is > 0 and < 255)
+        {
+            var background = backgroundColor?.ToColor() ?? Core.Color.Black;
+            return color.BlendWith(background);
+        }
+
+        return color;
+    }
+
+    /// <summary>
+    /// Converts SemanticTokens Color to Sixel palette format string.
+    /// </summary>
+    /// <param name="color">Color to convert</param>
+    /// <returns>Sixel color palette string in format "R;G;B" with values scaled to 0-100 range</returns>
+    /// <remarks>
+    /// Sixel protocol requires RGB values in 0-100 range for color palette definitions.
+    /// Converts from standard 0-255 RGBA to Sixel's 0-100 RGB format.
+    /// </remarks>
+    public static ReadOnlySpan<char> ToSixelPalette(this Core.Color color)
+    {
+        int r = (int)Math.Round(color.R * 100.0 / 255.0);
+        int g = (int)Math.Round(color.G * 100.0 / 255.0);
+        int b = (int)Math.Round(color.B * 100.0 / 255.0);
+        return $"{r};{g};{b}";
+    }
+}

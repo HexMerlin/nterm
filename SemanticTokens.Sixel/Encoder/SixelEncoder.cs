@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using CoreColor = SemanticTokens.Core.Color;
 using SixLabors.ImageSharp.Processing;
 
 namespace SemanticTokens.Sixel.Encoder;
@@ -106,7 +107,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// Create the color palette for the <paramref name="frame"/>
     /// </summary>
     /// <param name="frame"></param>
-    protected virtual ReadOnlySpan<SixelColor> GetColorPalette(ImageFrame<Rgba32> frame)
+    protected virtual ReadOnlySpan<CoreColor> GetColorPalette(ImageFrame<Rgba32> frame)
     {
         if (!Quantized)
             Quantize();
