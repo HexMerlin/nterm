@@ -14,9 +14,8 @@ public static class Select
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
     public static SelectItem Show(IEnumerable<SelectItem> items)
     {
-        // Handle null or empty items
-        var itemList = items?.Where(item => item != null).ToList() ?? new List<SelectItem>();
-
+        // Validate input and prepare items list
+        var itemList = ValidateInput(items);
         if (itemList.Count == 0)
         {
             return SelectItem.Empty;
@@ -25,7 +24,37 @@ public static class Select
         // Use ConsoleState to automatically manage console state restoration
         using var consoleState = new ConsoleState();
 
-        // Hide cursor during selection
+        // Prepare console for selection
+        PrepareConsoleForSelection();
+
+        // Clear any buffered input
+        ClearInputBuffer();
+
+        // Run the selection loop
+        return RunSelectionLoop(itemList, consoleState);
+    }
+
+    /// <summary>
+    /// Validates input parameters and returns a valid list of items.
+    /// </summary>
+    /// <param name="items">The items to validate.</param>
+    /// <returns>A list of valid items.</returns>
+    private static List<SelectItem> ValidateInput(IEnumerable<SelectItem> items)
+    {
+        if (items == null)
+            throw new ArgumentNullException(nameof(items));
+
+        if (Console.WindowWidth <= 0)
+            throw new InvalidOperationException("Console window width must be positive");
+
+        return [.. items.Where(item => item != null)];
+    }
+
+    /// <summary>
+    /// Prepares the console for selection by hiding the cursor.
+    /// </summary>
+    private static void PrepareConsoleForSelection()
+    {
         try
         {
             Console.CursorVisible = false;
@@ -34,13 +63,31 @@ public static class Select
         {
             // Cursor visibility not supported on this platform
         }
+    }
 
-        // Clear any buffered input
-        while (Console.KeyAvailable)
+    /// <summary>
+    /// Clears any buffered input to prevent unwanted key presses.
+    /// </summary>
+    private static void ClearInputBuffer()
+    {
+        int clearedKeys = 0;
+        const int maxKeysToClear = 100;
+
+        while (Console.KeyAvailable && clearedKeys < maxKeysToClear)
         {
             Console.ReadKey(true);
+            clearedKeys++;
         }
+    }
 
+    /// <summary>
+    /// Runs the main selection loop.
+    /// </summary>
+    /// <param name="items">The list of items to select from.</param>
+    /// <param name="consoleState">The console state for position tracking.</param>
+    /// <returns>The selected item.</returns>
+    private static SelectItem RunSelectionLoop(List<SelectItem> items, ConsoleState consoleState)
+    {
         int currentIndex = 0;
         bool selectionMade = false;
         SelectItem selectedItem = SelectItem.Empty;
@@ -50,43 +97,77 @@ public static class Select
         while (!selectionMade)
         {
             // Display current item at the original cursor position
-            DisplayItem(itemList[currentIndex], true, displayStartColumn, displayStartRow);
+            RenderSelection(items, currentIndex, displayStartColumn, displayStartRow);
 
-            // Wait for key input
-            var key = Console.ReadKey(true);
+            // Handle user input
+            var keyInfo = Console.ReadKey(true);
+            var (result, newIndex) = HandleUserInput(items, currentIndex, keyInfo);
+            currentIndex = newIndex;
 
-            switch (key.Key)
+            if (!result.IsEmpty())
             {
-                case ConsoleKey.UpArrow:
-                    // Navigate to previous item (circular)
-                    currentIndex = currentIndex == 0 ? itemList.Count - 1 : currentIndex - 1;
-                    break;
-
-                case ConsoleKey.DownArrow:
-                    // Navigate to next item (circular)
-                    currentIndex = currentIndex == itemList.Count - 1 ? 0 : currentIndex + 1;
-                    break;
-
-                case ConsoleKey.Enter:
-                    // Select current item
-                    selectedItem = itemList[currentIndex];
-                    selectionMade = true;
-                    break;
-
-                case ConsoleKey.Escape:
-                    // Cancel selection
-                    selectedItem = SelectItem.Empty;
-                    selectionMade = true;
-                    break;
-
-                // Ignore all other keys
-                default:
-                    break;
+                selectedItem = result;
+                selectionMade = true;
             }
         }
 
         return selectedItem;
-        // ConsoleState.Dispose() will be called automatically when exiting the using scope
+    }
+
+    /// <summary>
+    /// Handles user input and returns the result along with the new index.
+    /// </summary>
+    /// <param name="items">The list of items.</param>
+    /// <param name="currentIndex">The current selected index.</param>
+    /// <param name="keyInfo">The key that was pressed.</param>
+    /// <returns>A tuple containing the selected item (or SelectItem.Empty) and the new index.</returns>
+    private static (SelectItem result, int newIndex) HandleUserInput(
+        List<SelectItem> items,
+        int currentIndex,
+        ConsoleKeyInfo keyInfo
+    )
+    {
+        switch (keyInfo.Key)
+        {
+            case ConsoleKey.UpArrow:
+                // Navigate to previous item (circular)
+                var newIndexUp = currentIndex == 0 ? items.Count - 1 : currentIndex - 1;
+                return (SelectItem.Empty, newIndexUp);
+
+            case ConsoleKey.DownArrow:
+                // Navigate to next item (circular)
+                var newIndexDown = currentIndex == items.Count - 1 ? 0 : currentIndex + 1;
+                return (SelectItem.Empty, newIndexDown);
+
+            case ConsoleKey.Enter:
+                // Select current item
+                return (items[currentIndex], currentIndex);
+
+            case ConsoleKey.Escape:
+                // Cancel selection
+                return (SelectItem.Empty, currentIndex);
+
+            // Ignore all other keys
+            default:
+                return (SelectItem.Empty, currentIndex);
+        }
+    }
+
+    /// <summary>
+    /// Renders the current selection state.
+    /// </summary>
+    /// <param name="items">The list of items.</param>
+    /// <param name="currentIndex">The currently selected index.</param>
+    /// <param name="startColumn">The column position to start displaying.</param>
+    /// <param name="startRow">The row position to display.</param>
+    private static void RenderSelection(
+        List<SelectItem> items,
+        int currentIndex,
+        int startColumn,
+        int startRow
+    )
+    {
+        DisplayItem(items[currentIndex], true, startColumn, startRow);
     }
 
     /// <summary>
@@ -106,34 +187,34 @@ public static class Select
         Console.Write(new string(' ', clearLength));
         Console.SetCursorPosition(startColumn, startRow);
 
-        // Truncate text if it's longer than available space
-        var displayText = item.Text;
-        var maxWidth = Console.WindowWidth - startColumn; // Available space from cursor position
-        if (displayText.Length > maxWidth)
-        {
-            displayText = displayText[..maxWidth];
-        }
+        // Get truncated text for display
+        var displayText = TruncateText(item.Text, Console.WindowWidth - startColumn);
 
         if (isSelected)
         {
             // Highlight selected item in yellow
-            try
-            {
-                AnsiConsole.ForegroundColor = Color.Yellow;
-                AnsiConsole.Write(displayText);
-            }
-            catch
-            {
-                // Fallback to bold if color fails
-                AnsiConsole.Write("\x1b[1m"); // Bold
-                AnsiConsole.Write(displayText);
-                AnsiConsole.Write("\x1b[0m"); // Reset
-            }
+            AnsiConsole.ForegroundColor = Color.Yellow;
+            AnsiConsole.Write(displayText);
         }
         else
         {
             // Display normal text using AnsiConsole to respect current colors
             AnsiConsole.Write(displayText);
         }
+    }
+
+    /// <summary>
+    /// Truncates text to fit within the specified maximum width.
+    /// </summary>
+    /// <param name="text">The text to truncate.</param>
+    /// <param name="maxWidth">The maximum width allowed.</param>
+    /// <returns>The truncated text.</returns>
+    private static string TruncateText(string text, int maxWidth)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length <= maxWidth)
+            return text;
+
+        // Account for multi-byte characters by using Substring
+        return text[..Math.Min(maxWidth, text.Length)];
     }
 }

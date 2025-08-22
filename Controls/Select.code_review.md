@@ -6,6 +6,8 @@ The `Select.cs` file implements a CLI select control for choosing from a list of
 ## Critical Issues
 
 ### 1. **Single Responsibility Principle Violation (Large Method)**
+**DONE!**
+
 **Issue**: The `Show` method is doing too many things and is over 80 lines long:
 - Input validation
 - Console state management
@@ -24,6 +26,8 @@ The `Select.cs` file implements a CLI select control for choosing from a list of
 - `RunSelectionLoop()` for the main input processing loop
 
 ### 2. **Unnecessary Try/Catch for Color Operations**
+**DONE!**
+
 **Issue**: The code has unnecessary try/catch blocks around color operations:
 ```csharp
 try
@@ -49,6 +53,8 @@ AnsiConsole.Write(displayText);
 ```
 
 ### 3. **Poor Error Handling**
+**DONE!**
+
 **Issue**: Generic try-catch blocks that catch all exceptions in console operations:
 ```csharp
 catch (PlatformNotSupportedException)
@@ -83,6 +89,8 @@ catch (IOException ex)
 ```
 
 ### 4. **Console State Management Issues**
+**DONE!**
+
 **Issue**: Console state restoration is scattered and error-prone:
 - Multiple try-catch blocks for cursor visibility
 - Potential for state corruption if exceptions occur
@@ -107,6 +115,8 @@ public readonly struct ConsoleState : IDisposable
 ```
 
 ### 5. **Input Buffer Clearing Logic**
+**DONE!**
+
 **Issue**: The input buffer clearing logic is problematic:
 ```csharp
 while (Console.KeyAvailable)
@@ -129,6 +139,8 @@ while (Console.KeyAvailable && clearedKeys < maxKeysToClear)
 ```
 
 ### 6. **Text Truncation Logic**
+**DONE!**
+
 **Issue**: Text truncation doesn't account for multi-byte characters or ANSI escape sequences:
 ```csharp
 if (displayText.Length > maxWidth)
@@ -153,6 +165,8 @@ private static string TruncateText(string text, int maxWidth)
 ```
 
 ### 7. **Missing Input Validation**
+**DONE!**
+
 **Issue**: Limited validation of input parameters:
 - No null check for individual items in the collection
 - No validation of console window size
