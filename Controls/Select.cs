@@ -183,12 +183,13 @@ public static class Select
         Console.SetCursorPosition(startColumn, startRow);
 
         // Clear from current position to end of line
-        var clearLength = Console.WindowWidth - startColumn;
+        int windowWidth = Console.WindowWidth;
+        var clearLength = windowWidth - startColumn;
         Console.Write(new string(' ', clearLength));
         Console.SetCursorPosition(startColumn, startRow);
 
         // Get truncated text for display
-        var displayText = TruncateText(item.Text, Console.WindowWidth - startColumn);
+        var displayText = TruncateText(item.Text, windowWidth - startColumn);
 
         if (isSelected)
         {
