@@ -8,14 +8,6 @@ using SemanticTokens.Sixel.Encoder;
 
 namespace SemanticTokens.Sixel;
 
-public enum Transparency
-{
-    Default,    // Standard transparency (palette or alpha channel)
-    TopLeft,    // Make the color found at the top left corner (0, 0) transparent
-    Background, // Make the background color transparent (for some GIF or WebP images)
-    None        // No transparency
-}
-
 public static class SixelEncode
 {
 
@@ -43,20 +35,15 @@ public static class SixelEncode
     /// Create an encoder instance to convert the file <paramref name="path"/> to a Sixel string
     /// </summary>
     /// <param name="path">Image file path</param>
-    public static SixelEncoder CreateEncoder(string path)
-    {
-        return File.Exists(path)
+    public static SixelEncoder CreateEncoder(string path) => File.Exists(path)
             ? CreateEncoder(Image.Load<Rgba32>(path))
             : throw new FileNotFoundException("File not found", path);
-    }
+
     /// <summary>
     /// Create an encoder instance to convert the file <paramref name="path"/> to a Sixel string
     /// </summary>
     /// <param name="stream">a stream for image</param>
-    public static SixelEncoder CreateEncoder(Stream stream)
-    {
-        return CreateEncoder(Image.Load<Rgba32>(stream));
-    }
+    public static SixelEncoder CreateEncoder(Stream stream) => CreateEncoder(Image.Load<Rgba32>(stream));
 
     /// <summary>
     /// Encode Image stream to Sixel string
@@ -410,20 +397,14 @@ public static class SixelEncode
     }
     /// <param name="img">Image data</param>
     /// <inheritdoc cref="GetFormat"></inheritdoc>
-    public static string GetFormat(Image<Rgba32> img)
-    {
-        return img.Metadata.DecodedImageFormat?.Name ?? "Unknown";
-    }
+    public static string GetFormat(Image<Rgba32> img) => img.Metadata.DecodedImageFormat?.Name ?? "Unknown";
 
     /// <summary>
     /// Get suggested number of times to repeat animation (GIF, APNG, or WEBP)
     /// </summary>
     /// <param name="stream">Image Stream</param>
     /// <returns>int number of repeats, 0=continuous, -1=not applicable</returns>
-    public static int GetRepeatCount(Stream stream)
-    {
-        return GetRepeatCount(Image.Load<Rgba32>(new(), stream));
-    }
+    public static int GetRepeatCount(Stream stream) => GetRepeatCount(Image.Load<Rgba32>(new(), stream));
     /// <param name="img">Image data</param>
     /// <inheritdoc cref="GetRepeatCount"></inheritdoc>
     public static int GetRepeatCount(Image<Rgba32> img)
@@ -446,16 +427,10 @@ public static class SixelEncode
     /// </summary>
     /// <param name="stream">Image Stream</param>
     /// <returns>int number of ImageFrames</returns>
-    public static int GetNumFrames(Stream stream)
-    {
-        return GetNumFrames(Image.Load<Rgba32>(new(), stream));
-    }
+    public static int GetNumFrames(Stream stream) => GetNumFrames(Image.Load<Rgba32>(new(), stream));
     /// <param name="img">SixLabors.ImageSharp.Image data</param>
     /// <inheritdoc cref="GetNumFrames"></inheritdoc>
-    public static int GetNumFrames(Image<Rgba32> img)
-    {
-        return img.Frames.Count;
-    }
+    public static int GetNumFrames(Image<Rgba32> img) => img.Frames.Count;
 
     /// <summary>
     /// Build color palette for Sixel
