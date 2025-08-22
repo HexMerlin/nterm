@@ -1,4 +1,5 @@
-﻿
+﻿using SemanticTokens.Core;
+
 namespace SemanticTokens.Sixel;
 
 /// <summary>
@@ -68,7 +69,7 @@ public sealed class ConsoleImageDemo
         PrintChatMessage(
             avatar: _userAvatar,
             speakerLabel: "User",
-            speakerColor: new SemanticTokens.Core.Color(200, 255, 160),
+            speakerColor: new Color(200, 255, 160),
             text: @"Hey! Could you summarize today's headlines? Also—can you show avatars inline?
 Let's make sure text aligns neatly with those images."
         );
@@ -76,7 +77,7 @@ Let's make sure text aligns neatly with those images."
         PrintChatMessage(
             avatar: _botAvatar,
             speakerLabel: "Bot", 
-            speakerColor: new SemanticTokens.Core.Color(160, 200, 255),
+            speakerColor: new Color(160, 200, 255),
             text: @"Sure thing! I'll format the output with bullets and keep it short. 
 If your terminal supports SIXEL, you should see avatars on the left."
         );
@@ -84,7 +85,7 @@ If your terminal supports SIXEL, you should see avatars on the left."
         PrintChatMessage(
             avatar: _aiAvatar,
             speakerLabel: "AI",
-            speakerColor: new SemanticTokens.Core.Color(255, 200, 160),
+            speakerColor: new Color(255, 200, 160),
             text: @"I'm the LLM-powered one. If SIXEL isn't available, you'll just see clean fallback text.
 Either way, your 24-bit colors continue to work everywhere."
         );

@@ -60,8 +60,8 @@ public static class SixelDecode
                 break;
         }
 
-        var canvasSize = new Size(200, 200);
-        var resizeOption = new ResizeOptions()
+        Size canvasSize = new Size(200, 200);
+        ResizeOptions resizeOption = new ResizeOptions()
         {
             Mode = ResizeMode.BoxPad,
             Position = AnchorPositionMode.TopLeft,
@@ -85,7 +85,7 @@ public static class SixelDecode
                 case 0x0d:
                     break;
                 case 0x1b: // ESC
-                    var next = stream.ReadByte();
+                    int next = stream.ReadByte();
                     if (next == 0x5c) // '\' Sixel End sequence
                     {
                         if (image.Width != Width || image.Height != Height)
@@ -100,7 +100,7 @@ public static class SixelDecode
                     currentChar = ReadNumber(stream, ref repeatCount);
                     continue;
                 case 0x22: // '"' Raster Attributes. see: https://vt100.net/docs/vt3xx-gp/chapter14.html
-                    var param = new List<int>();
+                    List<int> param = new List<int>();
                     do
                     {
                         int paramNum = -1;
@@ -121,7 +121,7 @@ public static class SixelDecode
                     currentChar = ReadNumber(stream, ref colorN);
                     if (currentChar == 0x3B) // ';' Enter ColorMap sequence
                     {
-                        var (cSys, c1, c2, c3) = (-1, -1, -1, -1);
+                        (int cSys, int c1, int c2, int c3) = (-1, -1, -1, -1);
                         ReadNumber(stream, ref cSys);
                         ReadNumber(stream, ref c1);
                         ReadNumber(stream, ref c2);
