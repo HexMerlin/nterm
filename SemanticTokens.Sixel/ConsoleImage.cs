@@ -22,6 +22,22 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     public ConsoleImageSize DisplaySize => _displaySize;
 
     /// <summary>
+    /// Display dimensions in character grid cells.
+    /// Computed based on terminal capabilities and pixel dimensions.
+    /// </summary>
+    /// <returns>Character grid dimensions with precision indicator</returns>
+    public ConsoleImageCharacterSize CharacterSize => 
+        ConsoleImageCharacterSize.FromConsoleImage(this);
+
+    /// <summary>
+    /// Display dimensions in character grid cells with safety margin.
+    /// Adds +1 cell in each dimension for bulletproof robustness.
+    /// </summary>
+    /// <returns>Conservative character grid dimensions guaranteed to contain the image</returns>
+    public ConsoleImageCharacterSize SafeCharacterSize => 
+        ConsoleImageCharacterSize.FromConsoleImage(this, addSafetyMargin: true);
+
+    /// <summary>
     /// Optimized encoding availability.
     /// </summary>
     /// <returns><see langword="true"/> <b>iff</b> optimized data encoded and terminal capable.</returns>

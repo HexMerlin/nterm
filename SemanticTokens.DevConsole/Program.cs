@@ -1,11 +1,4 @@
-﻿
-using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.Scripting;
-using SemanticTokens.Document;
-using SemanticTokens.Examples;
-using SemanticTokens.Core;
-using System.Text;
-using SemanticTokens.Sixel;
+﻿using SemanticTokens.Examples;
 
 namespace SemanticTokens.DevConsole;
 
@@ -16,9 +9,10 @@ namespace SemanticTokens.DevConsole;
 internal static class Program
 {
     private static async Task Main()
-    {
-        //comment out to run specific demo
+    {     
+        Console.Title = "Showing some Console Demos";
 
+        //comment out to run specific demo
         ConsoleDemo demo1 = new ConsoleDemo();
         demo1.Run();
 
@@ -26,9 +20,7 @@ internal static class Program
         await demo2.Run();
 
         ConsoleImageDemo demo3 = new ConsoleImageDemo();
-        demo3.Run();
-
-  
+        demo3.Run(); 
 
     }
 

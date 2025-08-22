@@ -11,6 +11,13 @@ public static class Console
 {
     private static readonly Stream Stdout = System.Console.OpenStandardOutput();
 
+
+    public static string Title
+    { 
+        get => System.Console.Title;
+        set => System.Console.Title = value;
+    }
+
     /// <summary>
     /// 24-bit foreground color of the console. Setting this property immediately
     /// writes the corresponding ANSI escape sequence to stdout.
