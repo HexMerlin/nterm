@@ -180,8 +180,6 @@ public static partial class Sixel
                 break;
         }
 
-        DebugPrint($"Width: {canvasWidth}, Height: {canvasHeight}, (bpp={img.PixelType.BitsPerPixel})", lf: true);
-        DebugPrint($"Num ImageFrames: {frameCount}", lf: true);
         if (canvasWidth > 1 && canvasHeight > 1 && img.Width != canvasWidth && img.Height != canvasHeight)
         {
             img.Mutate(x => x.Resize(canvasWidth, canvasHeight));
@@ -193,13 +191,6 @@ public static partial class Sixel
         {
             x.Quantize(KnownQuantizers.Wu);
         });
-
-        if (tc is not null)
-            DebugPrint($"Transparent Palette Color={tc?.ToHex()}", lf: true);
-        else if (bg is not null)
-            DebugPrint($"Background Color={bg?.ToHex()}", lf: true);
-        else
-            DebugPrint($"No Background or Transparent palette color found.", lf: true);
 
         var imageFrame = img.Frames.RootFrame;
 
@@ -239,18 +230,14 @@ public static partial class Sixel
         sb.Append(ESC + SixelStart)
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
-        DebugPrint($"Palette Start Length={colorPalette.Length}", ConsoleColor.DarkGray, true);
         int colorPaletteLength = colorPalette.Length;
         for (var i = 0; i < colorPaletteLength; i++)
         {
             // DECGCI (#): Graphics Color Introducer
             var colorValue = colorPalette[i].ToColorPalette();
             sb.Append($"#{i};2;{colorValue}".AsSpan());
-            DebugPrint($"#{i};2;", ConsoleColor.Red);
-            DebugPrint(colorValue, ConsoleColor.Green, true);
         }
-        DebugPrint("End Palette", ConsoleColor.DarkGray, true);
-
+    
         var buffer = new byte[canvasWidth * colorPaletteLength];
         // Flag to indicate whether there is a color palette to display
         var cset = new bool[colorPaletteLength];
@@ -261,9 +248,8 @@ public static partial class Sixel
             {
                 // DECGNL (-): Graphics Next Line
                 sb.Append('-');
-                DebugPrint("-", lf: true);
             }
-            DebugPrint($"[{z}]", ConsoleColor.DarkGray);
+
             for (var p = 0; p < 6 && y < canvasHeight; p++, y++)
             {
                 for (var x = 0; x < canvasWidth; x++)
@@ -295,12 +281,10 @@ public static partial class Sixel
                 {
                     // DECGCR ($): Graphics Carriage Return
                     sb.Append('$');
-                    DebugPrint("$");
                 }
                 first = false;
 
                 sb.Append($"#{n}".AsSpan());
-                DebugPrint($"#{n}", ConsoleColor.Red, false);
                 var cnt = 0;
                 byte ch;
                 int bufIndex;
@@ -317,25 +301,20 @@ public static partial class Sixel
                         for (; cnt > 255; cnt -= 255)
                         {
                             sb.Append("!255").Append(sixelChar);
-                            DebugPrint($"!255{sixelChar}", ConsoleColor.Yellow);
                         }
                         switch (cnt)
                         {
                             case 1:
                                 sb.Append(sixelChar);
-                                DebugPrint($"{sixelChar}", ConsoleColor.Yellow);
                                 break;
                             case 2:
                                 sb.Append([sixelChar, sixelChar]);
-                                DebugPrint($"{sixelChar}{sixelChar}", ConsoleColor.Yellow);
                                 break;
                             case 3:
                                 sb.Append([sixelChar, sixelChar, sixelChar]);
-                                DebugPrint($"{sixelChar}{sixelChar}{sixelChar}", ConsoleColor.Yellow);
                                 break;
                             case > 0:
                                 sb.Append($"!{cnt}".AsSpan()).Append(sixelChar);
-                                DebugPrint($"!{cnt}{sixelChar}", ConsoleColor.Yellow);
                                 break;
                         }
                         cnt = 0;
@@ -349,25 +328,20 @@ public static partial class Sixel
                     for (; cnt > 255; cnt -= 255)
                     {
                         sb.Append("!255").Append(sixelChar);
-                        DebugPrint($"!255{sixelChar}", ConsoleColor.Cyan);
                     }
                     switch (cnt)
                     {
                         case 1:
                             sb.Append(sixelChar);
-                            DebugPrint($"{sixelChar}", ConsoleColor.Cyan);
                             break;
                         case 2:
                             sb.Append([sixelChar, sixelChar]);
-                            DebugPrint($"{sixelChar}{sixelChar}", ConsoleColor.Cyan);
                             break;
                         case 3:
                             sb.Append([sixelChar, sixelChar, sixelChar]);
-                            DebugPrint($"{sixelChar}{sixelChar}{sixelChar}", ConsoleColor.Cyan);
                             break;
                         case > 0:
                             sb.Append($"!{cnt}".AsSpan()).Append(sixelChar);
-                            DebugPrint($"!{cnt}{sixelChar}", ConsoleColor.Cyan);
                             break;
                     }
                 }
@@ -375,7 +349,6 @@ public static partial class Sixel
             }
         }
         sb.Append(ESC + End);
-        DebugPrint("End", ConsoleColor.DarkGray, true);
         return sb.ToString();
     }
 

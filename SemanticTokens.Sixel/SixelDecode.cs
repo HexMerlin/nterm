@@ -74,7 +74,6 @@ public static partial class Sixel
 #endif
 
 
-        DebugPrint("Start Sixel Data", lf: true);
         currentChar = stream.ReadByte();
         do
         {
@@ -91,7 +90,6 @@ public static partial class Sixel
                     {
                         if (image.Width != Width || image.Height != Height)
                         {
-                            DebugPrint($"Crop {image.Width}x{image.Height} => {Width}x{Height}", ConsoleColor.Red, true);
                             image.Mutate(x => x.Crop(Width, Height));
                         }
                         return image;
@@ -115,7 +113,6 @@ public static partial class Sixel
 
                     canvasSize.Width = param[2];
                     canvasSize.Height = param[3];
-                    DebugPrint($"Resize Image {image.Size} => {canvasSize}", lf: true);
                     resizeOption.Size = canvasSize;
                     image.Mutate(x => x.Resize(resizeOption));
                     continue;
@@ -151,7 +148,6 @@ public static partial class Sixel
                     if (canvasSize.Height < currentY + 6)
                     {
                         canvasSize.Height *= 2;
-                        DebugPrint($"Resize Image Height {image.Size} => {canvasSize}", lf: true);
                         resizeOption.Size = canvasSize;
                         image.Mutate(x => x.Resize(resizeOption));
                     }
@@ -162,7 +158,6 @@ public static partial class Sixel
                     if (canvasSize.Width < currentX + repeatCount)
                     {
                         canvasSize.Width *= 2;
-                        DebugPrint($"Resize Image Width {image.Size} => {canvasSize}", lf: true);
                         resizeOption.Size = canvasSize;
                         image.Mutate(x => x.Resize(resizeOption));
                     }

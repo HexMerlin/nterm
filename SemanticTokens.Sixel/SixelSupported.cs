@@ -24,7 +24,6 @@ public static partial class Sixel
 
         // Should get something like: ^[[?61;4;6;7;14;21;22;23;24;28;32;42c
         // The "4" indicates Sixel support
-        DebugPrint($"IsSupported: ^[{CSI_DEVICE_ATTRIBUTES} => ", ConsoleColor.DarkGray);
         var response = GetCtrlSeqResponse(CSI_DEVICE_ATTRIBUTES);
 
         return response.Contains(";4;", StringComparison.Ordinal)
@@ -40,7 +39,6 @@ public static partial class Sixel
 
         // Should get something like: ^[[?2026;1$yc
         // The "1" indicates synchronized output support (may receive 0 in its place, or nothing at all)
-        DebugPrint($"IsSyncSupported: ^[{CSI_SYNC_OUTPUT} => ", ConsoleColor.DarkGray);
         var response = GetCtrlSeqResponse(CSI_SYNC_OUTPUT, 'y');
 
         return !(response == default || response.Contains("2026;0$", StringComparison.Ordinal));
@@ -57,7 +55,6 @@ public static partial class Sixel
         if (CellSize is not null)
             return CellSize.Value;
 
-        DebugPrint($"GetCellSize: ^[{CSI_CELL_SIZE} => ", ConsoleColor.DarkGray);
         var response = GetCtrlSeqResponse(CSI_CELL_SIZE);
         try
         {
@@ -85,7 +82,6 @@ public static partial class Sixel
     public static Size GetWindowPixelSize()
     {
         // don't cache result, since the terminal can be resized
-        DebugPrint($"GetWindowPixelSize: ^[{CSI_WINDOW_PIXSIZE} => ", ConsoleColor.DarkGray);
         var response = GetCtrlSeqResponse(CSI_WINDOW_PIXSIZE);
         try
         {
@@ -163,7 +159,6 @@ public static partial class Sixel
                 return _termBG;
 
             // ^[]11;rgb:2828/2c2c/3434^[\
-            DebugPrint("GetTerminalBackgroundColor: ^[]11;?\\G  => ", ConsoleColor.DarkGray);
             var response = GetCtrlSeqResponse($"]11;?{(char)0x07}", '\\', (char)0x07);
             var start = response.IndexOf(':') + 1;
             if (start < 1)
@@ -205,17 +200,14 @@ public static partial class Sixel
             do
             {
                 char c = Console.ReadKey(true).KeyChar;
-                DebugPrint($"{(char.IsControl(c) ? $"\\{(char)(Convert.ToByte(c) + 0x40)}" : c)}",
-                           char.IsControl(c) ? ConsoleColor.Magenta : ConsoleColor.Red);
+               
                 if (ends.Contains(c))
                     break;
                 if (!char.IsControl(c))
                     response.Append(c);
             }
             while (Console.KeyAvailable);
-#if DEBUG
-            DebugPrint($" ({(DateTime.Now - start).TotalMilliseconds}ms)", ConsoleColor.DarkGray, true);
-#endif
+
         }
 
         try
@@ -224,7 +216,7 @@ public static partial class Sixel
             var cts = new CancellationTokenSource(100);
 
             using var readTask = ReadKeys(cts.Token);
-            Console.Out.Write($"{ESC}{ctrlSeq}");
+            Console.Write($"{ESC}{ctrlSeq}");
             readTask.Wait(cts.Token);
         }
         catch (OperationCanceledException) { }

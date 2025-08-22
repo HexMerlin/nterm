@@ -23,4 +23,8 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SemanticTokens.Core\SemanticTokens.Core.csproj" />
+  </ItemGroup>
+
 </Project>
