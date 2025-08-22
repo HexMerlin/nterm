@@ -31,19 +31,19 @@ public sealed class ConsoleImageDemo
         // Use Examples assembly since that's where the embedded resources are
         Assembly examplesAssembly = typeof(ConsoleImageDemo).Assembly;
         
-        _userAvatar = ConsoleImage.FromEmbeddedResource(ImageUser, examplesAssembly)
+        _userAvatar = ConsoleImageBuilder.FromEmbeddedResource(ImageUser, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[👤]")
             .WithTransparency(Transparency.Default)
             .Build();
 
-        _botAvatar = ConsoleImage.FromEmbeddedResource(ImageBot, examplesAssembly)
+        _botAvatar = ConsoleImageBuilder.FromEmbeddedResource(ImageBot, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[🤖]")
             .WithTransparency(Transparency.Default)
             .Build();
 
-        _aiAvatar = ConsoleImage.FromEmbeddedResource(ImageAI, examplesAssembly)
+        _aiAvatar = ConsoleImageBuilder.FromEmbeddedResource(ImageAI, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[🧠]")
             .WithTransparency(Transparency.Default)
@@ -60,9 +60,7 @@ public sealed class ConsoleImageDemo
     /// </remarks>
     public void Run()
     {
-        Console.WriteLine();
-        Console.WriteLine("=== Perfect Console Image Demo ===");
-        Console.WriteLine();
+         Console.WriteLine();
 
         PrintChatMessage(
             avatar: _userAvatar,

@@ -1,83 +1,52 @@
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using SixLabors.ImageSharp;
 
 namespace SemanticTokens.Sixel;
 
 /// <summary>
-/// Immutable console image with optimized SIXEL encoding and automatic terminal capability handling.
+/// Immutable console image data container.
+/// Gold standard user-facing type for console image operations.
 /// </summary>
 /// <remarks>
-/// Authority for console image representation. Encodes once during construction,
-/// provides immediate console-ready output via ultra-optimized single execution path.
+/// Pure data container with console-ready encoded image data.
+/// Provides immediate output via Console.WriteImage() integration.
 /// </remarks>
 public readonly struct ConsoleImage : IEquatable<ConsoleImage>
 {
     private readonly string _encodedData;
-    private readonly Size _displaySize;
-    private readonly bool _hasSixelData;
+    private readonly ConsoleImageSize _displaySize;
+    private readonly bool _hasOptimizedEncoding;
 
     /// <summary>
     /// Display dimensions in pixels.
     /// </summary>
-    public Size DisplaySize => _displaySize;
+    public ConsoleImageSize DisplaySize => _displaySize;
 
     /// <summary>
-    /// SIXEL encoding availability.
+    /// Optimized encoding availability.
     /// </summary>
-    /// <returns><see langword="true"/> <b>iff</b> SIXEL data encoded and terminal capable.</returns>
-    public bool HasSixelData => _hasSixelData;
+    /// <returns><see langword="true"/> <b>iff</b> optimized data encoded and terminal capable.</returns>
+    public bool HasOptimizedEncoding => _hasOptimizedEncoding;
 
     /// <summary>
     /// Console-ready image data.
     /// </summary>
-    /// <returns>Complete data ready for Console.WriteImage() - SIXEL or fallback text.</returns>
+    /// <returns>Complete data ready for Console.WriteImage() - optimized or fallback text.</returns>
     public ReadOnlySpan<char> ConsoleData => _encodedData.AsSpan();
 
     /// <summary>
     /// Initializes console image with pre-encoded data.
     /// </summary>
-    /// <param name="encodedData">SIXEL-encoded data or fallback text</param>
+    /// <param name="encodedData">Encoded image data or fallback text</param>
     /// <param name="displaySize">Target display size in pixels</param>
-    /// <param name="hasSixelData">Indicates whether encodedData contains SIXEL</param>
-    internal ConsoleImage(string encodedData, Size displaySize, bool hasSixelData)
+    /// <param name="hasOptimizedEncoding">Indicates whether encodedData contains optimized encoding</param>
+    public ConsoleImage(string encodedData, ConsoleImageSize displaySize, bool hasOptimizedEncoding)
     {
         _encodedData = encodedData;
         _displaySize = displaySize;
-        _hasSixelData = hasSixelData;
+        _hasOptimizedEncoding = hasOptimizedEncoding;
     }
 
-    /// <summary>
-    /// Factory: Create ConsoleImage from file path.
-    /// </summary>
-    /// <param name="filePath">Path to image file</param>
-    /// <returns>Builder for fluent configuration</returns>
-    public static ConsoleImageBuilder FromFile(string filePath) => new(new FileImageSource(filePath));
 
-    /// <summary>
-    /// Factory: Create ConsoleImage from stream.
-    /// </summary>
-    /// <param name="stream">Image data stream</param>
-    /// <returns>Builder for fluent configuration</returns>
-    public static ConsoleImageBuilder FromStream(Stream stream) => new(new StreamImageSource(stream));
-
-    /// <summary>
-    /// Factory: Create ConsoleImage from embedded resource.
-    /// </summary>
-    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
-    /// <returns>Builder for fluent configuration</returns>
-    /// <remarks>Uses the calling assembly to resolve embedded resources.</remarks>
-    public static ConsoleImageBuilder FromEmbeddedResource(string resourceSuffix) => 
-        new(new EmbeddedResourceImageSource(resourceSuffix));
-
-    /// <summary>
-    /// Factory: Create ConsoleImage from embedded resource in specific assembly.
-    /// </summary>
-    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
-    /// <param name="assembly">Assembly containing the embedded resources</param>
-    /// <returns>Builder for fluent configuration</returns>
-    public static ConsoleImageBuilder FromEmbeddedResource(string resourceSuffix, Assembly assembly) => 
-        new(new EmbeddedResourceImageSource(resourceSuffix, assembly));
 
     /// <summary>
     /// Indicates whether this console image is equal to another console image.
@@ -88,7 +57,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     public bool Equals(ConsoleImage other) => 
         _encodedData == other._encodedData && 
         _displaySize.Equals(other._displaySize) && 
-        _hasSixelData == other._hasSixelData;
+        _hasOptimizedEncoding == other._hasOptimizedEncoding;
 
     /// <summary>
     /// Determines whether this console image is equal to the specified object.
@@ -98,7 +67,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     public override bool Equals(object? obj) => obj is ConsoleImage other && Equals(other);
 
     ///<inheritdoc/>
-    public override int GetHashCode() => HashCode.Combine(_encodedData, _displaySize, _hasSixelData);
+    public override int GetHashCode() => HashCode.Combine(_encodedData, _displaySize, _hasOptimizedEncoding);
 
     /// <summary>
     /// Determines whether two specified console images have the same value.
@@ -117,5 +86,5 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     public static bool operator !=(ConsoleImage left, ConsoleImage right) => !left.Equals(right);
 
     public override string ToString() => 
-        $"ConsoleImage[{DisplaySize.Width}x{DisplaySize.Height}, {(HasSixelData ? "SIXEL" : "Fallback")}]";
+        $"ConsoleImage[{DisplaySize.Width}x{DisplaySize.Height}, {(HasOptimizedEncoding ? "Optimized" : "Fallback")}]";
 }

@@ -10,13 +10,45 @@ namespace SemanticTokens.Sixel;
 public sealed class ConsoleImageBuilder
 {
     private IImageSource Source { get; }
-    private Size? _targetPixelSize;
-    private Size? _targetCharacterSize;
+    private ConsoleImageSize? _targetPixelSize;
+    private ConsoleImageSize? _targetCharacterSize;
     private string _fallbackText = "[image]";
     private Transparency _transparency = Transparency.Default;
     private bool _keepAspectRatio = true;
 
     internal ConsoleImageBuilder(IImageSource source) => Source = source;
+
+    /// <summary>
+    /// Factory: Create ConsoleImage from file path.
+    /// </summary>
+    /// <param name="filePath">Path to image file</param>
+    /// <returns>Builder for fluent configuration</returns>
+    public static ConsoleImageBuilder FromFile(string filePath) => new(new FileImageSource(filePath));
+
+    /// <summary>
+    /// Factory: Create ConsoleImage from stream.
+    /// </summary>
+    /// <param name="stream">Image data stream</param>
+    /// <returns>Builder for fluent configuration</returns>
+    public static ConsoleImageBuilder FromStream(Stream stream) => new(new StreamImageSource(stream));
+
+    /// <summary>
+    /// Factory: Create ConsoleImage from embedded resource.
+    /// </summary>
+    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
+    /// <returns>Builder for fluent configuration</returns>
+    /// <remarks>Uses the calling assembly to resolve embedded resources.</remarks>
+    public static ConsoleImageBuilder FromEmbeddedResource(string resourceSuffix) => 
+        new(new EmbeddedResourceImageSource(resourceSuffix));
+
+    /// <summary>
+    /// Factory: Create ConsoleImage from embedded resource in specific assembly.
+    /// </summary>
+    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
+    /// <param name="assembly">Assembly containing the embedded resources</param>
+    /// <returns>Builder for fluent configuration</returns>
+    public static ConsoleImageBuilder FromEmbeddedResource(string resourceSuffix, Assembly assembly) => 
+        new(new EmbeddedResourceImageSource(resourceSuffix, assembly));
 
     /// <summary>
     /// Target size in pixels.
@@ -28,7 +60,7 @@ public sealed class ConsoleImageBuilder
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
-        _targetPixelSize = new Size(width, height);
+        _targetPixelSize = new ConsoleImageSize(width, height);
         return this;
     }
 
@@ -37,7 +69,7 @@ public sealed class ConsoleImageBuilder
     /// </summary>
     /// <param name="size">Size in pixels</param>
     /// <returns>This builder for fluent configuration</returns>
-    public ConsoleImageBuilder WithPixelSize(Size size)
+    public ConsoleImageBuilder WithPixelSize(ConsoleImageSize size)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(size.Width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(size.Height);
@@ -55,7 +87,7 @@ public sealed class ConsoleImageBuilder
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cols);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rows);
-        _targetCharacterSize = new Size(cols, rows);
+        _targetCharacterSize = new ConsoleImageSize(cols, rows);
         return this;
     }
 
@@ -114,7 +146,7 @@ public sealed class ConsoleImageBuilder
 
     private ConsoleImage BuildFromStream(Stream imageStream)
     {
-        Size targetSize = ComputeTargetSize();
+        ConsoleImageSize targetSize = ComputeTargetSize();
         
         // Ultra-optimized single execution path
         if (SixelCapabilities.IsSupported)
@@ -124,12 +156,12 @@ public sealed class ConsoleImageBuilder
                 // Encode to SIXEL using optimized pipeline
                 ReadOnlySpan<char> sixelData = SixelEncode.Encode(
                     imageStream, 
-                    targetSize, 
+                    new Size(targetSize.Width, targetSize.Height), 
                     _transparency, 
                     frame: -1
                 );
 
-                return new ConsoleImage(sixelData.ToString(), targetSize, hasSixelData: true);
+                return new ConsoleImage(sixelData.ToString(), targetSize, hasOptimizedEncoding: true);
             }
             catch
             {
@@ -138,15 +170,15 @@ public sealed class ConsoleImageBuilder
         }
 
         // Fallback path - terminal doesn't support SIXEL or encoding failed
-        return new ConsoleImage(_fallbackText, targetSize, hasSixelData: false);
+        return new ConsoleImage(_fallbackText, targetSize, hasOptimizedEncoding: false);
     }
 
-    private Size ComputeTargetSize()
+    private ConsoleImageSize ComputeTargetSize()
     {
         // Character-based sizing takes precedence (authority-driven)
         if (_targetCharacterSize.HasValue)
         {
-            Size charSize = _targetCharacterSize.Value;
+            ConsoleImageSize charSize = _targetCharacterSize.Value;
             Size cellSize = SixelCapabilities.CellSize;
             
             if (_keepAspectRatio)
@@ -162,13 +194,13 @@ public sealed class ConsoleImageBuilder
                         charSize.Height * cellSize.Height
                     );
                     
-                    Size result = new Size(targetPixelDimension, targetPixelDimension);
+                    ConsoleImageSize result = new ConsoleImageSize(targetPixelDimension, targetPixelDimension);
                     return result;
                 }
             }
             
             // Standard character-based sizing (no aspect ratio adjustment)
-            Size standardResult = new Size(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
+            ConsoleImageSize standardResult = new ConsoleImageSize(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
             return standardResult;
         }
 
@@ -179,7 +211,7 @@ public sealed class ConsoleImageBuilder
         }
 
         // Default: reasonable console image size
-        return new Size(320, 240);
+        return new ConsoleImageSize(320, 240);
     }
 }
 
