@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using TrueColor;
 
 namespace Controls;
@@ -5,14 +6,14 @@ namespace Controls;
 /// <summary>
 /// Represents the state of the console that can be restored later.
 /// </summary>
-public readonly struct ConsoleState : IDisposable
+public sealed class ConsoleState : IDisposable
 {
-    public readonly Color OriginalForeground { get; }
-    public readonly Color OriginalBackground { get; }
-    public readonly int OriginalCursorLeft { get; }
-    public readonly int OriginalCursorTop { get; }
-    private readonly bool OriginalCursorVisible { get; } = false;
-    private readonly bool CursorVisibilitySupported { get; } = false;
+    public Color OriginalForeground { get; }
+    public Color OriginalBackground { get; }
+    public int OriginalCursorLeft { get; }
+    public int OriginalCursorTop { get; }
+    private bool OriginalCursorVisible { get; } = false;
+    private bool CursorVisibilitySupported { get; } = false;
 
     public ConsoleState()
     {
@@ -21,10 +22,11 @@ public readonly struct ConsoleState : IDisposable
         OriginalCursorLeft = Console.CursorLeft;
         OriginalCursorTop = Console.CursorTop;
 
-#if platform_windows
-        OriginalCursorVisible = Console.CursorVisible;
-        CursorVisibilitySupported = true;
-#endif
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            OriginalCursorVisible = Console.CursorVisible;
+            CursorVisibilitySupported = true;
+        }
     }
 
     /// <summary>
