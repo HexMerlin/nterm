@@ -294,10 +294,10 @@ public static class SixelEncode
                     if (transp == Transparency.Background && rgba == bg)
                         continue;
 
-                    var sixelColor = rgba.ToSixelColor(transp, tc, bg);
+                    CoreColor sixelColor = rgba.ToSixelColor(transp, tc, bg);
                     if (sixelColor.A == 0)
                         continue;
-                    var idx = colorPalette.IndexOf(sixelColor);
+                    int idx = colorPalette.IndexOf(sixelColor);
                     if (idx < 0)
                         continue;
 
@@ -451,7 +451,7 @@ public static class SixelEncode
                 {
                     if (pixcelHash.Add(row[x]))
                     {
-                        var c = row[x].ToSixelColor(transp, tc, bg);
+                        CoreColor c = row[x].ToSixelColor(transp, tc, bg);
                         if (c.A == 0)
                             continue;
                         palette.Add(c);

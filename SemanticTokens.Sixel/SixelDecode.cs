@@ -18,7 +18,7 @@ public static class SixelDecode
     /// <exception cref="InvalidDataException">thrown when parsing Sixel data failed.</exception>
     public static Image<Rgba32> Decode(string sixelString)
     {
-        using var mem = new MemoryStream(sixelString.Length);
+        using MemoryStream mem = new(sixelString.Length);
         mem.Write(System.Text.Encoding.ASCII.GetBytes(sixelString));
         mem.Seek(0, SeekOrigin.Begin);
         return Decode(mem);
@@ -165,10 +165,10 @@ public static class SixelDecode
                         resizeOption.Size = canvasSize;
                         image.Mutate(x => x.Resize(resizeOption));
                     }
-                    for (var x = currentX; x < currentX + repeatCount; x++)
+                    for (int x = currentX; x < currentX + repeatCount; x++)
                     {
-                        var y = currentY;
-                        for (var p = 0; p < 6; p++)
+                        int y = currentY;
+                        for (int p = 0; p < 6; p++)
                         {
                             if ((sixelBit & (1 << p)) > 0)
                             {

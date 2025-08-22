@@ -1,6 +1,5 @@
-using System.Reflection;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using System.Reflection;
 
 namespace SemanticTokens.Sixel;
 

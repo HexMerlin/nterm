@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SemanticTokens.Sixel;
+﻿namespace SemanticTokens.Sixel;
 internal class Constants
 {
     public const char ESC = '\x1b';
