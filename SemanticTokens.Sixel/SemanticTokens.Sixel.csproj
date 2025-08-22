@@ -7,4 +7,21 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Images\ai.png" />
+    <None Remove="Images\bot.png" />
+    <None Remove="Images\user.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Images\ai.png" />
+    <EmbeddedResource Include="Images\bot.png" />
+    <EmbeddedResource Include="Images\user.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+    <PackageReference Include="SixPix" Version="0.3.2" />
+  </ItemGroup>
+
 </Project>
