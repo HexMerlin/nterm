@@ -29,17 +29,32 @@ class Program
 
         var items = new List<SelectItem>
         {
-            new() { Text = "Option A", Action = () => Console.WriteLine("You chose Option A") },
-            new() { Text = "Option B", Action = () => Console.WriteLine("You chose Option B") },
-            new() { Text = "Option C", Action = () => Console.WriteLine("You chose Option C") }
+            new()
+            {
+                Text = "Option A",
+                Action = () => Console.WriteLine("Doing stuff with Option A")
+            },
+            new()
+            {
+                Text = "Option B",
+                Action = () => Console.WriteLine("Doing stuff with Option B")
+            },
+            new()
+            {
+                Text = "Option C",
+                Action = () => Console.WriteLine("Doing stuff with Option C")
+            }
         };
 
-        var selectedItem = Select.Show(items);
+        var selectedItem1 = Select.Show(items);
+        AnsiConsole.Write(" and now select another option: ");
+        var selectedItem2 = Select.Show(items);
 
-        if (!selectedItem.IsEmpty())
+        if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
         {
-            AnsiConsole.WriteLine($"\nSelected: {selectedItem.Text}");
-            selectedItem.Action?.Invoke();
+            AnsiConsole.WriteLine($"\nSelected: {selectedItem1.Text} and {selectedItem2.Text}");
+            selectedItem1.Action?.Invoke();
+            selectedItem2.Action?.Invoke();
         }
         else
         {

@@ -22,99 +22,71 @@ public static class Select
             return SelectItem.Empty;
         }
 
-        // Store original console state
-        var originalForegroundColor = AnsiConsole.ForegroundColor;
-        var originalBackgroundColor = AnsiConsole.BackgroundColor;
-        var originalCursorLeft = Console.CursorLeft;
-        var originalCursorTop = Console.CursorTop;
-        bool originalCursorVisible = false;
+        // Use ConsoleState to automatically manage console state restoration
+        using var consoleState = new ConsoleState();
+
+        // Hide cursor during selection
         try
         {
-            originalCursorVisible = Console.CursorVisible;
+            Console.CursorVisible = false;
         }
         catch (PlatformNotSupportedException)
         {
             // Cursor visibility not supported on this platform
         }
 
-        try
+        // Clear any buffered input
+        while (Console.KeyAvailable)
         {
-            // Hide cursor during selection
-            try
-            {
-                Console.CursorVisible = false;
-            }
-            catch (PlatformNotSupportedException)
-            {
-                // Cursor visibility not supported on this platform
-            }
-
-            // Clear any buffered input
-            while (Console.KeyAvailable)
-            {
-                Console.ReadKey(true);
-            }
-
-            int currentIndex = 0;
-            bool selectionMade = false;
-            SelectItem selectedItem = SelectItem.Empty;
-            int displayStartColumn = originalCursorLeft;
-            int displayStartRow = originalCursorTop;
-
-            while (!selectionMade)
-            {
-                // Display current item at the original cursor position
-                DisplayItem(itemList[currentIndex], true, displayStartColumn, displayStartRow);
-
-                // Wait for key input
-                var key = Console.ReadKey(true);
-
-                switch (key.Key)
-                {
-                    case ConsoleKey.UpArrow:
-                        // Navigate to previous item (circular)
-                        currentIndex = currentIndex == 0 ? itemList.Count - 1 : currentIndex - 1;
-                        break;
-
-                    case ConsoleKey.DownArrow:
-                        // Navigate to next item (circular)
-                        currentIndex = currentIndex == itemList.Count - 1 ? 0 : currentIndex + 1;
-                        break;
-
-                    case ConsoleKey.Enter:
-                        // Select current item
-                        selectedItem = itemList[currentIndex];
-                        selectionMade = true;
-                        break;
-
-                    case ConsoleKey.Escape:
-                        // Cancel selection
-                        selectedItem = SelectItem.Empty;
-                        selectionMade = true;
-                        break;
-
-                    // Ignore all other keys
-                    default:
-                        break;
-                }
-            }
-
-            return selectedItem;
+            Console.ReadKey(true);
         }
-        finally
+
+        int currentIndex = 0;
+        bool selectionMade = false;
+        SelectItem selectedItem = SelectItem.Empty;
+        int displayStartColumn = consoleState.OriginalCursorLeft;
+        int displayStartRow = consoleState.OriginalCursorTop;
+
+        while (!selectionMade)
         {
-            // Reset any ANSI color codes and restore original console state
-            AnsiConsole.BackgroundColor = originalBackgroundColor;
-            AnsiConsole.ForegroundColor = originalForegroundColor;
-            try
+            // Display current item at the original cursor position
+            DisplayItem(itemList[currentIndex], true, displayStartColumn, displayStartRow);
+
+            // Wait for key input
+            var key = Console.ReadKey(true);
+
+            switch (key.Key)
             {
-                Console.CursorVisible = originalCursorVisible;
-            }
-            catch (PlatformNotSupportedException)
-            {
-                // Cursor visibility not supported on this platform
+                case ConsoleKey.UpArrow:
+                    // Navigate to previous item (circular)
+                    currentIndex = currentIndex == 0 ? itemList.Count - 1 : currentIndex - 1;
+                    break;
+
+                case ConsoleKey.DownArrow:
+                    // Navigate to next item (circular)
+                    currentIndex = currentIndex == itemList.Count - 1 ? 0 : currentIndex + 1;
+                    break;
+
+                case ConsoleKey.Enter:
+                    // Select current item
+                    selectedItem = itemList[currentIndex];
+                    selectionMade = true;
+                    break;
+
+                case ConsoleKey.Escape:
+                    // Cancel selection
+                    selectedItem = SelectItem.Empty;
+                    selectionMade = true;
+                    break;
+
+                // Ignore all other keys
+                default:
+                    break;
             }
         }
+
+        return selectedItem;
+        // ConsoleState.Dispose() will be called automatically when exiting the using scope
     }
 
     /// <summary>
