@@ -3,7 +3,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using CoreColor = SemanticTokens.Core.Color;
+using SemanticTokens.Core;
 using SemanticTokens.Sixel.Encoder;
 
 namespace SemanticTokens.Sixel;
@@ -225,7 +225,7 @@ public static class SixelEncode
         Console.WriteLine($"[DEBUG] Frame aspect ratio: {(double)imageFrame.Width/imageFrame.Height:F3}");
 
         // Building a color palette
-        ReadOnlySpan<CoreColor> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
+        ReadOnlySpan<SemanticTokens.Core.Color> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
         Size frameSize = new(imageFrame.Width, imageFrame.Height);  // Use actual frame dimensions
         
         Console.WriteLine($"[DEBUG] Frame size for encoding: {frameSize.Width}x{frameSize.Height}");
@@ -241,11 +241,11 @@ public static class SixelEncode
     /// <param name="frame">a frame part of Image data</param>
     /// <param name="colorPalette">Color palette for Sixel</param>
     /// <param name="frameSize">size of the frame</param>
-    /// <param name="tc">Transparent <see cref="Color"/> set for the image</param>
-    /// <param name="bg">Background <see cref="Color"/> set for the image</param>
+    /// <param name="tc">Transparent <see cref="SixLabors.ImageSharp.PixelFormats.Rgba32"/> set for the image</param>
+    /// <param name="bg">Background <see cref="SixLabors.ImageSharp.PixelFormats.Rgba32"/> set for the image</param>
     /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
     public static string EncodeFrame(ImageFrame<Rgba32> frame,
-                                     ReadOnlySpan<CoreColor> colorPalette,
+                                     ReadOnlySpan<SemanticTokens.Core.Color> colorPalette,
                                      Size frameSize,
                                      Transparency transp = Transparency.Default,
                                      Rgba32? tc = null,
@@ -265,36 +265,36 @@ public static class SixelEncode
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
         int colorPaletteLength = colorPalette.Length;
-        for (var i = 0; i < colorPaletteLength; i++)
+        for (int i = 0; i < colorPaletteLength; i++)
         {
             // DECGCI (#): Graphics Color Introducer
-            var colorValue = colorPalette[i].ToSixelPalette();
-            sb.Append($"#{i};2;{colorValue}".AsSpan());
+            ReadOnlySpan<char> colorValue = colorPalette[i].ToSixelPalette();
+            sb.Append($"{Constants.ColorIntroducer}{i};2;{colorValue}".AsSpan());
         }
     
-        var buffer = new byte[canvasWidth * colorPaletteLength];
+        byte[] buffer = new byte[canvasWidth * colorPaletteLength];
         // Flag to indicate whether there is a color palette to display
-        var cset = new bool[colorPaletteLength];
-        var ch0 = Constants.specialChNr;
-        for (var (z, y) = (0, 0); z < (canvasHeight + 5) / 6; z++, y = z * 6)
+        bool[] cset = new bool[colorPaletteLength];
+        byte ch0 = Constants.SpecialChNr;
+        for (int z = 0, y = 0; z < (canvasHeight + 5) / 6; z++, y = z * 6)
         {
             if (z > 0)
             {
                 // DECGNL (-): Graphics Next Line
-                sb.Append('-');
+                sb.Append(Constants.SixelNextLine);
             }
 
-            for (var p = 0; p < 6 && y < canvasHeight; p++, y++)
+            for (int p = 0; p < 6 && y < canvasHeight; p++, y++)
             {
-                for (var x = 0; x < canvasWidth; x++)
+                for (int x = 0; x < canvasWidth; x++)
                 {
-                    var rgba = frame[x, y];
+                    Rgba32 rgba = frame[x, y];
                     if (transp == Transparency.TopLeft && rgba == frame[0, 0])
                         continue;
                     if (transp == Transparency.Background && rgba == bg)
                         continue;
 
-                    CoreColor sixelColor = rgba.ToSixelColor(transp, tc, bg);
+                    SemanticTokens.Core.Color sixelColor = rgba.ToSixelColor(transp, tc, bg);
                     if (sixelColor.A == 0)
                         continue;
                     int idx = colorPalette.IndexOf(sixelColor);
@@ -306,12 +306,12 @@ public static class SixelEncode
                 }
             }
             bool first = true;
-            for (var n = 0; n < colorPaletteLength; n++)
+            for (int n = 0; n < colorPaletteLength; n++)
             {
                 if (!cset[n]) continue;
 
                 cset[n] = false;
-                if (ch0 == Constants.specialChCr && !first)
+                if (ch0 == Constants.SpecialChCr && !first)
                 {
                     // DECGCR ($): Graphics Carriage Return
                     sb.Append('$');
@@ -334,7 +334,7 @@ public static class SixelEncode
                         sixelChar = (char)(63 + ch0);
                         for (; cnt > 255; cnt -= 255)
                         {
-                            sb.Append("!255").Append(sixelChar);
+                            sb.Append(Constants.RepeatIntroducer).Append("255").Append(sixelChar);
                         }
                         switch (cnt)
                         {
@@ -361,7 +361,7 @@ public static class SixelEncode
                     sixelChar = (char)(63 + ch0);
                     for (; cnt > 255; cnt -= 255)
                     {
-                        sb.Append("!255").Append(sixelChar);
+                        sb.Append(Constants.RepeatIntroducer).Append("255").Append(sixelChar);
                     }
                     switch (cnt)
                     {
@@ -379,10 +379,10 @@ public static class SixelEncode
                             break;
                     }
                 }
-                ch0 = Constants.specialChCr;
+                ch0 = Constants.SpecialChCr;
             }
         }
-        sb.Append(Constants.ESC + Constants.End);
+        sb.Append(Constants.ESC + Constants.SixelEnd);
         return sb.ToString();
     }
 
@@ -435,15 +435,15 @@ public static class SixelEncode
     /// <summary>
     /// Build color palette for Sixel
     /// </summary>
-    public static CoreColor[] GetColorPalette(ImageFrame<Rgba32> frame,
+    public static SemanticTokens.Core.Color[] GetColorPalette(ImageFrame<Rgba32> frame,
                                                Transparency transp = Transparency.Default,
                                                Rgba32? tc = null,
                                                Rgba32? bg = null)
     {
-        var palette = new HashSet<CoreColor>();
+        HashSet<SemanticTokens.Core.Color> palette = new();
         frame.ProcessPixelRows(accessor =>
         {
-            var pixcelHash = new HashSet<Rgba32>();
+            HashSet<Rgba32> pixcelHash = new();
             for (int y = 0; y < accessor.Height; y++)
             {
                 Span<Rgba32> row = accessor.GetRowSpan(y);
@@ -451,7 +451,7 @@ public static class SixelEncode
                 {
                     if (pixcelHash.Add(row[x]))
                     {
-                        CoreColor c = row[x].ToSixelColor(transp, tc, bg);
+                        SemanticTokens.Core.Color c = row[x].ToSixelColor(transp, tc, bg);
                         if (c.A == 0)
                             continue;
                         palette.Add(c);

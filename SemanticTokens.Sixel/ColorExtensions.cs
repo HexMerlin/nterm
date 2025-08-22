@@ -13,14 +13,14 @@ internal static class ColorExtensions
     /// </summary>
     /// <param name="rgba">ImageSharp pixel value</param>
     /// <returns>Equivalent Color value</returns>
-    public static Core.Color ToColor(this Rgba32 rgba) => new(rgba.R, rgba.G, rgba.B, rgba.A);
+    public static Color ToColor(this Rgba32 rgba) => new(rgba.R, rgba.G, rgba.B, rgba.A);
 
     /// <summary>
     /// Converts SemanticTokens Color to ImageSharp Rgba32.
     /// </summary>
     /// <param name="color">SemanticTokens Color value</param>
     /// <returns>Equivalent ImageSharp Rgba32 value</returns>
-    public static Rgba32 ToRgba32(this Core.Color color) => new(color.R, color.G, color.B, color.A);
+    public static Rgba32 ToRgba32(this Color color) => new(color.R, color.G, color.B, color.A);
 
 
 
@@ -32,35 +32,35 @@ internal static class ColorExtensions
     /// <param name="transparentColor">Explicit transparent color (optional)</param>
     /// <param name="backgroundColor">Background color for blending (optional)</param>
     /// <returns>Color with transparency resolved for Sixel encoding</returns>
-    public static Core.Color ToSixelColor(this Core.Color color,
-                                          Transparency transparency = Transparency.Default,
-                                          Core.Color? transparentColor = null,
-                                          Core.Color? backgroundColor = null)
+    public static Color ToSixelColor(this Color color,
+                                     Transparency transparency = Transparency.Default,
+                                     Color? transparentColor = null,
+                                     Color? backgroundColor = null)
     {
         // Handle fully transparent pixels
         if (color.A == 0)
         {
             return transparency switch
             {
-                Transparency.None => Core.Color.Black,
-                Transparency.TopLeft => Core.Color.Black,
+                Transparency.None => Color.Black,
+                Transparency.TopLeft => Color.Black,
                 Transparency.Background when backgroundColor.HasValue => backgroundColor.Value,
-                _ => Core.Color.Transparent
+                _ => Color.Transparent
             };
         }
 
         // Handle explicit transparent color match
         if (transparentColor.HasValue && transparentColor.Value.Equals(color))
-            return Core.Color.Transparent;
+            return Color.Transparent;
 
         // Handle background transparency
         if (transparency == Transparency.Background && backgroundColor.HasValue && backgroundColor.Value.Equals(color))
-            return Core.Color.Transparent;
+            return Color.Transparent;
 
         // Blend partial transparency with background
         if (color.A is > 0 and < 255)
         {
-            Core.Color background = backgroundColor ?? Core.Color.Black;
+            Color background = backgroundColor ?? Color.Black;
             return color.BlendWith(background);
         }
 
@@ -75,15 +75,15 @@ internal static class ColorExtensions
     /// <param name="transparentColor">Explicit transparent color (optional)</param>
     /// <param name="backgroundColor">Background color for blending (optional)</param>
     /// <returns>Color with transparency resolved for Sixel encoding</returns>
-    public static Core.Color ToSixelColor(this Rgba32 rgba,
-                                          Transparency transparency = Transparency.Default,
-                                          Rgba32? transparentColor = null,
-                                          Rgba32? backgroundColor = null)
+    public static Color ToSixelColor(this Rgba32 rgba,
+                                     Transparency transparency = Transparency.Default,
+                                     Rgba32? transparentColor = null,
+                                     Rgba32? backgroundColor = null)
     {
         // Convert foreign type to our Color first
-        Core.Color color = rgba.ToColor();
-        Core.Color? transparentColorConverted = transparentColor?.ToColor();
-        Core.Color? backgroundColorConverted = backgroundColor?.ToColor();
+        Color color = rgba.ToColor();
+        Color? transparentColorConverted = transparentColor?.ToColor();
+        Color? backgroundColorConverted = backgroundColor?.ToColor();
         
         // Apply Sixel-specific transparency logic
         return color.ToSixelColor(transparency, transparentColorConverted, backgroundColorConverted);
@@ -98,7 +98,7 @@ internal static class ColorExtensions
     /// Sixel protocol requires RGB values in 0-100 range for color palette definitions.
     /// Converts from standard 0-255 RGBA to Sixel's 0-100 RGB format.
     /// </remarks>
-    public static ReadOnlySpan<char> ToSixelPalette(this Core.Color color)
+    public static ReadOnlySpan<char> ToSixelPalette(this Color color)
     {
         int r = (int)Math.Round(color.R * 100.0 / 255.0);
         int g = (int)Math.Round(color.G * 100.0 / 255.0);

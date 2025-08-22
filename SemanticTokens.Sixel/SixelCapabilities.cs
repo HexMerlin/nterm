@@ -63,7 +63,7 @@ public static class SixelCapabilities
         try
         {
             // Query device attributes: ESC[c
-            ReadOnlySpan<char> response = QueryTerminal("[c");
+            ReadOnlySpan<char> response = QueryTerminal(Constants.DeviceAttributesQuery);
             
             // Debug: show what we got back
             SemanticTokens.Core.Console.WriteLine($"[DEBUG] Terminal device attributes response: '{response.ToString()}'");

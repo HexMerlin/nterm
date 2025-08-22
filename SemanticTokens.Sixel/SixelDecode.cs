@@ -3,7 +3,7 @@ using System.Numerics;
 #endif
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using CoreColor = SemanticTokens.Core.Color;
+using SemanticTokens.Core;
 using SixLabors.ImageSharp.Processing;
 
 namespace SemanticTokens.Sixel;
@@ -39,7 +39,7 @@ public static class SixelDecode
 
         byte[] buffer = new byte[2];
         stream.Read(buffer);
-        if (buffer[0] != 0x1B /* ESC */ || buffer[1] != 0x50 /* 'P' */)
+        if (buffer[0] != Constants.ESC_BYTE || buffer[1] != Constants.SIXEL_START_BYTE)
         {
             throw new InvalidDataException($"Sixel must start with [ESC, 'P']");
         }
@@ -69,9 +69,9 @@ public static class SixelDecode
         };
 
 #if IMAGESHARP4 // ImageSharp v4.0
-        var image = new Image<Rgba32>(new Configuration(), canvasSize.Width, canvasSize.Height, CoreColor.White.ToRgba32());
+        Image<Rgba32> image = new(new Configuration(), canvasSize.Width, canvasSize.Height, SemanticTokens.Core.Color.White.ToRgba32());
 #else
-        var image = new Image<Rgba32>(canvasSize.Width, canvasSize.Height, CoreColor.White.ToRgba32());
+        Image<Rgba32> image = new(canvasSize.Width, canvasSize.Height, SemanticTokens.Core.Color.White.ToRgba32());
 #endif
 
 
@@ -130,10 +130,10 @@ public static class SixelDecode
                         switch (cSys)
                         {
                             case 1: // HLS
-                                _colorMap.Add(CoreColor.FromHLS(c1, c2, c3).ToRgba32());
+                                _colorMap.Add(SemanticTokens.Core.Color.FromHLS(c1, c2, c3).ToRgba32());
                                 break;
                             case 2: // RGB (values are in 0-100 range in Sixel format)
-                                _colorMap.Add(new CoreColor(
+                                _colorMap.Add(new SemanticTokens.Core.Color(
                                     (byte)Math.Round(c1 * 255.0 / 100.0), 
                                     (byte)Math.Round(c2 * 255.0 / 100.0), 
                                     (byte)Math.Round(c3 * 255.0 / 100.0)).ToRgba32());
