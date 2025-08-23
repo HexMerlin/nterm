@@ -1,9 +1,8 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Buffers;
-using SemanticTokens.Core;
 
-namespace SemanticTokens.Sixel;
+namespace SemanticTokens.Core;
 
 /// <summary>
 /// Terminal capability detection with caching and performance.

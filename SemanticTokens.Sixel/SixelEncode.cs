@@ -5,6 +5,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
 using Size = SemanticTokens.Core.Size;
+using Constants = SemanticTokens.Core.Constants;
 
 namespace SemanticTokens.Sixel;
 

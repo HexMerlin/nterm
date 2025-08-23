@@ -13,7 +13,7 @@ public class ConsoleDemo
         Console.ForegroundColor = Color.MediumSpringGreen;
         Console.WriteLine();
         Console.WriteLine("=== Terminal Capabilities ===");
-        Console.WriteLine($"SIXEL Support: {TerminalCapabilities.IsSupported}");
+        Console.WriteLine($"SIXEL Support: {TerminalCapabilities.IsSixelSupported}");
         Console.WriteLine($"Cell Size: {TerminalCapabilities.CellSize.Width}x{TerminalCapabilities.CellSize.Height}px");
         Console.WriteLine($"Window Size: {TerminalCapabilities.WindowCharacterSize.Width}x{TerminalCapabilities.WindowCharacterSize.Height} chars");
         Console.WriteLine();

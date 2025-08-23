@@ -1,8 +1,9 @@
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
+using SemanticTokens.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using Size = SemanticTokens.Core.Size;
 
 namespace SemanticTokens.Sixel.Encoder;

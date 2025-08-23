@@ -4,6 +4,7 @@ using System.Numerics;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Constants = SemanticTokens.Core.Constants;
 
 namespace SemanticTokens.Sixel;
 

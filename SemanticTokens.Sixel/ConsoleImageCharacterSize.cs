@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using SemanticTokens.Core;
 using Size = SemanticTokens.Core.Size;
 
 namespace SemanticTokens.Sixel;
