@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Text;
+using System.Buffers;
 using SemanticTokens.Core;
 
 namespace SemanticTokens.Sixel;
@@ -93,7 +93,7 @@ public static class TerminalCapabilities
         try
         {
             // Query cell size: ESC[16t
-            ReadOnlySpan<char> response = QueryTerminal("[16t");
+            ReadOnlySpan<char> response = QueryTerminal(Constants.CellPixelSizeQuery);
             
             // Expected format: [6;height;width;t
             Span<Range> ranges = stackalloc Range[4];
@@ -122,7 +122,7 @@ public static class TerminalCapabilities
         try
         {
             // Query window pixel size: ESC[14t
-            ReadOnlySpan<char> response = QueryTerminal("[14t");
+            ReadOnlySpan<char> response = QueryTerminal(Constants.WindowPixelSizeQuery);
             
             // Expected format: [4;height;width;t
             Span<Range> ranges = stackalloc Range[4];
@@ -153,7 +153,7 @@ public static class TerminalCapabilities
         try
         {
             // Query synchronized output support: ESC[?2026$p
-            ReadOnlySpan<char> response = QueryTerminal("[?2026$p", 'y');
+            ReadOnlySpan<char> response = QueryTerminal(Constants.SyncSupportQuery, 'y');
             
             // Synchronized output support indicated by "1" in response
             // Expected format: [?2026;1$y where "1" indicates support
@@ -173,17 +173,17 @@ public static class TerminalCapabilities
     /// <returns>Terminal response excluding control characters</returns>
     public static ReadOnlySpan<char> QueryTerminal(string query, params char[] endChars)
     {
-        // Default terminator = last char of query (e.g. 't' for CSI … t)
+        // Default terminator = last char of query (e.g., 't' for "[14t")
         char defaultTerm = query.Length > 0 ? query[^1] : 't';
         char term = (endChars is { Length: > 0 }) ? endChars[0] : defaultTerm;
 
-        // Small StringBuilder – replies are short (e.g., "[4;969;1872")
-        StringBuilder response = new(64);
+        char[] buffer = ArrayPool<char>.Shared.Rent(64);
+        int length = 0;
 
         try
         {
             // Send ESC + query (e.g., "\x1b[14t")
-            Console.Write("\x1b");
+            Console.Write(Constants.ESC);
             Console.Write(query);
 
             // Collect until we see the terminator or timeout
@@ -207,16 +207,27 @@ public static class TerminalCapabilities
 
                 // Keep only visible payload (digits, ';', '[', etc.). Drop ESC and other controls.
                 if (!char.IsControl(ch))
-                    response.Append(ch);
+                {
+                    if (length == buffer.Length)
+                    {
+                        char[] bigger = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
+                        buffer.AsSpan(0, length).CopyTo(bigger);
+                        ArrayPool<char>.Shared.Return(buffer);
+                        buffer = bigger;
+                    }
+                    buffer[length++] = ch;
+                }
             }
         }
         catch
         {
-            // swallow – return empty span on failure (matches your original behavior)
+            // Swallow and return empty
         }
 
-        // NOTE: This returns a span over a newly created string (safe for consumer to read immediately)
-        return response.ToString().AsSpan();
+        // Materialize to immutable string, then return span over it
+        string result = length == 0 ? string.Empty : new string(buffer, 0, length);
+        ArrayPool<char>.Shared.Return(buffer);
+        return result.AsSpan();
     }
 
 }

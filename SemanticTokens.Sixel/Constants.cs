@@ -31,6 +31,9 @@ internal static class Constants
     
     // Terminal queries
     public const string DeviceAttributesQuery = "[c";
+    public const string WindowPixelSizeQuery = "[14t";      // response: "[4;{height};{width}"
+    public const string CellPixelSizeQuery = "[16t";        // response: "[6;{height};{width}"
+    public const string SyncSupportQuery = "[?2026$p";      // response ends with 'y'
     
     // Sixel encoding characters
     public const byte SpecialChNr = 0x6d;

@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using SixLabors.ImageSharp;
+using Size = SemanticTokens.Core.Size;
 
 namespace SemanticTokens.Sixel;
 
@@ -45,7 +45,7 @@ public readonly struct ConsoleImageCharacterSize : IEquatable<ConsoleImageCharac
     /// <returns>Character grid dimensions with precision indicator</returns>
     public static ConsoleImageCharacterSize FromPixelSize(SemanticTokens.Core.Size pixelSize, bool addSafetyMargin = false)
     {
-        SemanticTokens.Core.Size cellSize = TerminalCapabilities.CellSize;
+        Size cellSize = TerminalCapabilities.CellSize;
         
         // Calculate exact character dimensions using ceiling to ensure bounding box coverage
         int columns = (int)Math.Ceiling((double)pixelSize.Width / cellSize.Width);
@@ -75,7 +75,7 @@ public readonly struct ConsoleImageCharacterSize : IEquatable<ConsoleImageCharac
     public static ConsoleImageCharacterSize FromConsoleImage(ConsoleImage image, bool addSafetyMargin = false) =>
         FromPixelSize(image.DisplaySize, addSafetyMargin);
 
-    private static CharacterSizePrecision DeterminePrecision(SemanticTokens.Core.Size cellSize)
+    private static CharacterSizePrecision DeterminePrecision(Size cellSize)
     {
         // Default size indicates detection failure - use estimated precision
         if (cellSize.Width == 10 && cellSize.Height == 20)
