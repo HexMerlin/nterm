@@ -1,8 +1,21 @@
-﻿using System.Reflection;
-using SemanticTokens.Core;
+﻿using SemanticTokens.Core;
 using SemanticTokens.Sixel;
+using System.Reflection;
 
 namespace SemanticTokens.Examples;
+
+
+public sealed record ChatEntry(ConsoleImage AvatarImage, string SenderName, string Text, Color SenderNameColor, Color TextColor)
+{
+    public void WriteToConsole()
+    {
+        Console.WriteImage(AvatarImage.ConsoleData);
+        Console.Write(" ");
+        Console.Write(SenderName, SenderNameColor);
+        Console.Write(" ");
+        Console.WriteLine(Text, TextColor);
+    }
+}
 
 /// <summary>
 /// Perfect console image demonstration using Optimized ConsoleImage API.
@@ -18,9 +31,9 @@ public sealed class ConsoleImageDemo
     public const string ImageAI = "Images.ai.png";
 
     // Pre-built optimized images (authority pattern)
-    private readonly ConsoleImage _userAvatar;
-    private readonly ConsoleImage _botAvatar;
-    private readonly ConsoleImage _aiAvatar;
+    private ConsoleImage UserAvatarImage { get; }
+    private ConsoleImage BotAvatarImage { get; }
+    private ConsoleImage AiAvatarImage { get; }
 
     /// <summary>
     /// Constructs demo with pre-encoded console images.
@@ -30,88 +43,55 @@ public sealed class ConsoleImageDemo
         // Build perfect console images once during construction
         // Use Examples assembly since that's where the embedded resources are
         Assembly examplesAssembly = typeof(ConsoleImageDemo).Assembly;
-        
-        _userAvatar = ConsoleImageBuilder.FromEmbeddedResource(ImageUser, examplesAssembly)
+
+        UserAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageUser, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[👤]")
             .WithTransparency(Transparency.Default)
             .Build();
 
-        _botAvatar = ConsoleImageBuilder.FromEmbeddedResource(ImageBot, examplesAssembly)
+        BotAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageBot, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[🤖]")
             .WithTransparency(Transparency.Default)
             .Build();
 
-        _aiAvatar = ConsoleImageBuilder.FromEmbeddedResource(ImageAI, examplesAssembly)
+        AiAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageAI, examplesAssembly)
             .WithCharacterSize(8, 8)
             .WithFallbackText("[🧠]")
             .WithTransparency(Transparency.Default)
             .Build();
     }
 
+
+
     /// <summary>
-    /// Demonstrates perfect console image usage.
+    /// Demonstrates example console image usage.
     /// </summary>
     /// <remarks>
-    /// Ultra-clean chat interface replacing all ugly cursor manipulation with
-    /// simple Console.WriteImage() calls. Single execution path with automatic
-    /// SIXEL/fallback handling.
+    /// Chat diaglog example with automatic SIXEL/fallback handling for images.
     /// </remarks>
     public void Run()
     {
-         Console.WriteLine();
-
-        PrintChatMessage(
-            avatar: _userAvatar,
-            speakerLabel: "User",
-            speakerColor: new Color(200, 255, 160),
-            text: @"Hey! Could you summarize today's headlines? Also—can you show avatars inline?
-Let's make sure text aligns neatly with those images."
-        );
-
-        PrintChatMessage(
-            avatar: _botAvatar,
-            speakerLabel: "Bot", 
-            speakerColor: new Color(160, 200, 255),
-            text: @"Sure thing! I'll format the output with bullets and keep it short. 
-If your terminal supports SIXEL, you should see avatars on the left."
-        );
-
-        PrintChatMessage(
-            avatar: _aiAvatar,
-            speakerLabel: "AI",
-            speakerColor: new Color(255, 200, 160),
-            text: @"I'm the LLM-powered one. If SIXEL isn't available, you'll just see clean fallback text.
-Either way, your 24-bit colors continue to work everywhere."
-        );
-
-    }
-
-    /// <summary>
-    /// Perfect chat message rendering with ultra-clean API.
-    /// </summary>
-    /// <param name="avatar">Pre-encoded console image</param>
-    /// <param name="speakerLabel">Speaker name</param>
-    /// <param name="speakerColor">Speaker name color</param>
-    /// <param name="text">Message text</param>
-    /// <remarks>
-    /// Single execution path replacing hundreds of lines of ugly cursor manipulation.
-    /// Authority-driven: ConsoleImage handles encoding, Console handles output.
-    /// </remarks>
-    private static void PrintChatMessage(ConsoleImage avatar, string speakerLabel, SemanticTokens.Core.Color speakerColor, string text)
-    {
-        // Perfect single-line image output
-        Console.WriteImage(avatar.ConsoleData);
-        Console.Write(" ");
-        
-        // Perfect colored speaker label
-        Console.Write(speakerLabel, speakerColor, SemanticTokens.Core.Color.Black);
-        Console.Write(": ");
-        
-        // Perfect text output
-        Console.WriteLine(text);
         Console.WriteLine();
-    }
 
+        ChatEntry userEntry = new ChatEntry(UserAvatarImage, "[User]", @"Hey! Can you show avatars inline?
+Let's make sure text aligns neatly with those images.", Color.Cyan, Color.LightCyan);
+
+        ChatEntry botEntry = new ChatEntry(BotAvatarImage, "[Bot]", @"Sure thing! I'll format the output with bullets and keep it short. 
+If your terminal supports SIXEL, you should see avatars on the left.", Color.OrangeRed, Color.Goldenrod);
+
+        ChatEntry aiEntry = new ChatEntry(AiAvatarImage, "[AI]", @"Hi I'm an LLM-powered AI. If SIXEL isn't available, you'll just see clean fallback text.
+Either way, your 24-bit colors continue to work everywhere.", Color.GreenYellow, Color.LightGreen);
+
+
+        userEntry.WriteToConsole();
+        Console.WriteLine();
+        botEntry.WriteToConsole();
+        Console.WriteLine();
+        aiEntry.WriteToConsole();
+        Console.WriteLine();
+
+        Console.ForegroundColor = Color.White;
+    }
 }

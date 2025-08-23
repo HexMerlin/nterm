@@ -25,12 +25,12 @@ public class ConsoleDemo
         Console.ForegroundColor = Color.White;
 
         //Testing to string conversion to known color "00FFEBCD" (Blanched Almond)
-        Color color1 = 0x00FFEBCDu;
-        Console.WriteLine($"Named color code 0x00FFEBCDu ToString: " + color1.ToString());
+        Color color1 = 0xFFFFEBCDu;
+        Console.WriteLine($"Named color code 0xFFFFEBCDu ToString: " + color1.ToString());
 
         //Testing to string conversion to non-named color - outputs RGB values instead "R:255, G:235, B:206"
-        Color color2 = 0x00FFEBCEu;
-        Console.WriteLine("Unnamed color code 0x00FFEBCEu ToString" + color2.ToString());
+        Color color2 = 0xFFFFEBCEu;
+        Console.WriteLine("Unnamed color code 0xFFFFEBCEu ToString" + color2.ToString());
 
         Console.WriteLine();
 

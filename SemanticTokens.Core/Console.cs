@@ -31,7 +31,8 @@ public static class Console
         get => field;
         set
         {
-            if (field == value) return;
+            if (value.IsIgnored) return; //value is ignored color - skip setting
+            if (value == field) return;
             field = value;
             WriteForegroundColorToStdout(value);
         }
@@ -50,7 +51,8 @@ public static class Console
         get => field;
         set
         {
-            if (field == value) return;
+            if (value.IsIgnored) return; //value is ignored color - skip setting
+            if (value == field) return;
             field = value;
             WriteBackgroundColorToStdout(value);
         }
@@ -98,30 +100,19 @@ public static class Console
         Stdout.Write(charBuf[..charLen]);
     }
 
-    /// <summary>
-    /// Writes a character with specified foreground color.
-    /// </summary>
-    /// <param name="ch">Character to write</param>
-    /// <param name="foreground">Foreground color</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write(char ch, Color foreground)
-    {
-        ForegroundColor = foreground;
-        Write(ch);
-    }
 
     /// <summary>
     /// Writes a character with specified colors using optimized color caching.
     /// </summary>
     /// <param name="ch">Character to write</param>
-    /// <param name="foreground">Foreground color</param>
-    /// <param name="background">Background color</param>
+    /// <param name="foreground">Foreground color.</param>
+    /// <param name="background">Background color. Optional.</param>
     /// <remarks>
-    /// Ultra-optimized implementation avoids redundant color escape sequences when colors haven't changed.
     /// Updates the ForegroundColor and BackgroundColor properties if colors have changed.
+    /// Avoids redundant color escape sequences when colors haven't changed.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write(char ch, Color foreground, Color background)
+    public static void Write(char ch, Color foreground, Color background = default)
     {
         // Set colors using properties (which handle ANSI output automatically)
         ForegroundColor = foreground;
@@ -170,11 +161,11 @@ public static class Console
     /// </summary>
     /// <param name="str">String to write</param>
     /// <param name="foreground">Foreground color</param>
-    /// <param name="background">Background color</param>
+    /// <param name="background">Background color. Optional.</param>
     /// <remarks>
     /// Sets colors using properties then delegates to non-colored Write method.
     /// </remarks>
-    public static void Write(ReadOnlySpan<char> str, Color foreground, Color background)
+    public static void Write(ReadOnlySpan<char> str, Color foreground, Color background = default)
     {
         ForegroundColor = foreground;
         BackgroundColor = background;
@@ -219,12 +210,12 @@ public static class Console
     /// </summary>
     /// <param name="str">String to write</param>
     /// <param name="foreground">Foreground color</param>
-    /// <param name="background">Background color</param>
+    /// <param name="background">Background color. Optional.</param>
     /// <remarks>
     /// Sets colors using properties then delegates to non-colored WriteLine method.
     /// Uses LF (\n) line terminator only, never CRLF (\r\n).
     /// </remarks>
-    public static void WriteLine(ReadOnlySpan<char> str, Color foreground, Color background)
+    public static void WriteLine(ReadOnlySpan<char> str, Color foreground, Color background = default)
     {
         ForegroundColor = foreground;
         BackgroundColor = background;
