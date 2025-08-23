@@ -1,5 +1,6 @@
-using SixLabors.ImageSharp;
+
 using System.Reflection;
+using Size = SemanticTokens.Core.Size;
 
 namespace SemanticTokens.Sixel;
 

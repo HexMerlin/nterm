@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Size = SemanticTokens.Core.Size;
+
 namespace SemanticTokens.Sixel.Encoder;
 
 /// <summary>
@@ -15,9 +17,9 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     public Image<Rgba32> Image { get; } = img;
     public string? Format { get; } = format;
 
-    public SixLabors.ImageSharp.Size CanvasSize
+    public Size CanvasSize
     {
-        get => Image.Size;
+        get => ToSize(Image.Size);
         set => Resize(value);
     }
 
@@ -35,6 +37,9 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// Delay milliseconds for each frame; anything less than 0 means use the default value for the image frame.
     /// </summary>
     protected int[] FrameDelays { get; set; } = [-1];
+
+
+    private static Size ToSize(SixLabors.ImageSharp.Size size) => new(size.Width, size.Height);
 
     /// <summary>
     /// Resize the image
@@ -169,8 +174,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// </summary>
     public IEnumerable<string> EncodeFrames()
     {
-        var frames = Image.Frames;
-        for (var i = 0; i < frames.Count; i++)
+        ImageFrameCollection<Rgba32> frames = Image.Frames;
+        for (int i = 0; i < frames.Count; i++)
         {
             yield return EncodeFrame(frames[i]);
         }
@@ -191,7 +196,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <returns>Frame delay in milliseconds</returns>
     public virtual int GetFrameDelay(int frameIndex)
     {
-        var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
+        int delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
         return delay < 0 ? 100 : delay;
     }
 
@@ -216,7 +221,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                                                             [EnumeratorCancellation]
                                                             CancellationToken cancellationToken = default)
     {
-        var frames = Image.Frames;
+        ImageFrameCollection<Rgba32> frames = Image.Frames;
         if (frames.Count < 2)
         {
             yield return EncodeFrame(frames[0]);
@@ -234,25 +239,25 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
         IEnumerable<(int Index, int FrameIndex)> frameIndexEnumerator()
         {
-            var count = endFrame - startFrame + 1;
-            for (var i = 0; i < count; i++)
+            int count = endFrame - startFrame + 1;
+            for (int i = 0; i < count; i++)
             {
                 yield return (i, i + startFrame);
             }
         }
 
-        var repeatCount = overwriteRepeat >= 0 ? (uint)overwriteRepeat : RepeatCount;
-        var delayMiliseconds = frameIndexEnumerator().Select(t => GetFrameDelay(t.FrameIndex))
+        uint repeatCount = overwriteRepeat >= 0 ? (uint)overwriteRepeat : RepeatCount;
+        int[] delayMiliseconds = frameIndexEnumerator().Select(t => GetFrameDelay(t.FrameIndex))
                                                      .ToArray();
 
         // cache of Sixel strings
-        var sixelFrames = new string[frames.Count];
+        string[] sixelFrames = new string[frames.Count];
 
         // Asynchronously store images as Sixel strings
-        using var mutex = new BlockingCollection<bool>();
-        var sixelFramesTask = Task.Run(() =>
+        using BlockingCollection<bool> mutex = new BlockingCollection<bool>();
+        Task sixelFramesTask = Task.Run(() =>
         {
-            foreach (var (i, frameIndex) in frameIndexEnumerator())
+            foreach ((int i, int frameIndex) in frameIndexEnumerator())
             {
                 sixelFrames[i] = EncodeFrame(frames[frameIndex]);
                 mutex.Add(true);
@@ -263,14 +268,14 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         DateTime start;
         // The first time of loop:
         // as soon as encoded in Sixel string
-        foreach (var (i, _) in frameIndexEnumerator())
+        foreach ((int i, int _) in frameIndexEnumerator())
         {
             start = DateTime.Now;
             mutex.Take(cancellationToken);
             yield return sixelFrames[i];
             if (delayMiliseconds[i] > 0)
             {
-                var elaps = (int)(DateTime.Now - start).TotalMilliseconds;
+                int elaps = (int)(DateTime.Now - start).TotalMilliseconds;
                 if (elaps < delayMiliseconds[i])
                     await Task.Delay(delayMiliseconds[i], cancellationToken);
             }
@@ -334,7 +339,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         }
         try
         {
-            await foreach (var sixelString in EncodeFramesAsync(overwriteRepeat,
+            await foreach (string sixelString in EncodeFramesAsync(overwriteRepeat,
                                                                 startFrame,
                                                                 endFrame,
                                                                 cancellationToken))

@@ -4,6 +4,7 @@ using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
+using Size = SemanticTokens.Core.Size;
 
 namespace SemanticTokens.Sixel;
 
@@ -173,7 +174,7 @@ public static class SixelEncode
             // Force exact dimensions without aspect ratio preservation
             img.Mutate(x => x.Resize(new ResizeOptions
             {
-                Size = new Size(canvasWidth, canvasHeight),
+                Size = new SixLabors.ImageSharp.Size(canvasWidth, canvasHeight),
                 Mode = ResizeMode.Stretch  // Force exact dimensions, ignore aspect ratio
             }));
         }
@@ -204,7 +205,7 @@ public static class SixelEncode
     /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
     public static string EncodeFrame(ImageFrame<Rgba32> frame,
                                      ReadOnlySpan<SemanticTokens.Core.Color> colorPalette,
-                                     Size frameSize,
+                                     SemanticTokens.Core.Size frameSize,
                                      Transparency transp = Transparency.Default,
                                      Rgba32? tc = null,
                                      Rgba32? bg = null)
