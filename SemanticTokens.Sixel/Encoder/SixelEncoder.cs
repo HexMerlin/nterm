@@ -280,7 +280,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         int count = 0;
         while (repeatCount < 1 || repeatCount > ++count)
         {
-            foreach (var (i, _) in frameIndexEnumerator())
+            foreach ((int i, int _) in frameIndexEnumerator())
             {
                 yield return sixelFrames[i];
                 if (delayMiliseconds[i] > 0)
@@ -318,7 +318,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
         bool isOpaque = TransparencyMode == Transparency.None;
 
-        Size cursorSize = TerminalCapabilities.CellSize;
+        SemanticTokens.Core.Size cursorSize = TerminalCapabilities.CellSize;
         int lines = (int)Math.Ceiling((double)Image.Height / cursorSize.Height);
         // Allocate rows for the image height
         Console.Write(new string('\n', lines));

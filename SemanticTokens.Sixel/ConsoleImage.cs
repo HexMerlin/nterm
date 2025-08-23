@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using SemanticTokens.Core;
 
 namespace SemanticTokens.Sixel;
 
@@ -13,13 +14,13 @@ namespace SemanticTokens.Sixel;
 public readonly struct ConsoleImage : IEquatable<ConsoleImage>
 {
     private readonly string _encodedData;
-    private readonly ConsoleImageSize _displaySize;
+    private readonly Size _displaySize;
     private readonly bool _hasOptimizedEncoding;
 
     /// <summary>
     /// Display dimensions in pixels.
     /// </summary>
-    public ConsoleImageSize DisplaySize => _displaySize;
+    public Size DisplaySize => _displaySize;
 
     /// <summary>
     /// Display dimensions in character grid cells.
@@ -55,7 +56,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="encodedData">Encoded image data or fallback text</param>
     /// <param name="displaySize">Target display size in pixels</param>
     /// <param name="hasOptimizedEncoding">Indicates whether encodedData contains optimized encoding</param>
-    public ConsoleImage(string encodedData, ConsoleImageSize displaySize, bool hasOptimizedEncoding)
+    public ConsoleImage(string encodedData, Size displaySize, bool hasOptimizedEncoding)
     {
         _encodedData = encodedData;
         _displaySize = displaySize;

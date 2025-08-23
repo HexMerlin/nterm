@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using SemanticTokens.Core;
-using SixLabors.ImageSharp;
 
 namespace SemanticTokens.Sixel;
 

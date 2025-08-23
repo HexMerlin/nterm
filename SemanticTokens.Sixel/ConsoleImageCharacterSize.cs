@@ -43,9 +43,9 @@ public readonly struct ConsoleImageCharacterSize : IEquatable<ConsoleImageCharac
     /// <param name="pixelSize">Image size in pixels</param>
     /// <param name="addSafetyMargin">Add +1 cell in each dimension for guaranteed robustness</param>
     /// <returns>Character grid dimensions with precision indicator</returns>
-    public static ConsoleImageCharacterSize FromPixelSize(ConsoleImageSize pixelSize, bool addSafetyMargin = false)
+    public static ConsoleImageCharacterSize FromPixelSize(SemanticTokens.Core.Size pixelSize, bool addSafetyMargin = false)
     {
-        Size cellSize = TerminalCapabilities.CellSize;
+        SemanticTokens.Core.Size cellSize = TerminalCapabilities.CellSize;
         
         // Calculate exact character dimensions using ceiling to ensure bounding box coverage
         int columns = (int)Math.Ceiling((double)pixelSize.Width / cellSize.Width);
@@ -75,7 +75,7 @@ public readonly struct ConsoleImageCharacterSize : IEquatable<ConsoleImageCharac
     public static ConsoleImageCharacterSize FromConsoleImage(ConsoleImage image, bool addSafetyMargin = false) =>
         FromPixelSize(image.DisplaySize, addSafetyMargin);
 
-    private static CharacterSizePrecision DeterminePrecision(Size cellSize)
+    private static CharacterSizePrecision DeterminePrecision(SemanticTokens.Core.Size cellSize)
     {
         // Default size indicates detection failure - use estimated precision
         if (cellSize.Width == 10 && cellSize.Height == 20)

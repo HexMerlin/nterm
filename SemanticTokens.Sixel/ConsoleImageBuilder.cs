@@ -10,8 +10,8 @@ namespace SemanticTokens.Sixel;
 public sealed class ConsoleImageBuilder
 {
     private IImageSource Source { get; }
-    private ConsoleImageSize? _targetPixelSize;
-    private ConsoleImageSize? _targetCharacterSize;
+    private SemanticTokens.Core.Size? _targetPixelSize;
+    private SemanticTokens.Core.Size? _targetCharacterSize;
     private string _fallbackText = "[image]";
     private Transparency _transparency = Transparency.Default;
     private bool _keepAspectRatio = true;
@@ -60,7 +60,7 @@ public sealed class ConsoleImageBuilder
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
-        _targetPixelSize = new ConsoleImageSize(width, height);
+        _targetPixelSize = new SemanticTokens.Core.Size(width, height);
         return this;
     }
 
@@ -69,7 +69,7 @@ public sealed class ConsoleImageBuilder
     /// </summary>
     /// <param name="size">Size in pixels</param>
     /// <returns>This builder for fluent configuration</returns>
-    public ConsoleImageBuilder WithPixelSize(ConsoleImageSize size)
+    public ConsoleImageBuilder WithPixelSize(SemanticTokens.Core.Size size)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(size.Width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(size.Height);
@@ -87,7 +87,7 @@ public sealed class ConsoleImageBuilder
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cols);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rows);
-        _targetCharacterSize = new ConsoleImageSize(cols, rows);
+        _targetCharacterSize = new SemanticTokens.Core.Size(cols, rows);
         return this;
     }
 
@@ -146,7 +146,7 @@ public sealed class ConsoleImageBuilder
 
     private ConsoleImage BuildFromStream(Stream imageStream)
     {
-        ConsoleImageSize targetSize = ComputeTargetSize();
+        SemanticTokens.Core.Size targetSize = ComputeTargetSize();
         
         // Optimized single execution path
         if (TerminalCapabilities.IsSupported)
@@ -173,13 +173,13 @@ public sealed class ConsoleImageBuilder
         return new ConsoleImage(_fallbackText, targetSize, hasOptimizedEncoding: false);
     }
 
-    private ConsoleImageSize ComputeTargetSize()
+    private SemanticTokens.Core.Size ComputeTargetSize()
     {
         // Character-based sizing takes precedence (authority-driven)
         if (_targetCharacterSize.HasValue)
         {
-            ConsoleImageSize charSize = _targetCharacterSize.Value;
-            Size cellSize = TerminalCapabilities.CellSize;
+            SemanticTokens.Core.Size charSize = _targetCharacterSize.Value;
+            SemanticTokens.Core.Size cellSize = TerminalCapabilities.CellSize;
             
             if (_keepAspectRatio)
             {
@@ -193,14 +193,14 @@ public sealed class ConsoleImageBuilder
                         charSize.Width * cellSize.Width,
                         charSize.Height * cellSize.Height
                     );
-                    
-                    ConsoleImageSize result = new ConsoleImageSize(targetPixelDimension, targetPixelDimension);
+
+                    SemanticTokens.Core.Size result = new SemanticTokens.Core.Size(targetPixelDimension, targetPixelDimension);
                     return result;
                 }
             }
-            
+
             // Standard character-based sizing (no aspect ratio adjustment)
-            ConsoleImageSize standardResult = new ConsoleImageSize(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
+            SemanticTokens.Core.Size standardResult = new SemanticTokens.Core.Size(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
             return standardResult;
         }
 
@@ -211,7 +211,7 @@ public sealed class ConsoleImageBuilder
         }
 
         // Default: reasonable console image size
-        return new ConsoleImageSize(320, 240);
+        return new SemanticTokens.Core.Size(320, 240);
     }
 }
 
