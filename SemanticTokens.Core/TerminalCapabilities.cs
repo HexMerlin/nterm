@@ -67,14 +67,14 @@ public static class TerminalCapabilities
             // Traditional SIXEL support indicated by parameter "4" in response
             bool hasTraditionalSupport = response.Contains(";4;", StringComparison.Ordinal) ||
                                         response.EndsWith(";4", StringComparison.Ordinal);
-            
-            // Modern Windows Terminal with SIXEL support often reports parameter "61" and others
-            // Let's check for modern terminal patterns that likely support SIXEL
-            bool hasModernSupport = response.Contains("61", StringComparison.Ordinal) && 
-                                   response.Contains("24", StringComparison.Ordinal); // Common in modern terminals
-            
-            bool hasSupport = hasTraditionalSupport || hasModernSupport;
-            
+
+            bool hasSupport = hasTraditionalSupport;
+
+            // Modern terminals with SIXEL support sometimes reports parameter "61" and others
+            // If getting needed, to resolve false negative, we could also check for modern terminal patterns that likely support SIXEL
+            // But this check will come with false positives on some terminals (e.g. VS Code), so use it only if we get false negatives
+            // hasSupport |= response.Contains("61", StringComparison.Ordinal) && response.Contains("24", StringComparison.Ordinal); // Common in modern terminals
+
             return hasSupport;
         }
         catch
