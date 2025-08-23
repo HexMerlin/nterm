@@ -1,9 +1,10 @@
 ﻿using SemanticTokens.Core;
 using SemanticTokens.Sixel;
+using System.Collections.Immutable;
 
 namespace SemanticTokens.Examples;
 
-public sealed record ChatEntry(ConsoleImage AvatarImage, string SenderName, string Text, Color SenderNameColor, Color TextColor)
+public sealed record ChatEntry(ConsoleImage AvatarImage, string SenderName, ImmutableArray<string> TextLines, Color SenderNameColor, Color TextColor)
 {
     public void WriteToConsole()
     {
@@ -11,6 +12,9 @@ public sealed record ChatEntry(ConsoleImage AvatarImage, string SenderName, stri
         Console.Write(" ");
         Console.Write(SenderName, SenderNameColor);
         Console.Write(" ");
-        Console.WriteLine(Text, TextColor);
+        foreach (string line in TextLines)
+        {
+            Console.WriteLine(line, TextColor);
+        }
     }
 }
