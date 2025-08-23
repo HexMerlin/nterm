@@ -178,7 +178,6 @@ public static class SixelEncode
             }));
         }
 
-        // 減色処理
         // Color Reduction
         img.Mutate(x =>
         {

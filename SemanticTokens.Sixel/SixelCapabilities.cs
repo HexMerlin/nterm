@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using SixLabors.ImageSharp;
@@ -5,7 +6,7 @@ using SixLabors.ImageSharp;
 namespace SemanticTokens.Sixel;
 
 /// <summary>
-/// Terminal capability detection with caching and ultra-performance.
+/// Terminal capability detection with caching and performance.
 /// Single authority for SIXEL support determination and terminal characteristics.
 /// </summary>
 public static class SixelCapabilities
@@ -165,49 +166,57 @@ public static class SixelCapabilities
     }
 
     /// <summary>
-    /// Ultra-optimized terminal query with timeout.
+    /// Optimized terminal query with timeout.
     /// </summary>
     /// <param name="query">Control sequence to send (without ESC prefix)</param>
     /// <param name="endChars">Response termination characters</param>
     /// <returns>Terminal response excluding control characters</returns>
-    private static ReadOnlySpan<char> QueryTerminal(string query, params char[] endChars)
+    public static ReadOnlySpan<char> QueryTerminal(string query, params char[] endChars)
     {
-        char[] defaultEndChars = [query[^1]]; // Use last character as default terminator
-        char[] terminators = endChars.Length > 0 ? endChars : defaultEndChars;
-        
-        var response = new StringBuilder(64);
+        // Default terminator = last char of query (e.g. 't' for CSI … t)
+        char defaultTerm = query.Length > 0 ? query[^1] : 't';
+        char term = (endChars is { Length: > 0 }) ? endChars[0] : defaultTerm;
+
+        // Small StringBuilder – replies are short (e.g., "[4;969;1872")
+        StringBuilder response = new(64);
 
         try
         {
-            // Send query with 100ms timeout
-            using var cts = new CancellationTokenSource(100);
-            
-            Console.Write($"\x1B{query}");
-            
-            // Collect response until terminator or timeout
-            DateTime start = DateTime.UtcNow;
-            while ((DateTime.UtcNow - start).TotalMilliseconds < 100)
+            // Send ESC + query (e.g., "\x1b[14t")
+            Console.Write("\x1b");
+            Console.Write(query);
+
+            // Collect until we see the terminator or timeout
+            Stopwatch sw = Stopwatch.StartNew();
+            SpinWait spinner = new SpinWait();
+
+            while (sw.ElapsedMilliseconds < 50)
             {
-                if (!Console.KeyAvailable)
+                if (!System.Console.KeyAvailable)
                 {
-                    Thread.Sleep(1);
+                    // cheaper than Thread.Sleep(1) in short waits
+                    spinner.SpinOnce();
                     continue;
                 }
 
+                // Read one char without echo
                 char ch = Console.ReadKey(intercept: true).KeyChar;
-                
-                if (Array.IndexOf(terminators, ch) >= 0)
+
+                if (ch == term)
                     break;
-                    
+
+                // Keep only visible payload (digits, ';', '[', etc.). Drop ESC and other controls.
                 if (!char.IsControl(ch))
                     response.Append(ch);
             }
         }
         catch
         {
-            // Return empty on any failure
+            // swallow – return empty span on failure (matches your original behavior)
         }
 
+        // NOTE: This returns a span over a newly created string (safe for consumer to read immediately)
         return response.ToString().AsSpan();
     }
+
 }

@@ -5,7 +5,7 @@ using SemanticTokens.Sixel;
 namespace SemanticTokens.Examples;
 
 /// <summary>
-/// Perfect console image demonstration using ultra-optimized ConsoleImage API.
+/// Perfect console image demonstration using Optimized ConsoleImage API.
 /// </summary>
 /// <remarks>
 /// Replaces all ugly manual ANSI cursor manipulation with clean single-execution-path design.
@@ -86,12 +86,6 @@ If your terminal supports SIXEL, you should see avatars on the left."
 Either way, your 24-bit colors continue to work everywhere."
         );
 
-        Console.WriteLine();
-        Console.WriteLine("=== Terminal Capabilities ===");
-        Console.WriteLine($"SIXEL Support: {SixelCapabilities.IsSupported}");
-        Console.WriteLine($"Cell Size: {SixelCapabilities.CellSize.Width}x{SixelCapabilities.CellSize.Height}px");
-        Console.WriteLine($"Window Size: {SixelCapabilities.WindowCharacterSize.Width}x{SixelCapabilities.WindowCharacterSize.Height} chars");
-        Console.WriteLine();
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 ﻿using SemanticTokens.Core;
+using SemanticTokens.Sixel;
 using System.Text;
 
 namespace SemanticTokens.Examples;
@@ -8,6 +9,15 @@ public class ConsoleDemo
 
     public void Run()
     {
+
+        Console.ForegroundColor = Color.MediumSpringGreen;
+        Console.WriteLine();
+        Console.WriteLine("=== Terminal Capabilities ===");
+        Console.WriteLine($"SIXEL Support: {SixelCapabilities.IsSupported}");
+        Console.WriteLine($"Cell Size: {SixelCapabilities.CellSize.Width}x{SixelCapabilities.CellSize.Height}px");
+        Console.WriteLine($"Window Size: {SixelCapabilities.WindowCharacterSize.Width}x{SixelCapabilities.WindowCharacterSize.Height} chars");
+        Console.WriteLine();
+
         Console.WriteLine("=== Testing New Console API ===");
 
         System.Console.OutputEncoding = Encoding.UTF8;

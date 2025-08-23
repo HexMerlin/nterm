@@ -4,7 +4,7 @@ using System.Reflection;
 namespace SemanticTokens.Sixel;
 
 /// <summary>
-/// Fluent builder for ConsoleImage with ultra-optimized encoding pipeline.
+/// Fluent builder for ConsoleImage with Optimized encoding pipeline.
 /// Single-use authority-driven builder following perfect execution path philosophy.
 /// </summary>
 public sealed class ConsoleImageBuilder
@@ -148,7 +148,7 @@ public sealed class ConsoleImageBuilder
     {
         ConsoleImageSize targetSize = ComputeTargetSize();
         
-        // Ultra-optimized single execution path
+        // Optimized single execution path
         if (SixelCapabilities.IsSupported)
         {
             try
