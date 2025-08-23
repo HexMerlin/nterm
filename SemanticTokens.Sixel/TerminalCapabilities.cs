@@ -18,7 +18,7 @@ public static class TerminalCapabilities
     /// Terminal SIXEL support.
     /// </summary>
     /// <returns><see langword="true"/> <b>iff</b> terminal supports SIXEL graphics</returns>
-    public static bool IsSupported => _isSupported ??= DetectSixelSupport();
+    public static bool IsSixelSupported => _isSupported ??= DetectSixelSupport();
 
     /// <summary>
     /// Terminal cell dimensions in pixels.

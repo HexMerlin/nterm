@@ -150,7 +150,7 @@ public sealed class ConsoleImageBuilder
         SemanticTokens.Core.Size targetSize = ComputeTargetSize();
         
         // Optimized single execution path
-        if (TerminalCapabilities.IsSupported)
+        if (TerminalCapabilities.IsSixelSupported)
         {
             try
             {
