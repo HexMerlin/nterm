@@ -1,6 +1,6 @@
 
 using System.Reflection;
-using Size = SemanticTokens.Core.Size;
+using SemanticTokens.Core;
 
 namespace SemanticTokens.Sixel;
 
@@ -11,8 +11,8 @@ namespace SemanticTokens.Sixel;
 public sealed class ConsoleImageBuilder
 {
     private IImageSource Source { get; }
-    private SemanticTokens.Core.Size? _targetPixelSize;
-    private SemanticTokens.Core.Size? _targetCharacterSize;
+    private Size? _targetPixelSize;
+    private Size? _targetCharacterSize;
     private string _fallbackText = "[image]";
     private Transparency _transparency = Transparency.Default;
     private bool _keepAspectRatio = true;
@@ -179,8 +179,8 @@ public sealed class ConsoleImageBuilder
         // Character-based sizing takes precedence (authority-driven)
         if (_targetCharacterSize.HasValue)
         {
-            SemanticTokens.Core.Size charSize = _targetCharacterSize.Value;
-            SemanticTokens.Core.Size cellSize = TerminalCapabilities.CellSize;
+            Size charSize = _targetCharacterSize.Value;
+            Size cellSize = TerminalCapabilities.CellSize;
             
             if (_keepAspectRatio)
             {
@@ -195,13 +195,13 @@ public sealed class ConsoleImageBuilder
                         charSize.Height * cellSize.Height
                     );
 
-                    SemanticTokens.Core.Size result = new SemanticTokens.Core.Size(targetPixelDimension, targetPixelDimension);
+                    Size result = new Size(targetPixelDimension, targetPixelDimension);
                     return result;
                 }
             }
 
             // Standard character-based sizing (no aspect ratio adjustment)
-            SemanticTokens.Core.Size standardResult = new SemanticTokens.Core.Size(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
+            Size standardResult = new Size(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
             return standardResult;
         }
 
@@ -212,7 +212,7 @@ public sealed class ConsoleImageBuilder
         }
 
         // Default: reasonable console image size
-        return new SemanticTokens.Core.Size(320, 240);
+        return new Size(320, 240);
     }
 }
 

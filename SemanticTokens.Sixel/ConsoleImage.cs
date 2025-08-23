@@ -13,14 +13,21 @@ namespace SemanticTokens.Sixel;
 /// </remarks>
 public readonly struct ConsoleImage : IEquatable<ConsoleImage>
 {
-    private readonly string _encodedData;
-    private readonly Size _displaySize;
-    private readonly bool _hasOptimizedEncoding;
+    /// <summary>
+    /// Image dimensions in pixels.
+    /// </summary>
+    public readonly Size DisplaySize {  get; }
 
     /// <summary>
-    /// Display dimensions in pixels.
+    /// Optimized encoding availability.
     /// </summary>
-    public Size DisplaySize => _displaySize;
+    /// <returns><see langword="true"/> <b>iff</b> optimized data encoded and terminal capable.</returns>
+    public readonly bool HasOptimizedEncoding { get; }
+
+    /// <summary>
+    /// Encoded image data as string
+    /// </summary>
+    private readonly string EncodedData { get; }
 
     /// <summary>
     /// Display dimensions in character grid cells.
@@ -38,17 +45,12 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     public ConsoleImageCharacterSize SafeCharacterSize => 
         ConsoleImageCharacterSize.FromConsoleImage(this, addSafetyMargin: true);
 
-    /// <summary>
-    /// Optimized encoding availability.
-    /// </summary>
-    /// <returns><see langword="true"/> <b>iff</b> optimized data encoded and terminal capable.</returns>
-    public bool HasOptimizedEncoding => _hasOptimizedEncoding;
 
     /// <summary>
     /// Console-ready image data.
     /// </summary>
     /// <returns>Complete data ready for Console.WriteImage() - optimized or fallback text.</returns>
-    public ReadOnlySpan<char> ConsoleData => _encodedData.AsSpan();
+    public ReadOnlySpan<char> ConsoleData => EncodedData.AsSpan();
 
     /// <summary>
     /// Initializes console image with pre-encoded data.
@@ -58,11 +60,10 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="hasOptimizedEncoding">Indicates whether encodedData contains optimized encoding</param>
     public ConsoleImage(string encodedData, Size displaySize, bool hasOptimizedEncoding)
     {
-        _encodedData = encodedData;
-        _displaySize = displaySize;
-        _hasOptimizedEncoding = hasOptimizedEncoding;
+        EncodedData = encodedData;
+        DisplaySize = displaySize;
+        HasOptimizedEncoding = hasOptimizedEncoding;
     }
-
 
 
     /// <summary>
@@ -72,9 +73,9 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <returns><see langword="true"/> <b>iff</b> the specified console image is equal to this console image</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(ConsoleImage other) => 
-        _encodedData == other._encodedData && 
-        _displaySize.Equals(other._displaySize) && 
-        _hasOptimizedEncoding == other._hasOptimizedEncoding;
+        EncodedData == other.EncodedData &&
+        DisplaySize.Equals(other.DisplaySize) && 
+        HasOptimizedEncoding == other.HasOptimizedEncoding;
 
     /// <summary>
     /// Determines whether this console image is equal to the specified object.
@@ -84,7 +85,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     public override bool Equals(object? obj) => obj is ConsoleImage other && Equals(other);
 
     ///<inheritdoc/>
-    public override int GetHashCode() => HashCode.Combine(_encodedData, _displaySize, _hasOptimizedEncoding);
+    public override int GetHashCode() => HashCode.Combine(EncodedData, DisplaySize, HasOptimizedEncoding);
 
     /// <summary>
     /// Determines whether two specified console images have the same value.
