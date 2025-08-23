@@ -45,7 +45,7 @@ public readonly struct ConsoleImageCharacterSize : IEquatable<ConsoleImageCharac
     /// <returns>Character grid dimensions with precision indicator</returns>
     public static ConsoleImageCharacterSize FromPixelSize(ConsoleImageSize pixelSize, bool addSafetyMargin = false)
     {
-        Size cellSize = SixelCapabilities.CellSize;
+        Size cellSize = TerminalCapabilities.CellSize;
         
         // Calculate exact character dimensions using ceiling to ensure bounding box coverage
         int columns = (int)Math.Ceiling((double)pixelSize.Width / cellSize.Width);

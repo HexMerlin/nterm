@@ -2,9 +2,7 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SemanticTokens.Core;
 using SixLabors.ImageSharp.Processing;
-
 namespace SemanticTokens.Sixel.Encoder;
 
 /// <summary>
@@ -17,7 +15,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     public Image<Rgba32> Image { get; } = img;
     public string? Format { get; } = format;
 
-    public Size CanvasSize
+    public SixLabors.ImageSharp.Size CanvasSize
     {
         get => Image.Size;
         set => Resize(value);
@@ -320,7 +318,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
         bool isOpaque = TransparencyMode == Transparency.None;
 
-        Size cursorSize = SixelCapabilities.CellSize;
+        Size cursorSize = TerminalCapabilities.CellSize;
         int lines = (int)Math.Ceiling((double)Image.Height / cursorSize.Height);
         // Allocate rows for the image height
         Console.Write(new string('\n', lines));
@@ -329,7 +327,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         // Save the cursor position
         Console.Write($"{Constants.ESC}{Constants.CursorSave}");
         string beginSync = "", endSync = "";
-        if (SixelCapabilities.IsSyncSupported)
+        if (TerminalCapabilities.IsSyncSupported)
         {
             beginSync = Constants.ESC + Constants.SyncBegin;
             endSync = Constants.ESC + Constants.SyncEnd;

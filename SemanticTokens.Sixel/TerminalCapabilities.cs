@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using SemanticTokens.Core;
 using SixLabors.ImageSharp;
 
 namespace SemanticTokens.Sixel;
@@ -9,7 +10,7 @@ namespace SemanticTokens.Sixel;
 /// Terminal capability detection with caching and performance.
 /// Single authority for SIXEL support determination and terminal characteristics.
 /// </summary>
-public static class SixelCapabilities
+public static class TerminalCapabilities
 {
     private static bool? _isSupported;
     private static Size? _cellSize;

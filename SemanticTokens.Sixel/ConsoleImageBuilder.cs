@@ -149,7 +149,7 @@ public sealed class ConsoleImageBuilder
         ConsoleImageSize targetSize = ComputeTargetSize();
         
         // Optimized single execution path
-        if (SixelCapabilities.IsSupported)
+        if (TerminalCapabilities.IsSupported)
         {
             try
             {
@@ -179,7 +179,7 @@ public sealed class ConsoleImageBuilder
         if (_targetCharacterSize.HasValue)
         {
             ConsoleImageSize charSize = _targetCharacterSize.Value;
-            Size cellSize = SixelCapabilities.CellSize;
+            Size cellSize = TerminalCapabilities.CellSize;
             
             if (_keepAspectRatio)
             {

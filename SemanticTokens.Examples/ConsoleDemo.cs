@@ -13,9 +13,9 @@ public class ConsoleDemo
         Console.ForegroundColor = Color.MediumSpringGreen;
         Console.WriteLine();
         Console.WriteLine("=== Terminal Capabilities ===");
-        Console.WriteLine($"SIXEL Support: {SixelCapabilities.IsSupported}");
-        Console.WriteLine($"Cell Size: {SixelCapabilities.CellSize.Width}x{SixelCapabilities.CellSize.Height}px");
-        Console.WriteLine($"Window Size: {SixelCapabilities.WindowCharacterSize.Width}x{SixelCapabilities.WindowCharacterSize.Height} chars");
+        Console.WriteLine($"SIXEL Support: {TerminalCapabilities.IsSupported}");
+        Console.WriteLine($"Cell Size: {TerminalCapabilities.CellSize.Width}x{TerminalCapabilities.CellSize.Height}px");
+        Console.WriteLine($"Window Size: {TerminalCapabilities.WindowCharacterSize.Width}x{TerminalCapabilities.WindowCharacterSize.Height} chars");
         Console.WriteLine();
 
         Console.WriteLine("=== Testing New Console API ===");
