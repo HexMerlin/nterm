@@ -20,7 +20,7 @@ public sealed record ChatEntry(ConsoleImage AvatarImage, string SenderName, Immu
         
         // Position cursor to the right of the image, aligned with image top
         int textLeft = startLeft + imageSize.Columns + 1; // +1 for small margin
-        int textTop = startTop;
+        int textTop = startTop + (TextLines.Length < 3 ? 1 : 0); // Offset shorter messages for natural feel
         
         // Write sender name and text lines
         Console.SetCursorPosition(textLeft, textTop);
