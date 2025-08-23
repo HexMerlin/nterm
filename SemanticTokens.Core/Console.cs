@@ -75,6 +75,9 @@ public static class Console
 
     public static bool KeyAvailable => System.Console.KeyAvailable;
 
+    public static void SetCursorPosition(int left, int top) => System.Console.SetCursorPosition(left, top);
+  
+
     static Console()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
