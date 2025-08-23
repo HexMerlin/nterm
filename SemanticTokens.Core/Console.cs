@@ -99,6 +99,18 @@ public static class Console
     }
 
     /// <summary>
+    /// Writes a character with specified foreground color.
+    /// </summary>
+    /// <param name="ch">Character to write</param>
+    /// <param name="foreground">Foreground color</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(char ch, Color foreground)
+    {
+        ForegroundColor = foreground;
+        Write(ch);
+    }
+
+    /// <summary>
     /// Writes a character with specified colors using optimized color caching.
     /// </summary>
     /// <param name="ch">Character to write</param>

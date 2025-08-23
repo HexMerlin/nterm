@@ -35,21 +35,34 @@ public readonly partial struct Color : IEquatable<Color>
     public byte A { get; }
 
     /// <summary>
+    /// Indicates whether this Color has value
+    /// </summary>
+    public bool HasValue { get;  } = false;
+
+    /// <summary>
+    /// The <b>Ignored</b> color with no value. Same as <b>default</b> and <b>new Color()</b>.
+    /// Useful Color value to denote colors that should be igrored. Enables stack-only patterns that avoids using nullable <b>Color?</b>.
+    /// </summary>
+    public static Color Ignored => default;
+
+    /// <summary>
+    /// Indicates if this Color is ignored. True opposite of <see cref="HasValue"/>
+    /// </summary>
+    public bool IsIgnored => !HasValue;
+
+    /// <summary>
+    /// Default Color constructor. Same as <see langword="default"/> and <see cref="Color.Ignored"/>
+    /// </summary>
+    public Color() => (R, G, B, A, HasValue) = (0, 0, 0, 0, false);
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="Color"/> struct with the specified component values.
     /// </summary>
     /// <param name="r">The red component value (0-255).</param>
     /// <param name="g">The green component value (0-255).</param>
     /// <param name="b">The blue component value (0-255).</param>
     /// <param name="a">The alpha component value (0-255). Defaults to 255 (fully opaque).</param>
-    public Color(byte r, byte g, byte b, byte a = 255) => (R, G, B, A) = (r, g, b, a);
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Color"/> struct with the specified RGB component values and full opacity.
-    /// </summary>
-    /// <param name="r">The red component value (0-255).</param>
-    /// <param name="g">The green component value (0-255).</param>
-    /// <param name="b">The blue component value (0-255).</param>
-    public Color(byte r, byte g, byte b) => (R, G, B, A) = (r, g, b, 255);
+    public Color(byte r, byte g, byte b, byte a = 255) => (R, G, B, A, HasValue) = (r, g, b, a, true);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Color"/> struct from a 32-bit uint (0xAARRGGBB).
@@ -61,6 +74,7 @@ public readonly partial struct Color : IEquatable<Color>
         R = (byte)((value >> 16) & 0xFF);
         G = (byte)((value >> 8) & 0xFF);
         B = (byte)(value & 0xFF);
+        HasValue = true;
     }
 
     /// <summary>
@@ -76,7 +90,7 @@ public readonly partial struct Color : IEquatable<Color>
     /// <param name="other">The color to compare with this color.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified color is equal to this color.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Equals(Color other) => R == other.R && G == other.G && B == other.B && A == other.A;
+    public bool Equals(Color other) => R == other.R && G == other.G && B == other.B && A == other.A && HasValue == other.HasValue;
 
     /// <summary>
     /// Determines whether this color is equal to the specified object.
@@ -205,12 +219,11 @@ public readonly partial struct Color : IEquatable<Color>
         );
     }
 
-    public override string ToString()
-    {
-        if (TryGetKnownColorName(this, out string name))
-            return name;
-        return A == 255 ? $"R:{R}, G:{G}, B:{B}" : $"R:{R}, G:{G}, B:{B}, A:{A}";
-    }
+    public override string ToString() =>
+        !HasValue ? "Invalid" :
+        TryGetKnownColorName(this, out string name) 
+            ? name :
+            $"R:{R}, G:{G}, B:{B}{(A == 255 ? "" : $", A:{A}")}";
 
 
 }
