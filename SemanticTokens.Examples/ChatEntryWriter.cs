@@ -9,10 +9,10 @@ namespace SemanticTokens.Examples;
 /// Optimized for console rendering with precise character-cell alignment.
 /// </summary>
 /// <param name="AvatarImage">Console-ready avatar image with SIXEL or fallback encoding</param>
-/// <param name="SenderName">Sender display name</param>
-/// <param name="TextLines">Message text lines in display order</param>
-/// <param name="SenderNameColor">24-bit color for sender name rendering</param>
-/// <param name="TextColor">24-bit color for message text rendering</param>
+/// <param name="SenderName">OBSOLETE.Sender display name</param>
+/// <param name="TextLines">OBSOLETE. </param>
+/// <param name="SenderNameColor">OBSOLETE.</param>
+/// <param name="TextColor">OBSOLETE./param>
 /// <remarks>
 /// <para>
 /// Provides side-by-side layout: avatar image left-aligned, text content right-aligned with precise vertical positioning.
@@ -24,7 +24,7 @@ namespace SemanticTokens.Examples;
 /// Character cell calculations leverage terminal capability detection for pixel-perfect alignment.
 /// </para>
 /// </remarks>
-public sealed record ChatEntry(ConsoleImage AvatarImage, string SenderName, ImmutableArray<string> TextLines, Color SenderNameColor, Color TextColor)
+public sealed record ChatEntryWriter(ConsoleImage AvatarImage, string SenderName, ImmutableArray<string> TextLines, Color SenderNameColor, Color TextColor)
 {
     private const int TextMargin = 1;       // Character spacing between image and text
     private const int ShortMessageLines = 3; // Threshold for vertical offset adjustment
@@ -42,9 +42,9 @@ public sealed record ChatEntry(ConsoleImage AvatarImage, string SenderName, Immu
     /// Horizontal positioning: <c>textLeft = imageLeft + imageWidth + 1</c> for consistent margin.
     /// </para>
     /// </remarks>
-    public void WriteToConsole()
+    public void BeginWrite()
     {
-        (int startLeft, int startTop) = (System.Console.CursorLeft, System.Console.CursorTop);
+        (int startLeft, int startTop) = (Console.CursorLeft, Console.CursorTop);
         
         Console.WriteImage(AvatarImage.ConsoleData);
         
@@ -70,4 +70,46 @@ public sealed record ChatEntry(ConsoleImage AvatarImage, string SenderName, Immu
         int finalTop = Math.Max(startTop + imageSize.Rows, textTop + TextLines.Length);
         Console.SetCursorPosition(0, finalTop);
     }
+
+
+    /// <summary>
+    /// Ends writing of the ChatEntryWriter. The cursor is reset to the absolute beginning of the next line that is ensured to not overwrite any 
+    /// content in the ChatEntryWriter (Avatar or added text). 
+    /// This is to allow for other following console output to start on a new fresh line.
+    /// After the call to EndWrite we can consider the ChatEntryWriter to be 'Closed' and it will never be referenced to, or written to again.
+    /// </summary>
+    public void EndWrite()
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Writes text to current text cursor position of the ChatEntryWriter by appending to the current line. 
+    /// The cursor position should be moved forward accordingly to allow for succssive calls
+    /// Its purpose is enable streaming text output in the ChatEntryWriter
+    /// Important simplification: We can assume input text contains no newlines so that does need to be handled
+    /// </summary>
+    /// <param name="text">Partial text to be written.</param>
+    public void Write(string text)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Ends the current line of ChatEntryWriter text. The cursor is moved down and to the default column start position (right of the image)
+    /// </summary>
+    public void WriteLineBreak()
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Clears all text in the ChatEntryWriter. The cursor is repositioned to allow for adding new text
+    /// </summary>
+    /// <exception cref="NotImplementedException"></exception>
+    public void ClearText()
+    {
+        throw new NotImplementedException ();
+    }
+
 }

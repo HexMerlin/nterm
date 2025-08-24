@@ -62,18 +62,18 @@ public sealed class ConsoleImageDemo
     {
         Console.WriteLine();
 
-        ChatEntry userEntry = new ChatEntry(UserAvatarImage, "[User]", ["Hey! Can you show avatars inline?", "Let's make sure text aligns neatly with those images."], Color.Cyan, Color.LightCyan);
+        ChatEntryWriter userEntry = new ChatEntryWriter(UserAvatarImage, "[User]", ["Hey! Can you show avatars inline?", "Let's make sure text aligns neatly with those images."], Color.Cyan, Color.LightCyan);
 
-        ChatEntry botEntry = new ChatEntry(BotAvatarImage, "[Bot]", ["Sure thing! I'll format the output with bullets and keep it short.", "If your terminal supports SIXEL, you should see avatars on the left."], Color.OrangeRed, Color.Goldenrod);
+        ChatEntryWriter botEntry = new ChatEntryWriter(BotAvatarImage, "[Bot]", ["Sure thing! I'll format the output with bullets and keep it short.", "If your terminal supports SIXEL, you should see avatars on the left."], Color.OrangeRed, Color.Goldenrod);
 
-        ChatEntry aiEntry = new ChatEntry(AiAvatarImage, "[AI]", ["Hi I'm an LLM-powered AI. If SIXEL isn't available, you'll just see clean fallback text.", "Either way, your 24-bit colors continue to work everywhere."], Color.GreenYellow, Color.LightGreen);
+        ChatEntryWriter aiEntry = new ChatEntryWriter(AiAvatarImage, "[AI]", ["Hi I'm an LLM-powered AI. If SIXEL isn't available, you'll just see clean fallback text.", "Either way, your 24-bit colors continue to work everywhere."], Color.GreenYellow, Color.LightGreen);
 
 
-        userEntry.WriteToConsole();
+        userEntry.BeginWrite();
         Console.WriteLine();
-        botEntry.WriteToConsole();
+        botEntry.BeginWrite();
         Console.WriteLine();
-        aiEntry.WriteToConsole();
+        aiEntry.BeginWrite();
         Console.WriteLine();
 
         Console.ForegroundColor = Color.White;
