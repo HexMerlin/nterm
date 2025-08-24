@@ -11,6 +11,13 @@ public static class Console
 {
     private static readonly Stream Stdout = System.Console.OpenStandardOutput();
 
+    static Console()
+    {
+        System.Console.OutputEncoding = Encoding.UTF8;
+        WriteFg(Color.FromConsoleColor(System.Console.ForegroundColor));
+        WriteBg(Color.FromConsoleColor(System.Console.BackgroundColor));
+        TryEnableVirtualTerminalOnWindows();
+    }
 
     public static string Title
     { 
@@ -67,6 +74,8 @@ public static class Console
     public static int WindowHeight => System.Console.WindowHeight;
     public static int BufferWidth => System.Console.BufferWidth;
 
+    public static int BufferHeight => System.Console.BufferHeight;
+
     public static int CursorLeft => System.Console.CursorLeft;
 
     public static int CursorTop => System.Console.CursorTop;
@@ -79,17 +88,36 @@ public static class Console
 
     public static bool KeyAvailable => System.Console.KeyAvailable;
 
-    public static void SetCursorPosition(int left, int top) => System.Console.SetCursorPosition(left, top);
-
-
-    static Console()
+    public static void SetCursorPosition(int left, int top)
     {
-        System.Console.OutputEncoding = Encoding.UTF8;
-        WriteFg(Color.FromConsoleColor(System.Console.ForegroundColor));
-        WriteBg(Color.FromConsoleColor(System.Console.BackgroundColor));
-        TryEnableVirtualTerminalOnWindows();
-    }
+        if (left < 0) left = 0;
+        if (top < 0) top = 0;
 
+        // Ensure width is valid relative to the window
+        int minWidth = Math.Max(System.Console.WindowWidth, 1);
+        int minHeight = Math.Max(System.Console.WindowHeight, 1);
+
+        // Clamp left to current width (or expand first if you prefer)
+        if (left >= System.Console.BufferWidth)
+            left = System.Console.BufferWidth - 1;
+
+        // Expand buffer height if needed
+        if (top >= System.Console.BufferHeight)
+        {
+            int newHeight = top + 1; // or add margin, e.g. + 50
+            try
+            {
+                System.Console.SetBufferSize(Math.Max(Console.BufferWidth, minWidth), Math.Max(newHeight, minHeight));
+            }
+            catch
+            {
+                // Fallback: clamp if the host doesn't allow resizing
+                top = System.Console.BufferHeight - 1;
+            }
+        }
+
+        System.Console.SetCursorPosition(left, top);
+    }
 
     /// <summary>
     /// Writes a character using current foreground and background colors.
