@@ -67,6 +67,10 @@ public static class Console
     public static int WindowHeight => System.Console.WindowHeight;
     public static int BufferWidth => System.Console.BufferWidth;
 
+    public static int CursorLeft => System.Console.CursorLeft;
+
+    public static int CursorTop => System.Console.CursorTop;
+
     public static int Read() => System.Console.Read();
 
     public static ConsoleKeyInfo ReadKey(bool intercept = false) => System.Console.ReadKey(intercept); 

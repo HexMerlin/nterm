@@ -20,8 +20,8 @@ internal static class Program
         //await demo2.Run();
 
         ConsoleImageDemo demo3 = new ConsoleImageDemo();
-        demo3.Run(); 
-
+        await demo3.RunAsync();
+        await demo3.RunAsync();
     }
 
 

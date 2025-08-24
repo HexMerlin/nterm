@@ -5,70 +5,79 @@ using System.Collections.Immutable;
 namespace SemanticTokens.Examples;
 
 /// <summary>
-/// Immutable chat message entry containing avatar image and formatted text content.
+/// Streaming chat message writer with avatar image and progressive text output.
 /// Optimized for console rendering with precise character-cell alignment.
 /// </summary>
 /// <param name="AvatarImage">Console-ready avatar image with SIXEL or fallback encoding</param>
-/// <param name="SenderName">OBSOLETE.Sender display name</param>
-/// <param name="TextLines">OBSOLETE. </param>
-/// <param name="SenderNameColor">OBSOLETE.</param>
-/// <param name="TextColor">OBSOLETE./param>
 /// <remarks>
 /// <para>
-/// Provides side-by-side layout: avatar image left-aligned, text content right-aligned with precise vertical positioning.
-/// Text positioning adapts based on message length: messages with ≥3 lines align with image top,
-/// shorter messages offset +1 row for natural visual balance.
+/// Provides side-by-side layout: avatar image left-aligned, streaming text content right-aligned with precise vertical positioning.
+/// Supports progressive text output through Write, WriteLineBreak, ClearText, and EndWrite methods.
 /// </para>
 /// <para>
-/// Console rendering preserves cursor state and positions final cursor below the complete chat entry bounds.
+/// Console rendering preserves cursor state and maintains text positioning relative to avatar image bounds.
 /// Character cell calculations leverage terminal capability detection for pixel-perfect alignment.
 /// </para>
 /// </remarks>
-public sealed record ChatEntryWriter(ConsoleImage AvatarImage, string SenderName, ImmutableArray<string> TextLines, Color SenderNameColor, Color TextColor)
+public sealed class ChatEntryWriter
 {
     private const int TextMargin = 1;       // Character spacing between image and text
-    private const int ShortMessageLines = 3; // Threshold for vertical offset adjustment
+    
+    /// <summary>
+    /// Console-ready avatar image with SIXEL or fallback encoding.
+    /// </summary>
+    public ConsoleImage AvatarImage { get; }
+    
+    // State tracking for streaming text output
+    private int _startLeft;
+    private int _startTop;
+    private int _textLeft;
+    private int _textTop;
+    private int _currentTextLine;
+    private int _currentTextColumn;
+    private bool _isWriting;
 
     /// <summary>
-    /// Renders complete chat entry to console with side-by-side image and text layout.
+    /// Initializes streaming chat entry writer with avatar image.
+    /// </summary>
+    /// <param name="avatarImage">Console-ready avatar image with SIXEL or fallback encoding</param>
+    public ChatEntryWriter(ConsoleImage avatarImage)
+    {
+        AvatarImage = avatarImage;
+    }
+
+    /// <summary>
+    /// Begins streaming chat entry output by writing avatar image and positioning cursor for text.
     /// </summary>
     /// <remarks>
     /// <para>
     /// Rendering sequence: captures cursor position → writes avatar image → calculates text positioning →
-    /// writes sender name and message lines → positions cursor after entry bounds.
+    /// positions cursor ready for streaming text output.
     /// </para>
     /// <para>
-    /// Text vertical alignment: top-aligned <c>iff</c> <c>TextLines.Length ≥ 3</c>, otherwise offset +1 row.
-    /// Horizontal positioning: <c>textLeft = imageLeft + imageWidth + 1</c> for consistent margin.
+    /// Text horizontal positioning: <c>textLeft = imageLeft + imageWidth + 1</c> for consistent margin.
+    /// Text vertical positioning: top-aligned with image for optimal visual layout.
     /// </para>
     /// </remarks>
     public void BeginWrite()
     {
-        (int startLeft, int startTop) = (Console.CursorLeft, Console.CursorTop);
+        if (_isWriting)
+            throw new InvalidOperationException("ChatEntryWriter is already in writing mode. Call EndWrite() first.");
+
+        _startLeft = Console.CursorLeft;
+        _startTop = Console.CursorTop;
         
         Console.WriteImage(AvatarImage.ConsoleData);
         
         ConsoleImageCharacterSize imageSize = AvatarImage.CharacterSize;
-        int textLeft = startLeft + imageSize.Columns + TextMargin;
-        int textTop = startTop + (TextLines.Length < ShortMessageLines ? 1 : 0);
+        _textLeft = _startLeft + imageSize.Columns + TextMargin;
+        _textTop = _startTop;
+        _currentTextLine = 0;
+        _currentTextColumn = 0;
+        _isWriting = true;
         
-        // Write sender name on first text line
-        Console.SetCursorPosition(textLeft, textTop);
-        Console.Write(SenderName, SenderNameColor);
-        Console.Write(" ");
-        
-        // Write message text lines
-        int senderNameWidth = SenderName.Length + 1;
-        for (int i = 0; i < TextLines.Length; i++)
-        {
-            int lineLeft = textLeft + (i == 0 ? senderNameWidth : 0);
-            Console.SetCursorPosition(lineLeft, textTop + i);
-            Console.Write(TextLines[i], TextColor);
-        }
-        
-        // Position cursor after chat entry bounds
-        int finalTop = Math.Max(startTop + imageSize.Rows, textTop + TextLines.Length);
-        Console.SetCursorPosition(0, finalTop);
+        // Position cursor ready for text output
+        Console.SetCursorPosition(_textLeft, _textTop);
     }
 
 
@@ -80,20 +89,37 @@ public sealed record ChatEntryWriter(ConsoleImage AvatarImage, string SenderName
     /// </summary>
     public void EndWrite()
     {
-        throw new NotImplementedException();
+        if (!_isWriting)
+            throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
+        
+        ConsoleImageCharacterSize imageSize = AvatarImage.CharacterSize;
+        int finalTop = _startTop + imageSize.Rows;
+        Console.SetCursorPosition(0, finalTop);
+        
+        _isWriting = false;
     }
 
     /// <summary>
     /// Writes text to current text cursor position of the ChatEntryWriter by appending to the current line. 
-    /// The cursor position should be moved forward accordingly to allow for succssive calls
+    /// The cursor position should be moved forward accordingly to allow for successive calls
     /// Its purpose is enable streaming text output in the ChatEntryWriter
     /// Important simplification: We can assume input text contains no newlines so that does need to be handled
     /// </summary>
     /// <param name="text">Partial text to be written.</param>
-    /// <param name="forgroundColor">Forground color for the written text.</param>
-    public void Write(string text, Color forgroundColor)
+    /// <param name="foregroundColor">Foreground color for the written text.</param>
+    public void Write(string text, Color foregroundColor)
     {
-        throw new NotImplementedException();
+        if (!_isWriting)
+            throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
+        
+        if (string.IsNullOrEmpty(text))
+            return;
+        
+        // Write text at current position
+        Console.Write(text, foregroundColor);
+        
+        // Update horizontal position tracking
+        _currentTextColumn += text.Length;
     }
 
     /// <summary>
@@ -101,16 +127,40 @@ public sealed record ChatEntryWriter(ConsoleImage AvatarImage, string SenderName
     /// </summary>
     public void WriteLineBreak()
     {
-        throw new NotImplementedException();
+        if (!_isWriting)
+            throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
+        
+        // Move to next line
+        _currentTextLine++;
+        _currentTextColumn = 0;
+        
+        // Position cursor at start of next text line
+        Console.SetCursorPosition(_textLeft, _textTop + _currentTextLine);
     }
 
     /// <summary>
     /// Clears all text in the ChatEntryWriter. The cursor is repositioned to allow for adding new text
     /// </summary>
-    /// <exception cref="NotImplementedException"></exception>
     public void ClearText()
     {
-        throw new NotImplementedException ();
+        if (!_isWriting)
+            throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
+        
+        // Clear all text lines that were written
+        // We need to clear from line 0 to _currentTextLine (inclusive)
+        int textAreaWidth = Console.WindowWidth - _textLeft;
+        string clearLine = new(' ', Math.Max(0, textAreaWidth));
+        
+        for (int line = 0; line <= _currentTextLine; line++)
+        {
+            Console.SetCursorPosition(_textLeft, _textTop + line);
+            Console.Write(clearLine);
+        }
+        
+        // Reset to initial text position
+        _currentTextLine = 0;
+        _currentTextColumn = 0;
+        Console.SetCursorPosition(_textLeft, _textTop);
     }
 
 }

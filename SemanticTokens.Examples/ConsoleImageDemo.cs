@@ -53,29 +53,112 @@ public sealed class ConsoleImageDemo
 
 
     /// <summary>
-    /// Demonstrates example console image usage.
+    /// Demonstrates console image streaming text output with progressive rendering.
     /// </summary>
     /// <remarks>
-    /// Chat diaglog example with automatic SIXEL/fallback handling for images.
+    /// Advanced chat dialog with streaming text, demonstrating Write, WriteLineBreak, and ClearText methods.
+    /// Text appears progressively with realistic typing delays to showcase streaming capabilities.
     /// </remarks>
-    public void Run()
+    public async Task RunAsync()
     {
         Console.WriteLine();
+        Console.WriteLine("=== Streaming Chat Demo ===");
+        Console.WriteLine();
 
-        ChatEntryWriter userEntry = new ChatEntryWriter(UserAvatarImage, "[User]", ["Hey! Can you show avatars inline?", "Let's make sure text aligns neatly with those images."], Color.Cyan, Color.LightCyan);
-
-        ChatEntryWriter botEntry = new ChatEntryWriter(BotAvatarImage, "[Bot]", ["Sure thing! I'll format the output with bullets and keep it short.", "If your terminal supports SIXEL, you should see avatars on the left."], Color.OrangeRed, Color.Goldenrod);
-
-        ChatEntryWriter aiEntry = new ChatEntryWriter(AiAvatarImage, "[AI]", ["Hi I'm an LLM-powered AI. If SIXEL isn't available, you'll just see clean fallback text.", "Either way, your 24-bit colors continue to work everywhere."], Color.GreenYellow, Color.LightGreen);
-
-
+        // User message with streaming text
+        ChatEntryWriter userEntry = new ChatEntryWriter(UserAvatarImage);
         userEntry.BeginWrite();
+        
+        await WriteStreamingText(userEntry, "[User] ", Color.Cyan);
+        await WriteStreamingText(userEntry, "Hey! Can you show me how ", Color.LightCyan);
+        userEntry.WriteLineBreak();
+        await WriteStreamingText(userEntry, "streaming text output works? ", Color.LightCyan);
+        userEntry.WriteLineBreak();
+        await WriteStreamingText(userEntry, "This looks pretty cool!", Color.LightCyan);
+        
+        userEntry.EndWrite();
         Console.WriteLine();
+
+        // Bot response with different streaming patterns
+        ChatEntryWriter botEntry = new ChatEntryWriter(BotAvatarImage);
         botEntry.BeginWrite();
+        
+        await WriteStreamingText(botEntry, "[Bot] ", Color.OrangeRed);
+        await WriteStreamingText(botEntry, "Sure thing! Let me demonstrate...", Color.Goldenrod);
+        botEntry.WriteLineBreak();
+        
+        // Simulate typing delay
+        await Task.Delay(1000);
+        
+        botEntry.WriteLineBreak();
+        await WriteStreamingText(botEntry, "First, I'll write some text progressively.", Color.Goldenrod);
+        botEntry.WriteLineBreak();
+        
+        // Demonstrate clear and rewrite
+        await WriteStreamingText(botEntry, "Wait, let me rephrase that...", Color.DarkOrange);
+        await Task.Delay(800);
+        botEntry.ClearText();
+        
+        await WriteStreamingText(botEntry, "[Bot] ", Color.OrangeRed);
+        await WriteStreamingText(botEntry, "Perfect! Text appears word by word.", Color.Goldenrod);
+        botEntry.WriteLineBreak();
+        await WriteStreamingText(botEntry, "Line breaks work seamlessly.", Color.Goldenrod);
+        botEntry.WriteLineBreak();
+        await WriteStreamingText(botEntry, "And clearing text works too! ✨", Color.LightGreen);
+        
+        botEntry.EndWrite();
         Console.WriteLine();
+
+        // AI response showcasing different colors and timing
+        ChatEntryWriter aiEntry = new ChatEntryWriter(AiAvatarImage);
         aiEntry.BeginWrite();
+        
+        await WriteStreamingText(aiEntry, "[AI] ", Color.GreenYellow);
+        await WriteStreamingText(aiEntry, "Impressive! ", Color.LightGreen, 50);
+        await WriteStreamingText(aiEntry, "This streaming approach ", Color.LightGreen, 30);
+        aiEntry.WriteLineBreak();
+        await WriteStreamingText(aiEntry, "enables real-time chat experiences ", Color.LightGreen, 40);
+        aiEntry.WriteLineBreak();
+        await WriteStreamingText(aiEntry, "with perfect image-text alignment! 🚀", Color.Lime, 60);
+        
+        aiEntry.EndWrite();
         Console.WriteLine();
 
         Console.ForegroundColor = Color.White;
+        Console.WriteLine("=== Demo Complete ===");
+    }
+
+    /// <summary>
+    /// Simple synchronous wrapper for async demo.
+    /// </summary>
+    public void Run() => RunAsync().GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Writes text progressively to simulate streaming/typing effect.
+    /// </summary>
+    /// <param name="writer">ChatEntryWriter to write to</param>
+    /// <param name="text">Text to write progressively</param>
+    /// <param name="color">Color for the text</param>
+    /// <param name="delayMs">Delay between words in milliseconds</param>
+    private static async Task WriteStreamingText(ChatEntryWriter writer, string text, Color color, int delayMs = 80)
+    {
+        if (string.IsNullOrEmpty(text))
+            return;
+
+        // Split into words and write progressively
+        string[] words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        
+        for (int i = 0; i < words.Length; i++)
+        {
+            writer.Write(words[i], color);
+            
+            // Add space between words (except for last word)
+            if (i < words.Length - 1)
+                writer.Write(" ", color);
+            
+            // Delay between words for streaming effect
+            if (delayMs > 0)
+                await Task.Delay(delayMs);
+        }
     }
 }
