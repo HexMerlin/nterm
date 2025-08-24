@@ -27,7 +27,10 @@ public sealed class ChatEntryWriter
     /// Console-ready avatar image with SIXEL or fallback encoding.
     /// </summary>
     public ConsoleImage AvatarImage { get; }
-    
+
+    private readonly Color DefaultForegroundColor;
+    private readonly Color DefaultBackgroundColor;
+
     // State tracking for streaming text output
     private int _startLeft;
     private int _startTop;
@@ -37,6 +40,8 @@ public sealed class ChatEntryWriter
     private int _currentTextColumn;
     private bool _isWriting;
 
+
+
     /// <summary>
     /// Initializes streaming chat entry writer with avatar image.
     /// </summary>
@@ -44,6 +49,8 @@ public sealed class ChatEntryWriter
     public ChatEntryWriter(ConsoleImage avatarImage)
     {
         AvatarImage = avatarImage;
+        DefaultForegroundColor = Console.ForegroundColor;
+        DefaultBackgroundColor = Console.BackgroundColor;
     }
 
     /// <summary>
@@ -97,6 +104,10 @@ public sealed class ChatEntryWriter
         Console.SetCursorPosition(0, finalTop);
         
         _isWriting = false;
+
+        //restore original colors before exiting
+        Console.ForegroundColor = DefaultForegroundColor;
+        Console.BackgroundColor = DefaultBackgroundColor;
     }
 
     /// <summary>
@@ -154,7 +165,7 @@ public sealed class ChatEntryWriter
         for (int line = 0; line <= _currentTextLine; line++)
         {
             Console.SetCursorPosition(_textLeft, _textTop + line);
-            Console.Write(clearLine);
+            Console.Write(clearLine, DefaultForegroundColor, DefaultBackgroundColor);
         }
         
         // Reset to initial text position

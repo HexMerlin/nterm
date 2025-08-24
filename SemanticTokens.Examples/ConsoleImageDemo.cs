@@ -61,6 +61,8 @@ public sealed class ConsoleImageDemo
     /// </remarks>
     public async Task RunAsync()
     {
+        Console.BackgroundColor = Color.Navy;
+
         Console.WriteLine();
         Console.WriteLine("=== Streaming Chat Demo ===");
         Console.WriteLine();
@@ -88,7 +90,7 @@ public sealed class ConsoleImageDemo
         botEntry.WriteLineBreak();
         
         // Simulate typing delay
-        await Task.Delay(1000);
+        await Task.Delay(300);
         
         botEntry.WriteLineBreak();
         await WriteStreamingText(botEntry, "First, I'll write some text progressively.", Color.Goldenrod);
@@ -96,7 +98,7 @@ public sealed class ConsoleImageDemo
         
         // Demonstrate clear and rewrite
         await WriteStreamingText(botEntry, "Wait, let me rephrase that...", Color.DarkOrange);
-        await Task.Delay(800);
+        await Task.Delay(500);
         botEntry.ClearText();
         
         await WriteStreamingText(botEntry, "[Bot] ", Color.OrangeRed);
@@ -140,7 +142,7 @@ public sealed class ConsoleImageDemo
     /// <param name="text">Text to write progressively</param>
     /// <param name="color">Color for the text</param>
     /// <param name="delayMs">Delay between words in milliseconds</param>
-    private static async Task WriteStreamingText(ChatEntryWriter writer, string text, Color color, int delayMs = 80)
+    private static async Task WriteStreamingText(ChatEntryWriter writer, string text, Color color, int delayMs = 20)
     {
         if (string.IsNullOrEmpty(text))
             return;

@@ -10,8 +10,8 @@ public class ConsoleDemo
     public void Run()
     {
 
-        Console.ForegroundColor = Color.MediumSpringGreen;
-        Console.WriteLine();
+       // Console.ForegroundColor = Color.MediumSpringGreen;
+       // Console.WriteLine();
         Console.WriteLine("=== Terminal Capabilities ===");
         Console.WriteLine($"SIXEL Support: {TerminalCapabilities.IsSixelSupported}");
         Console.WriteLine($"Cell Size: {TerminalCapabilities.CellSize.Width}x{TerminalCapabilities.CellSize.Height}px");
@@ -19,8 +19,6 @@ public class ConsoleDemo
         Console.WriteLine();
 
         Console.WriteLine("=== Testing New Console API ===");
-
-        System.Console.OutputEncoding = Encoding.UTF8;
 
         Console.ForegroundColor = Color.White;
 

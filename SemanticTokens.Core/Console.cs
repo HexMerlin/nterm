@@ -34,7 +34,7 @@ public static class Console
             if (value.IsIgnored) return; //value is ignored color - skip setting
             if (value == field) return;
             field = value;
-            WriteForegroundColorToStdout(value);
+            WriteFg(value);
         }
     }
 
@@ -54,7 +54,7 @@ public static class Console
             if (value.IsIgnored) return; //value is ignored color - skip setting
             if (value == field) return;
             field = value;
-            WriteBackgroundColorToStdout(value);
+            WriteBg(value);
         }
     }
 
@@ -85,8 +85,8 @@ public static class Console
     static Console()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
-        ForegroundColor = Color.FromConsoleColor(System.Console.ForegroundColor);
-        BackgroundColor = Color.FromConsoleColor(System.Console.BackgroundColor);
+        WriteFg(Color.FromConsoleColor(System.Console.ForegroundColor));
+        WriteBg(Color.FromConsoleColor(System.Console.BackgroundColor));
         TryEnableVirtualTerminalOnWindows();
     }
 
@@ -243,11 +243,15 @@ public static class Console
         Write(imageData);
     }
 
+    public static void Reset() =>
+        Write($"{Constants.ESC}{Constants.SGR_RESET}");
+
     public static void Clear(Color backgroundColor = default, bool clearScrollback = false)
     {
         BackgroundColor = backgroundColor; //is ignored if no value is provided
 
-        // Apply current background color (and foreground if you want a default too)
+        //Apply current background color(and foreground if you want a default too)
+        
         WriteBg(BackgroundColor);
         // WriteFg(ForegroundColor); // uncomment if you want default fg reapplied
 
@@ -259,7 +263,7 @@ public static class Console
         if (clearScrollback)
             Write($"{Constants.ESC}{Constants.EraseScrollback}");
 
-        // Reset SGR state to keep your BG/FG active as defaults
+        //Reset SGR state to keep your BG / FG active as defaults
         // If you want to go back to terminal theme defaults instead, call WriteReset()
     }
 
@@ -276,41 +280,41 @@ public static class Console
     /// Writes ANSI foreground color escape sequence to stdout.
     /// </summary>
     /// <param name="color">Foreground color to set</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteForegroundColorToStdout(Color color)
-    {
-        Span<byte> buf = stackalloc byte[32]; // ESC[38;2;255;255;255m = max 19 bytes
-        ReadOnlySpan<byte> prefix = "\x1B[38;2;"u8; // ESC[38;2; in single operation
-        int i = 0;
+    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //private static void WriteForegroundColorToStdout(Color color)
+    //{
+    //    Span<byte> buf = stackalloc byte[32]; // ESC[38;2;255;255;255m = max 19 bytes
+    //    ReadOnlySpan<byte> prefix = "\x1B[38;2;"u8; // ESC[38;2; in single operation
+    //    int i = 0;
         
-        prefix.CopyTo(buf);
-        i += prefix.Length;
-        i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
+    //    prefix.CopyTo(buf);
+    //    i += prefix.Length;
+    //    i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
+    //    i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
+    //    i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
         
-        Stdout.Write(buf[..i]);
-    }
+    //    Stdout.Write(buf[..i]);
+    //}
 
     /// <summary>
     /// Writes ANSI background color escape sequence to stdout.
     /// </summary>
     /// <param name="color">Background color to set</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteBackgroundColorToStdout(Color color)
-    {
-        Span<byte> buf = stackalloc byte[32]; // ESC[48;2;255;255;255m = max 19 bytes
-        ReadOnlySpan<byte> prefix = "\x1B[48;2;"u8; // ESC[48;2; in single operation
-        int i = 0;
+    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //private static void WriteBackgroundColorToStdout(Color color)
+    //{
+    //    Span<byte> buf = stackalloc byte[32]; // ESC[48;2;255;255;255m = max 19 bytes
+    //    ReadOnlySpan<byte> prefix = "\x1B[48;2;"u8; // ESC[48;2; in single operation
+    //    int i = 0;
         
-        prefix.CopyTo(buf);
-        i += prefix.Length;
-        i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
-        i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
+    //    prefix.CopyTo(buf);
+    //    i += prefix.Length;
+    //    i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
+    //    i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
+    //    i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
         
-        Stdout.Write(buf[..i]);
-    }
+    //    Stdout.Write(buf[..i]);
+    //}
 
     /// <summary>
     /// Encodes a string span to UTF-8 bytes optimized for console output.

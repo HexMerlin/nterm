@@ -9,7 +9,7 @@ public class Constants
     // --- CSI / SGR / OSC basics ---
     // NOTE: All codes below are the bracketed/parameter part (you prefix them with ESC).
     public const string CSI = "[";                 // Control Sequence Introducer ("[")
-    public const string SGR_Reset = "[0m";         // Reset all attributes
+    public const string SGR_RESET = "[0m";         // Reset all attributes
 
     // True-color SGR prefixes and terminator
     public const string SGR_FG_TRUECOLOR_PREFIX = "[38;2;"; // foreground: 38;2;R;G;B
