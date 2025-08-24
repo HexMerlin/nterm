@@ -80,7 +80,7 @@ public static class Console
     public static bool KeyAvailable => System.Console.KeyAvailable;
 
     public static void SetCursorPosition(int left, int top) => System.Console.SetCursorPosition(left, top);
-  
+
 
     static Console()
     {
@@ -243,6 +243,33 @@ public static class Console
         Write(imageData);
     }
 
+    public static void Clear(Color backgroundColor = default, bool clearScrollback = false)
+    {
+        BackgroundColor = backgroundColor; //is ignored if no value is provided
+
+        // Apply current background color (and foreground if you want a default too)
+        WriteBg(BackgroundColor);
+        // WriteFg(ForegroundColor); // uncomment if you want default fg reapplied
+
+        // Erase full display and home cursor
+        Write($"{Constants.ESC}{Constants.EraseDisplayAll}");
+        Write($"{Constants.ESC}{Constants.CursorHome}");
+
+        // Optionally clear scrollback
+        if (clearScrollback)
+            Write($"{Constants.ESC}{Constants.EraseScrollback}");
+
+        // Reset SGR state to keep your BG/FG active as defaults
+        // If you want to go back to terminal theme defaults instead, call WriteReset()
+    }
+
+
+    private static void WriteBg(Color c) =>
+      Write($"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
+
+    private static void WriteFg(Color c) =>
+        Write($"{Constants.ESC}{Constants.SGR_FG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
+
     #region Private Methods
 
     /// <summary>
@@ -398,16 +425,28 @@ public static class Console
 
     private static void TryEnableVirtualTerminalOnWindows()
     {
-        if (!OperatingSystem.IsWindows()) return; //this stuff is only required on Windows
+        if (!OperatingSystem.IsWindows()) return;
 
         const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
+        const uint ENABLE_VIRTUAL_TERMINAL_INPUT = 0x0200;
         const int STD_OUTPUT_HANDLE = -11;
+        const int STD_INPUT_HANDLE = -10;
 
-        nint h = GetStdHandle(STD_OUTPUT_HANDLE);
-        if (h == nint.Zero) return;
-        if (!GetConsoleMode(h, out uint mode)) return;
-        _ = SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+        // Output: enable VT processing for SGR/OSC writes
+        nint hout = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hout != nint.Zero && GetConsoleMode(hout, out uint outMode))
+        {
+            SetConsoleMode(hout, outMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+        }
+
+        // Input: enable VT input so OSC replies arrive as input chars
+        nint hin = GetStdHandle(STD_INPUT_HANDLE);
+        if (hin != nint.Zero && GetConsoleMode(hin, out uint inMode))
+        {
+            SetConsoleMode(hin, inMode | ENABLE_VIRTUAL_TERMINAL_INPUT);
+        }
     }
+
 
     [DllImport("kernel32.dll", SetLastError = true)] private static extern nint GetStdHandle(int nStdHandle);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
