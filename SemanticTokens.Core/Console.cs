@@ -65,26 +65,7 @@ public static class Console
     public static int WindowWidth => System.Console.WindowWidth;
 
     public static int WindowHeight => System.Console.WindowHeight;
-    
     public static int BufferWidth => System.Console.BufferWidth;
-    
-    /// <summary>
-    /// Console buffer height in character rows.
-    /// </summary>
-    /// <returns>Maximum number of character rows that can be addressed by cursor positioning</returns>
-    public static int BufferHeight => System.Console.BufferHeight;
-    
-    /// <summary>
-    /// Current cursor column position within the console buffer.
-    /// </summary>
-    /// <returns>Zero-based column index of cursor position</returns>
-    public static int CursorLeft => System.Console.CursorLeft;
-    
-    /// <summary>
-    /// Current cursor row position within the console buffer.
-    /// </summary>
-    /// <returns>Zero-based row index of cursor position</returns>
-    public static int CursorTop => System.Console.CursorTop;
 
     public static int Read() => System.Console.Read();
 

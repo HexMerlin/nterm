@@ -90,7 +90,8 @@ public sealed record ChatEntryWriter(ConsoleImage AvatarImage, string SenderName
     /// Important simplification: We can assume input text contains no newlines so that does need to be handled
     /// </summary>
     /// <param name="text">Partial text to be written.</param>
-    public void Write(string text)
+    /// <param name="forgroundColor">Forground color for the written text.</param>
+    public void Write(string text, Color forgroundColor)
     {
         throw new NotImplementedException();
     }
