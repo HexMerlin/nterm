@@ -40,7 +40,12 @@ public class SelectControl : ISelectControl
         );
 
         // Run the selection loop anchored at adjusted start row
-        return RunSelectionLoop(itemList, consoleState);
+        return RunSelectionLoop(
+            itemList,
+            consoleState,
+            consoleState.OriginalCursorLeft,
+            adjustedStartRow
+        );
     }
 
     /// <summary>
@@ -95,17 +100,40 @@ public class SelectControl : ISelectControl
     /// <param name="items">The list of items to select from.</param>
     /// <param name="consoleState">The console state for position tracking.</param>
     /// <returns>The selected item.</returns>
-    private static SelectItem RunSelectionLoop(List<SelectItem> items, ConsoleState consoleState)
+    private static SelectItem RunSelectionLoop(
+        List<SelectItem> items,
+        ConsoleState consoleState,
+        int anchorColumn,
+        int anchorRow
+    )
     {
         int currentIndex = 0;
         bool selectionMade = false;
         SelectItem selectedItem = SelectItem.Empty;
-        int displayStartColumn = consoleState.OriginalCursorLeft;
-        int displayStartRow = Console.CursorTop; // may be adjusted by EnsureSpaceForDropdown
+        int displayStartColumn = anchorColumn;
+        int displayStartRow = anchorRow; // may be adjusted by EnsureSpaceForDropdown
         int lastRenderedLineCount = 0;
+        int prevWindowWidth = Console.WindowWidth;
+        int prevWindowHeight = Console.WindowHeight;
 
         while (!selectionMade)
         {
+            // Handle terminal resize: re-ensure space and re-anchor without moving the selection line
+            if (Console.WindowWidth != prevWindowWidth || Console.WindowHeight != prevWindowHeight)
+            {
+                // Clear previously rendered area before re-anchoring
+                ClearRenderedArea(displayStartColumn, displayStartRow, lastRenderedLineCount);
+                int adjusted = EnsureSpaceForDropdown(
+                    displayStartColumn,
+                    displayStartRow,
+                    items.Count
+                );
+                displayStartRow = adjusted;
+                lastRenderedLineCount = 0;
+                prevWindowWidth = Console.WindowWidth;
+                prevWindowHeight = Console.WindowHeight;
+            }
+
             // Display dropdown anchored at the original cursor position
             lastRenderedLineCount = RenderDropdown(
                 items,
