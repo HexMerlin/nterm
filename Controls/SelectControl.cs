@@ -32,7 +32,14 @@ public class SelectControl : ISelectControl
         // Clear any buffered input
         ClearInputBuffer();
 
-        // Run the selection loop
+        // Ensure there is enough space below to render the dropdown without hiding the selected line
+        int adjustedStartRow = EnsureSpaceForDropdown(
+            consoleState.OriginalCursorLeft,
+            consoleState.OriginalCursorTop,
+            itemList.Count
+        );
+
+        // Run the selection loop anchored at adjusted start row
         return RunSelectionLoop(itemList, consoleState);
     }
 
@@ -65,11 +72,6 @@ public class SelectControl : ISelectControl
         {
             // Cursor visibility not supported on this platform
         }
-
-        for (int i = 0; i < MaxVisibleItems; i++)
-        {
-            Console.WriteLine("");
-        }
     }
 
     /// <summary>
@@ -99,7 +101,7 @@ public class SelectControl : ISelectControl
         bool selectionMade = false;
         SelectItem selectedItem = SelectItem.Empty;
         int displayStartColumn = consoleState.OriginalCursorLeft;
-        int displayStartRow = consoleState.OriginalCursorTop;
+        int displayStartRow = Console.CursorTop; // may be adjusted by EnsureSpaceForDropdown
         int lastRenderedLineCount = 0;
 
         while (!selectionMade)
@@ -142,6 +144,41 @@ public class SelectControl : ISelectControl
             consoleState
         );
         return selectedItem;
+    }
+
+    /// <summary>
+    /// Ensures there is enough space below the anchor line to display up to MaxVisibleItems.
+    /// Adds the minimum number of empty lines needed and repositions the cursor back to the anchor.
+    /// Returns the adjusted anchor row after any scrolling.
+    /// </summary>
+    private static int EnsureSpaceForDropdown(int startColumn, int startRow, int itemCount)
+    {
+        int windowHeight = Console.WindowHeight;
+        int capacity = Math.Min(MaxVisibleItems, Math.Max(1, itemCount));
+        int requiredBelow = Math.Max(0, capacity - 1);
+        int rowsBelow = Math.Max(0, (windowHeight - 1) - startRow);
+        int needed = Math.Max(0, requiredBelow - rowsBelow);
+        if (needed == 0)
+        {
+            return startRow;
+        }
+
+        // Write the minimal number of newlines to create room.
+        // This may cause the terminal to scroll up if we're at the bottom.
+        SafeSetCursorPosition(startColumn, startRow);
+        for (int i = 0; i < needed; i++)
+        {
+            Console.WriteLine("");
+        }
+
+        // Calculate how many screen scrolls happened
+        int scrolled = Math.Max(0, (startRow + needed) - (windowHeight - 1));
+        int adjustedStartRow = Math.Max(0, startRow - scrolled);
+
+        // Restore cursor to the anchor position
+        SafeSetCursorPosition(startColumn, adjustedStartRow);
+
+        return adjustedStartRow;
     }
 
     /// <summary>
@@ -335,11 +372,8 @@ public class SelectControl : ISelectControl
         if (row < 0 || row >= Console.WindowHeight)
             return;
         SafeSetCursorPosition(startColumn, row);
-        int clearLength = Math.Max(0, windowWidth - startColumn);
-        if (clearLength > 0)
-        {
-            Console.Write(new string(' ', clearLength));
-        }
+        // Use ANSI Erase in Line (EL) to clear from cursor to end-of-line without scrolling
+        Console.Write("\u001b[K");
         SafeSetCursorPosition(startColumn, row);
     }
 
