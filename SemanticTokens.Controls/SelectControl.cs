@@ -58,7 +58,7 @@ public class SelectControl : ISelectControl
         if (items == null)
             throw new ArgumentNullException(nameof(items));
 
-        if (System.Console.WindowWidth <= 0)
+        if (Console.WindowWidth <= 0)
             throw new InvalidOperationException("Console window width must be positive");
 
         return [.. items.Where(item => item != null)];
@@ -87,9 +87,9 @@ public class SelectControl : ISelectControl
         int clearedKeys = 0;
         const int maxKeysToClear = 100;
 
-        while (System.Console.KeyAvailable && clearedKeys < maxKeysToClear)
+        while (Console.KeyAvailable && clearedKeys < maxKeysToClear)
         {
-            System.Console.ReadKey(true);
+            Console.ReadKey(true);
             clearedKeys++;
         }
     }
@@ -113,16 +113,13 @@ public class SelectControl : ISelectControl
         int displayStartColumn = anchorColumn;
         int displayStartRow = anchorRow; // may be adjusted by EnsureSpaceForDropdown
         int lastRenderedLineCount = 0;
-        int prevWindowWidth = System.Console.WindowWidth;
-        int prevWindowHeight = System.Console.WindowHeight;
+        int prevWindowWidth = Console.WindowWidth;
+        int prevWindowHeight = Console.WindowHeight;
 
         while (!selectionMade)
         {
             // Handle terminal resize: re-ensure space and re-anchor without moving the selection line
-            if (
-                System.Console.WindowWidth != prevWindowWidth
-                || System.Console.WindowHeight != prevWindowHeight
-            )
+            if (Console.WindowWidth != prevWindowWidth || Console.WindowHeight != prevWindowHeight)
             {
                 // Clear previously rendered area before re-anchoring
                 ClearRenderedArea(displayStartColumn, displayStartRow, lastRenderedLineCount);
@@ -133,8 +130,8 @@ public class SelectControl : ISelectControl
                 );
                 displayStartRow = adjusted;
                 lastRenderedLineCount = 0;
-                prevWindowWidth = System.Console.WindowWidth;
-                prevWindowHeight = System.Console.WindowHeight;
+                prevWindowWidth = Console.WindowWidth;
+                prevWindowHeight = Console.WindowHeight;
             }
 
             // Display dropdown anchored at the original cursor position
@@ -147,7 +144,7 @@ public class SelectControl : ISelectControl
             );
 
             // Handle user input
-            var keyInfo = System.Console.ReadKey(true);
+            var keyInfo = Console.ReadKey(true);
             var (result, newIndex) = HandleUserInput(items, currentIndex, keyInfo);
             currentIndex = newIndex;
 
@@ -156,7 +153,7 @@ public class SelectControl : ISelectControl
                 selectedItem = result;
                 selectionMade = true;
             }
-            else if (keyInfo.Key == System.ConsoleKey.Escape)
+            else if (keyInfo.Key == ConsoleKey.Escape)
             {
                 // On cancel, clear any rendered lines and exit cleanly
                 ClearRenderedArea(displayStartColumn, displayStartRow, lastRenderedLineCount);
@@ -184,7 +181,7 @@ public class SelectControl : ISelectControl
     /// </summary>
     private static int EnsureSpaceForDropdown(int startColumn, int startRow, int itemCount)
     {
-        int windowHeight = System.Console.WindowHeight;
+        int windowHeight = Console.WindowHeight;
         int capacity = Math.Min(MaxVisibleItems, Math.Max(1, itemCount));
         int requiredBelow = Math.Max(0, capacity - 1);
         int rowsBelow = Math.Max(0, (windowHeight - 1) - startRow);
@@ -199,7 +196,7 @@ public class SelectControl : ISelectControl
         SafeSetCursorPosition(startColumn, startRow);
         for (int i = 0; i < needed; i++)
         {
-            System.Console.WriteLine("");
+            Console.WriteLine("");
         }
 
         // Calculate how many screen scrolls happened
@@ -266,8 +263,8 @@ public class SelectControl : ISelectControl
         int previouslyRenderedCount
     )
     {
-        int windowWidth = System.Console.WindowWidth;
-        int windowHeight = System.Console.WindowHeight;
+        int windowWidth = Console.WindowWidth;
+        int windowHeight = Console.WindowHeight;
 
         // Clamp starting column to window bounds
         startColumn = Math.Clamp(startColumn, 0, Math.Max(0, windowWidth - 1));
@@ -328,20 +325,20 @@ public class SelectControl : ISelectControl
         ClearLineFrom(startColumn, startRow);
 
         // Get truncated text for display
-        int windowWidth = System.Console.WindowWidth;
+        int windowWidth = Console.WindowWidth;
         var displayText = TruncateText(item.Text, Math.Max(0, windowWidth - startColumn));
 
         if (isSelected)
         {
             // Highlight selected item in yellow
             Console.ForegroundColor = Color.Yellow;
-            System.Console.Write(displayText);
+            Console.Write(displayText);
         }
         else
         {
             // Display in white for non-selected items
             Console.ForegroundColor = Color.White;
-            System.Console.Write(displayText);
+            Console.Write(displayText);
         }
     }
 
@@ -382,13 +379,13 @@ public class SelectControl : ISelectControl
         SafeSetCursorPosition(startColumn, startRow);
         string displayText = TruncateText(
             selectedItem.Text,
-            Math.Max(0, System.Console.WindowWidth - startColumn)
+            Math.Max(0, Console.WindowWidth - startColumn)
         );
-        System.Console.Write(displayText);
+        Console.Write(displayText);
 
         // Move cursor to end of the written text
         int finalColumn = Math.Min(
-            System.Console.WindowWidth - 1,
+            Console.WindowWidth - 1,
             startColumn + (displayText?.Length ?? 0)
         );
         SafeSetCursorPosition(finalColumn, startRow);
@@ -399,12 +396,12 @@ public class SelectControl : ISelectControl
     /// </summary>
     private static void ClearLineFrom(int startColumn, int row)
     {
-        int windowWidth = System.Console.WindowWidth;
-        if (row < 0 || row >= System.Console.WindowHeight)
+        int windowWidth = Console.WindowWidth;
+        if (row < 0 || row >= Console.WindowHeight)
             return;
         SafeSetCursorPosition(startColumn, row);
         // Use ANSI Erase in Line (EL) to clear from cursor to end-of-line without scrolling
-        System.Console.Write("\u001b[K");
+        Console.Write("\u001b[K");
         SafeSetCursorPosition(startColumn, row);
     }
 
@@ -413,7 +410,7 @@ public class SelectControl : ISelectControl
     /// </summary>
     private static void ClearRenderedArea(int startColumn, int startRow, int lineCount)
     {
-        int windowHeight = System.Console.WindowHeight;
+        int windowHeight = Console.WindowHeight;
         for (int i = 0; i < lineCount; i++)
         {
             int row = startRow + i;
@@ -429,11 +426,11 @@ public class SelectControl : ISelectControl
     /// </summary>
     private static void SafeSetCursorPosition(int left, int top)
     {
-        int clampedLeft = Math.Clamp(left, 0, Math.Max(0, System.Console.WindowWidth - 1));
-        int clampedTop = Math.Clamp(top, 0, Math.Max(0, System.Console.WindowHeight - 1));
+        int clampedLeft = Math.Clamp(left, 0, Math.Max(0, Console.WindowWidth - 1));
+        int clampedTop = Math.Clamp(top, 0, Math.Max(0, Console.WindowHeight - 1));
         try
         {
-            System.Console.SetCursorPosition(clampedLeft, clampedTop);
+            Console.SetCursorPosition(clampedLeft, clampedTop);
         }
         catch
         {
