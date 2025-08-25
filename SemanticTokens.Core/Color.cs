@@ -7,7 +7,8 @@ namespace SemanticTokens.Core;
 /// Also provides set of predefined named colors.
 /// </summary>
 /// <remarks>
-/// Predefined colors are equivalent to set in <see cref="System.Drawing.KnownColor"/> but without the heavy dependency to System.Drawing.
+/// Predefined colors that contain with some additional color:
+/// all colors of in <see cref="System.Drawing.KnownColor"/> but without the heavy dependency to System.Drawing.
 /// </remarks>
 public readonly partial struct Color : IEquatable<Color>
 {

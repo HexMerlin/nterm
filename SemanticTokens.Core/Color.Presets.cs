@@ -527,6 +527,10 @@ public readonly partial struct Color
     public static Color YellowGreen => new(yellowGreen);
     private const uint yellowGreen = 0xFF9ACD32u;
 
+    //Added colors in addition to System.Drawing.KnownColor
+
+    public static Color ClarityBlue => new(clarityBlue);
+    private const uint clarityBlue = 0xFF012456;
 
     /// <summary>
     /// Attempts to get the known color name for the specified color value.
@@ -698,6 +702,9 @@ public readonly partial struct Color
             windowFrame => nameof(WindowFrame),
             yellow => nameof(Yellow),
             yellowGreen => nameof(YellowGreen),
+            
+            //added colors
+            clarityBlue => nameof(ClarityBlue),
             _ => ""
         };
         return knownName.Length > 0;
