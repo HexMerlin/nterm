@@ -1,6 +1,6 @@
 using SemanticTokens.Core;
 
-namespace Controls;
+namespace SemanticTokens.Controls;
 
 /// <summary>
 /// Implementation of a CLI select control that allows users to choose from a list of items.
@@ -107,27 +107,19 @@ public class SelectControl : ISelectControl
         int displayStartRow = anchorRow; // may be adjusted by EnsureSpaceBelow
         int lastRenderedLineCount = 0;
         int scrollOffset = 0; // top index of the viewport rendered below the current line
-        int prevWindowWidth = Console.WindowWidth;
-        int prevWindowHeight = Console.WindowHeight;
+        int prevWindowWidth = ConsoleEx.WindowWidth;
+        int prevWindowHeight = ConsoleEx.WindowHeight;
 
         while (!selectionMade)
         {
-            // Handle terminal resize: re-ensure space and re-anchor without moving the selection line
-            if (Console.WindowWidth != prevWindowWidth || Console.WindowHeight != prevWindowHeight)
-            {
-                // Clear previously rendered area before re-anchoring
-                ConsoleEx.ClearArea(displayStartColumn, displayStartRow, lastRenderedLineCount);
-                int requiredRowsBelow = Math.Min(MaxVisibleItems, Math.Max(1, items.Count));
-                int adjusted = ConsoleEx.EnsureSpaceBelow(
-                    displayStartColumn,
-                    displayStartRow,
-                    requiredRowsBelow
-                );
-                displayStartRow = adjusted;
-                lastRenderedLineCount = 0;
-                prevWindowWidth = Console.WindowWidth;
-                prevWindowHeight = Console.WindowHeight;
-            }
+            UpdateOnResize(
+                items.Count,
+                displayStartColumn,
+                ref displayStartRow,
+                ref lastRenderedLineCount,
+                ref prevWindowWidth,
+                ref prevWindowHeight
+            );
 
             // Display dropdown anchored at the original cursor position
             var (renderedCount, newScrollOffset) = RenderDropdown(
@@ -151,7 +143,7 @@ public class SelectControl : ISelectControl
                 selectedItem = result;
                 selectionMade = true;
             }
-            else if (keyInfo.Key == ConsoleKey.Escape)
+            else if (IsCancel(keyInfo))
             {
                 // On cancel, clear any rendered lines and exit cleanly
                 ConsoleEx.ClearArea(displayStartColumn, displayStartRow, lastRenderedLineCount);
@@ -171,6 +163,37 @@ public class SelectControl : ISelectControl
         );
         return selectedItem;
     }
+
+    private static void UpdateOnResize(
+        int itemCount,
+        int displayStartColumn,
+        ref int displayStartRow,
+        ref int lastRenderedLineCount,
+        ref int prevWindowWidth,
+        ref int prevWindowHeight
+    )
+    {
+        if (!HasWindowResized(prevWindowWidth, prevWindowHeight))
+        {
+            return;
+        }
+
+        ConsoleEx.ClearArea(displayStartColumn, displayStartRow, lastRenderedLineCount);
+        int requiredRowsBelow = Math.Min(MaxVisibleItems, Math.Max(1, itemCount));
+        displayStartRow = ConsoleEx.EnsureSpaceBelow(
+            displayStartColumn,
+            displayStartRow,
+            requiredRowsBelow
+        );
+        lastRenderedLineCount = 0;
+        prevWindowWidth = ConsoleEx.WindowWidth;
+        prevWindowHeight = ConsoleEx.WindowHeight;
+    }
+
+    private static bool HasWindowResized(int prevWindowWidth, int prevWindowHeight) =>
+        ConsoleEx.WindowWidth != prevWindowWidth || ConsoleEx.WindowHeight != prevWindowHeight;
+
+    private static bool IsCancel(ConsoleKeyInfo keyInfo) => keyInfo.Key == ConsoleKey.Escape;
 
     /// <summary>
     /// Handles user input and returns the result along with the new index.
@@ -212,23 +235,58 @@ public class SelectControl : ISelectControl
         int currentScrollOffset
     )
     {
-        int windowWidth = Console.WindowWidth;
-        int windowHeight = Console.WindowHeight;
+        ClampStartPosition(ref startColumn, ref startRow);
 
-        // Clamp starting column to window bounds
+        int rowsToRender = CalculateRowsToRender(startRow);
+        int offset = CalculateScrollOffset(
+            selectedIndex,
+            rowsToRender,
+            currentScrollOffset,
+            items.Count
+        );
+
+        // Render selected item on the original line (always visible), underlined
+        DisplayItem(items[selectedIndex], true, startColumn, startRow, underline: true);
+
+        int actuallyRenderedRows = RenderViewport(
+            items,
+            selectedIndex,
+            startColumn,
+            startRow,
+            rowsToRender,
+            offset
+        );
+        int totalRenderedLines = 1 + actuallyRenderedRows; // selected line + viewport rows
+
+        ClearShrinkingTail(previouslyRenderedCount, totalRenderedLines, startColumn, startRow);
+
+        return (totalRenderedLines, offset);
+    }
+
+    private static void ClampStartPosition(ref int startColumn, ref int startRow)
+    {
+        int windowWidth = ConsoleEx.WindowWidth;
+        int windowHeight = ConsoleEx.WindowHeight;
         startColumn = Math.Clamp(startColumn, 0, Math.Max(0, windowWidth - 1));
         startRow = Math.Clamp(startRow, 0, Math.Max(0, windowHeight - 1));
+    }
 
-        // Determine viewport size BELOW the current line
+    private static int CalculateRowsToRender(int startRow)
+    {
+        int windowHeight = ConsoleEx.WindowHeight;
         int availableRowsBelow = Math.Max(0, (windowHeight - 1) - startRow);
         int rowsToRender = Math.Min(MaxVisibleItems, availableRowsBelow);
-        if (rowsToRender < 0)
-        {
-            rowsToRender = 0;
-        }
+        return Math.Max(0, rowsToRender);
+    }
 
-        // Adjust scroll offset to keep selection visible in viewport
-        int maxOffset = Math.Max(0, items.Count - Math.Max(0, rowsToRender));
+    private static int CalculateScrollOffset(
+        int selectedIndex,
+        int rowsToRender,
+        int currentScrollOffset,
+        int itemCount
+    )
+    {
+        int maxOffset = Math.Max(0, itemCount - Math.Max(0, rowsToRender));
         int offset = Math.Clamp(currentScrollOffset, 0, maxOffset);
         if (selectedIndex < offset)
         {
@@ -238,12 +296,19 @@ public class SelectControl : ISelectControl
         {
             offset = selectedIndex - rowsToRender + 1;
         }
-        offset = Math.Clamp(offset, 0, maxOffset);
+        return Math.Clamp(offset, 0, maxOffset);
+    }
 
-        // Render selected item on the original line (always visible), underlined
-        DisplayItem(items[selectedIndex], true, startColumn, startRow, underline: true);
-
-        // Render the fixed-size viewport directly below
+    private static int RenderViewport(
+        List<SelectItem> items,
+        int selectedIndex,
+        int startColumn,
+        int startRow,
+        int rowsToRender,
+        int offset
+    )
+    {
+        int windowHeight = ConsoleEx.WindowHeight;
         int actuallyRenderedRows = 0;
         for (int i = 0; i < rowsToRender; i++)
         {
@@ -268,26 +333,33 @@ public class SelectControl : ISelectControl
             }
             actuallyRenderedRows++;
         }
+        return actuallyRenderedRows;
+    }
 
-        int totalRenderedLines = 1 + actuallyRenderedRows; // selected line + viewport rows
-
-        // Clear any leftover lines from previous render if shrinking
-        if (previouslyRenderedCount > totalRenderedLines)
+    private static void ClearShrinkingTail(
+        int previouslyRenderedCount,
+        int totalRenderedLines,
+        int startColumn,
+        int startRow
+    )
+    {
+        if (previouslyRenderedCount <= totalRenderedLines)
         {
-            for (
-                int row = startRow + totalRenderedLines;
-                row < startRow + previouslyRenderedCount;
-                row++
-            )
-            {
-                if (row >= 0 && row < windowHeight)
-                {
-                    ConsoleEx.ClearLineFrom(startColumn, row);
-                }
-            }
+            return;
         }
 
-        return (totalRenderedLines, offset);
+        int windowHeight = ConsoleEx.WindowHeight;
+        for (
+            int row = startRow + totalRenderedLines;
+            row < startRow + previouslyRenderedCount;
+            row++
+        )
+        {
+            if (row >= 0 && row < windowHeight)
+            {
+                ConsoleEx.ClearLineFrom(startColumn, row);
+            }
+        }
     }
 
     /// <summary>

@@ -1,6 +1,4 @@
-using System;
-
-namespace Controls;
+namespace SemanticTokens.Controls;
 
 internal static class ConsoleEx
 {
@@ -45,7 +43,7 @@ internal static class ConsoleEx
     public static int EnsureSpaceBelow(int startColumn, int startRow, int requiredRows)
     {
         int windowHeight = WindowHeight;
-        int rowsBelow = Math.Max(0, (windowHeight - 1) - startRow);
+        int rowsBelow = Math.Max(0, windowHeight - 1 - startRow);
         int needed = Math.Max(0, requiredRows - rowsBelow);
         if (needed == 0)
         {
@@ -53,12 +51,9 @@ internal static class ConsoleEx
         }
 
         SetCursor(startColumn, startRow);
-        for (int i = 0; i < needed; i++)
-        {
-            Console.WriteLine("");
-        }
+        Console.Write(new string('\n', needed));
 
-        int scrolled = Math.Max(0, (startRow + needed) - (windowHeight - 1));
+        int scrolled = Math.Max(0, startRow + needed - (windowHeight - 1));
         int adjustedStartRow = Math.Max(0, startRow - scrolled);
         SetCursor(startColumn, adjustedStartRow);
         return adjustedStartRow;

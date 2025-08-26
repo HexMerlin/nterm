@@ -1,4 +1,4 @@
-namespace Controls;
+namespace SemanticTokens.Controls;
 
 /// <summary>
 /// A CLI select control that allows users to choose from a list of items. This class is a wrapper around the <see cref="SelectControl"/> class.

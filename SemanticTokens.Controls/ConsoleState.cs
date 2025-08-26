@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using SemanticTokens.Core;
 
-namespace Controls;
+namespace SemanticTokens.Controls;
 
 /// <summary>
 /// Represents the state of the console that can be restored later.
