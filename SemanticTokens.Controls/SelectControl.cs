@@ -113,6 +113,7 @@ public class SelectControl : ISelectControl
         int displayStartColumn = anchorColumn;
         int displayStartRow = anchorRow; // may be adjusted by EnsureSpaceForDropdown
         int lastRenderedLineCount = 0;
+        int scrollOffset = 0; // top index of the viewport rendered below the current line
         int prevWindowWidth = Console.WindowWidth;
         int prevWindowHeight = Console.WindowHeight;
 
@@ -135,13 +136,16 @@ public class SelectControl : ISelectControl
             }
 
             // Display dropdown anchored at the original cursor position
-            lastRenderedLineCount = RenderDropdown(
+            var renderTuple = RenderDropdown(
                 items,
                 currentIndex,
                 displayStartColumn,
                 displayStartRow,
-                lastRenderedLineCount
+                lastRenderedLineCount,
+                scrollOffset
             );
+            lastRenderedLineCount = renderTuple.renderedCount;
+            scrollOffset = renderTuple.newScrollOffset;
 
             // Handle user input
             var keyInfo = Console.ReadKey(true);
@@ -182,8 +186,8 @@ public class SelectControl : ISelectControl
     private static int EnsureSpaceForDropdown(int startColumn, int startRow, int itemCount)
     {
         int windowHeight = Console.WindowHeight;
-        int capacity = Math.Min(MaxVisibleItems, Math.Max(1, itemCount));
-        int requiredBelow = Math.Max(0, capacity - 1);
+        // Reserve up to MaxVisibleItems rows BELOW the current line for the list viewport
+        int requiredBelow = Math.Min(MaxVisibleItems, Math.Max(1, itemCount));
         int rowsBelow = Math.Max(0, (windowHeight - 1) - startRow);
         int needed = Math.Max(0, requiredBelow - rowsBelow);
         if (needed == 0)
@@ -255,12 +259,13 @@ public class SelectControl : ISelectControl
     /// <param name="currentIndex">The currently selected index.</param>
     /// <param name="startColumn">The column position to start displaying.</param>
     /// <param name="startRow">The row position to display.</param>
-    private static int RenderDropdown(
+    private static (int renderedCount, int newScrollOffset) RenderDropdown(
         List<SelectItem> items,
         int selectedIndex,
         int startColumn,
         int startRow,
-        int previouslyRenderedCount
+        int previouslyRenderedCount,
+        int currentScrollOffset
     )
     {
         int windowWidth = Console.WindowWidth;
@@ -270,34 +275,60 @@ public class SelectControl : ISelectControl
         startColumn = Math.Clamp(startColumn, 0, Math.Max(0, windowWidth - 1));
         startRow = Math.Clamp(startRow, 0, Math.Max(0, windowHeight - 1));
 
-        // Determine how many lines we can show (never cause auto-scrolling)
+        // Determine viewport size BELOW the current line
         int availableRowsBelow = Math.Max(0, (windowHeight - 1) - startRow);
-        int capacity = Math.Min(MaxVisibleItems, items.Count);
-        int itemsRemainingFromSelected = Math.Max(1, items.Count - selectedIndex); // include selected
-        int visibleCount = Math.Min(
-            capacity,
-            Math.Min(availableRowsBelow + 1, itemsRemainingFromSelected)
-        ); // no wrap in display
-        if (visibleCount <= 0)
+        int rowsToRender = Math.Min(MaxVisibleItems, availableRowsBelow);
+        if (rowsToRender < 0)
         {
-            return 0;
+            rowsToRender = 0;
         }
 
-        // Render selected item on the original line
+        // Adjust scroll offset to keep selection visible in viewport
+        int maxOffset = Math.Max(0, items.Count - Math.Max(0, rowsToRender));
+        int offset = Math.Clamp(currentScrollOffset, 0, maxOffset);
+        if (selectedIndex < offset)
+        {
+            offset = selectedIndex;
+        }
+        else if (rowsToRender > 0 && selectedIndex >= offset + rowsToRender)
+        {
+            offset = selectedIndex - rowsToRender + 1;
+        }
+        offset = Math.Clamp(offset, 0, maxOffset);
+
+        // Render selected item on the original line (always visible)
         DisplayItem(items[selectedIndex], true, startColumn, startRow);
 
-        // Render subsequent items directly below, wrapping around the list
-        for (int i = 1; i < visibleCount; i++)
+        // Render the fixed-size viewport directly below
+        int actuallyRenderedRows = 0;
+        for (int i = 0; i < rowsToRender; i++)
         {
-            int row = startRow + i;
-            int idx = selectedIndex + i; // do not wrap for display
-            DisplayItem(items[idx], false, startColumn, row);
+            int row = startRow + 1 + i;
+            if (row < 0 || row >= windowHeight)
+                continue;
+
+            if (offset + i < items.Count)
+            {
+                bool isSelectedInList = (offset + i) == selectedIndex;
+                DisplayItem(items[offset + i], isSelectedInList, startColumn, row);
+            }
+            else
+            {
+                ClearLineFrom(startColumn, row);
+            }
+            actuallyRenderedRows++;
         }
 
+        int totalRenderedLines = 1 + actuallyRenderedRows; // selected line + viewport rows
+
         // Clear any leftover lines from previous render if shrinking
-        if (previouslyRenderedCount > visibleCount)
+        if (previouslyRenderedCount > totalRenderedLines)
         {
-            for (int row = startRow + visibleCount; row < startRow + previouslyRenderedCount; row++)
+            for (
+                int row = startRow + totalRenderedLines;
+                row < startRow + previouslyRenderedCount;
+                row++
+            )
             {
                 if (row >= 0 && row < windowHeight)
                 {
@@ -306,7 +337,7 @@ public class SelectControl : ISelectControl
             }
         }
 
-        return visibleCount;
+        return (totalRenderedLines, offset);
     }
 
     /// <summary>
