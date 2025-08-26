@@ -1,7 +1,4 @@
-using Controls;
-using SemanticTokens.Core;
-
-namespace ControlsExample;
+namespace SemanticTokens.Controls.Example;
 
 /// <summary>
 /// Demo program to test the Select control functionality.

@@ -22,7 +22,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticTokens.Controls", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SemanticTokens.Controls.Example", "SemanticTokens.Controls.Example", "{8B6DF1B8-AE86-48FF-B161-E4652D33B298}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticTokesn.Controls.Example", "SemanticTokens.Controls.Example\SemanticTokesn.Controls.Example.csproj", "{BD5EEEF4-5696-4072-9C19-D330D35C630A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticTokens.Controls.Example", "SemanticTokens.Controls.Example\SemanticTokens.Controls.Example.csproj", "{BD5EEEF4-5696-4072-9C19-D330D35C630A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

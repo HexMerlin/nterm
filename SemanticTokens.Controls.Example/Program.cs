@@ -1,8 +1,7 @@
 using System.Text;
-using Controls;
 using SemanticTokens.Core;
 
-namespace ControlsExample;
+namespace SemanticTokens.Controls.Example;
 
 class Program
 {
