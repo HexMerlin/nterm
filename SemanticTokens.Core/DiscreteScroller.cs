@@ -131,29 +131,13 @@ public static class DiscreteScroller
         }
     }
 
-    // ---- INTERNAL (tiny + focused) -----------------------------------------
-
     private static string BuildNotice()
     {
         bool unicodeOk = UnicodeFriendly();
-        string arrow = unicodeOk ? "▲" : "^";
-        string dash = unicodeOk ? "─" : "-";
+        char arrow = unicodeOk ? '▲' : '^';
+        char dash = unicodeOk ? '─' : '-';
         string text = "Earlier output above — scroll up to see more";
-
-        int width = SafeWidth();
-        string core = $"  {arrow}  {text}  {arrow}  ";
-
-        if (core.Length > width)
-        {
-            int keep = Math.Max(0, width - ("  " + arrow + "    " + arrow + "  ").Length - 1);
-            string truncated = text.Length > keep ? text.Substring(0, keep) + "…" : text;
-            core = $"  {arrow}  {truncated}  {arrow}  ";
-        }
-
-        int rem = Math.Max(0, width - core.Length);
-        string left = new string(dash[0], rem / 2);
-        string right = new string(dash[0], width - core.Length - left.Length);
-        return left + core + right;
+        return $"                           {arrow}  {text}  {arrow}  ";
     }
 
     private static int SafeWidth() { try { return Math.Max(20, Console.WindowWidth); } catch { return 80; } }
