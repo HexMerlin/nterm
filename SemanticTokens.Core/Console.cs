@@ -11,6 +11,8 @@ public static class Console
 {
     private static readonly Stream Stdout = System.Console.OpenStandardOutput();
 
+    private static readonly Lock writeLock = new();
+
     static Console()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
@@ -90,33 +92,36 @@ public static class Console
 
     public static void SetCursorPosition(int left, int top)
     {
-        if (left < 0) left = 0;
-        if (top < 0) top = 0;
-
-        // Ensure width is valid relative to the window
-        int minWidth = Math.Max(System.Console.WindowWidth, 1);
-        int minHeight = Math.Max(System.Console.WindowHeight, 1);
-
-        // Clamp left to current width (or expand first if you prefer)
-        if (left >= System.Console.BufferWidth)
-            left = System.Console.BufferWidth - 1;
-
-        // Expand buffer height if needed
-        if (top >= System.Console.BufferHeight)
+        lock (writeLock)
         {
-            int newHeight = top + 1; // or add margin, e.g. + 50
-            try
-            {
-                System.Console.SetBufferSize(Math.Max(Console.BufferWidth, minWidth), Math.Max(newHeight, minHeight));
-            }
-            catch
-            {
-                // Fallback: clamp if the host doesn't allow resizing
-                top = System.Console.BufferHeight - 1;
-            }
-        }
+            if (left < 0) left = 0;
+            if (top < 0) top = 0;
 
-        System.Console.SetCursorPosition(left, top);
+            // Ensure width is valid relative to the window
+            int minWidth = Math.Max(System.Console.WindowWidth, 1);
+            int minHeight = Math.Max(System.Console.WindowHeight, 1);
+
+            // Clamp left to current width (or expand first if you prefer)
+            if (left >= System.Console.BufferWidth)
+                left = System.Console.BufferWidth - 1;
+
+            // Expand buffer height if needed
+            if (top >= System.Console.BufferHeight)
+            {
+                int newHeight = top + 1; // or add margin, e.g. + 50
+                try
+                {
+                    System.Console.SetBufferSize(Math.Max(Console.BufferWidth, minWidth), Math.Max(newHeight, minHeight));
+                }
+                catch
+                {
+                    // Fallback: clamp if the host doesn't allow resizing
+                    top = System.Console.BufferHeight - 1;
+                }
+            }
+
+            System.Console.SetCursorPosition(left, top);
+        }
     }
 
     /// <summary>
@@ -130,9 +135,12 @@ public static class Console
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(char ch)
     {
-        Span<byte> charBuf = stackalloc byte[4]; // Max UTF-8 char length
-        int charLen = EncodeCharUtf8(ch, charBuf);
-        Stdout.Write(charBuf[..charLen]);
+        lock (writeLock)
+        {
+            Span<byte> charBuf = stackalloc byte[4]; // Max UTF-8 char length
+            int charLen = EncodeCharUtf8(ch, charBuf);
+            Stdout.Write(charBuf[..charLen]);
+        }
     }
 
 
@@ -167,26 +175,29 @@ public static class Console
     /// </remarks>
     public static void Write(ReadOnlySpan<char> str)
     {
-        if (str.IsEmpty) return;
-        
-        // Optimize for common short strings with stack allocation
-        if (str.Length <= 256)
+        lock (writeLock)
         {
-            Span<byte> buffer = stackalloc byte[str.Length * 4]; // Max UTF-8 expansion
-            int bytesWritten = EncodeStringUtf8(str, buffer);
-            Stdout.Write(buffer[..bytesWritten]);
-        }
-        else
-        {
-            // For longer strings, use chunked processing to avoid large stack allocation
-            const int chunkSize = 256;
-            Span<byte> buffer = stackalloc byte[chunkSize * 4];
-            
-            for (int i = 0; i < str.Length; i += chunkSize)
+            if (str.IsEmpty) return;
+
+            // Optimize for common short strings with stack allocation
+            if (str.Length <= 256)
             {
-                ReadOnlySpan<char> chunk = str.Slice(i, Math.Min(chunkSize, str.Length - i));
-                int bytesWritten = EncodeStringUtf8(chunk, buffer);
+                Span<byte> buffer = stackalloc byte[str.Length * 4]; // Max UTF-8 expansion
+                int bytesWritten = EncodeStringUtf8(str, buffer);
                 Stdout.Write(buffer[..bytesWritten]);
+            }
+            else
+            {
+                // For longer strings, use chunked processing to avoid large stack allocation
+                const int chunkSize = 256;
+                Span<byte> buffer = stackalloc byte[chunkSize * 4];
+
+                for (int i = 0; i < str.Length; i += chunkSize)
+                {
+                    ReadOnlySpan<char> chunk = str.Slice(i, Math.Min(chunkSize, str.Length - i));
+                    int bytesWritten = EncodeStringUtf8(chunk, buffer);
+                    Stdout.Write(buffer[..bytesWritten]);
+                }
             }
         }
     }
@@ -217,26 +228,29 @@ public static class Console
     /// </remarks>
     public static void WriteLine(ReadOnlySpan<char> str = "")
     {
-        if (str.IsEmpty)
+        lock (writeLock)
         {
-            // Just write LF
-            Stdout.Write("\n"u8);
-            return;
-        }
-        
-        // Optimize for common short strings with stack allocation
-        if (str.Length <= 255) // Reserve 1 char for \n
-        {
-            Span<byte> buffer = stackalloc byte[(str.Length + 1) * 4]; // +1 for \n, max UTF-8 expansion
-            int bytesWritten = EncodeStringUtf8(str, buffer);
-            buffer[bytesWritten++] = (byte)'\n'; // Add LF
-            Stdout.Write(buffer[..bytesWritten]);
-        }
-        else
-        {
-            // For longer strings, write string then newline separately
-            Write(str);
-            Stdout.Write("\n"u8);
+            if (str.IsEmpty)
+            {
+                // Just write LF
+                Stdout.Write("\n"u8);
+                return;
+            }
+
+            // Optimize for common short strings with stack allocation
+            if (str.Length <= 255) // Reserve 1 char for \n
+            {
+                Span<byte> buffer = stackalloc byte[(str.Length + 1) * 4]; // +1 for \n, max UTF-8 expansion
+                int bytesWritten = EncodeStringUtf8(str, buffer);
+                buffer[bytesWritten++] = (byte)'\n'; // Add LF
+                Stdout.Write(buffer[..bytesWritten]);
+            }
+            else
+            {
+                // For longer strings, write string then newline separately
+                Write(str);
+                Stdout.Write("\n"u8);
+            }
         }
     }
 
@@ -271,33 +285,41 @@ public static class Console
         Write(imageData);
     }
 
-    public static void Reset() =>
-        Write($"{Constants.ESC}{Constants.SGR_RESET}");
+    public static void Reset()
+    {
+        lock (writeLock)
+        {
+            Write($"{Constants.ESC}{Constants.SGR_RESET}");
+        }
+    }
 
     public static void Clear(Color backgroundColor = default, bool clearScrollback = false)
     {
-        BackgroundColor = backgroundColor; //is ignored if no value is provided
+        lock (writeLock)
+        {
+            BackgroundColor = backgroundColor; //is ignored if no value is provided
 
-        //Apply current background color(and foreground if you want a default too)
-        
-        WriteBg(BackgroundColor);
-        // WriteFg(ForegroundColor); // uncomment if you want default fg reapplied
+            //Apply current background color(and foreground if you want a default too)
 
-        // Erase full display and home cursor
-        Write($"{Constants.ESC}{Constants.EraseDisplayAll}");
-        Write($"{Constants.ESC}{Constants.CursorHome}");
+            WriteBg(BackgroundColor);
+            // WriteFg(ForegroundColor); // uncomment if you want default fg reapplied
 
-        // Optionally clear scrollback
-        if (clearScrollback)
-            Write($"{Constants.ESC}{Constants.EraseScrollback}");
+            // Erase full display and home cursor
+            Write($"{Constants.ESC}{Constants.EraseDisplayAll}");
+            Write($"{Constants.ESC}{Constants.CursorHome}");
 
-        //Reset SGR state to keep your BG / FG active as defaults
-        // If you want to go back to terminal theme defaults instead, call WriteReset()
+            // Optionally clear scrollback
+            if (clearScrollback)
+                Write($"{Constants.ESC}{Constants.EraseScrollback}");
+
+            //Reset SGR state to keep your BG / FG active as defaults
+            // If you want to go back to terminal theme defaults instead, call WriteReset()
+        }
     }
 
 
     private static void WriteBg(Color c) =>
-      Write($"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
+        Write($"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
 
     private static void WriteFg(Color c) =>
         Write($"{Constants.ESC}{Constants.SGR_FG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
