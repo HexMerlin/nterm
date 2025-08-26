@@ -296,8 +296,8 @@ public class SelectControl : ISelectControl
         }
         offset = Math.Clamp(offset, 0, maxOffset);
 
-        // Render selected item on the original line (always visible)
-        DisplayItem(items[selectedIndex], true, startColumn, startRow);
+        // Render selected item on the original line (always visible), underlined
+        DisplayItem(items[selectedIndex], true, startColumn, startRow, underline: true);
 
         // Render the fixed-size viewport directly below
         int actuallyRenderedRows = 0;
@@ -310,7 +310,13 @@ public class SelectControl : ISelectControl
             if (offset + i < items.Count)
             {
                 bool isSelectedInList = (offset + i) == selectedIndex;
-                DisplayItem(items[offset + i], isSelectedInList, startColumn, row);
+                DisplayItem(
+                    items[offset + i],
+                    isSelectedInList,
+                    startColumn,
+                    row,
+                    underline: false
+                );
             }
             else
             {
@@ -347,8 +353,19 @@ public class SelectControl : ISelectControl
     /// <param name="isSelected">Whether the item is currently selected.</param>
     /// <param name="startColumn">The column position to start displaying the item.</param>
     /// <param name="startRow">The row position to display the item.</param>
-    private static void DisplayItem(SelectItem item, bool isSelected, int startColumn, int startRow)
+    private static void DisplayItem(
+        SelectItem item,
+        bool isSelected,
+        int startColumn,
+        int startRow,
+        bool underline = false
+    )
     {
+        string prefix = underline
+            ? string.Empty
+            : isSelected
+                ? "• "
+                : "  ";
         // Position cursor at the specified location
         SafeSetCursorPosition(startColumn, startRow);
 
@@ -357,18 +374,26 @@ public class SelectControl : ISelectControl
 
         // Get truncated text for display
         int windowWidth = Console.WindowWidth;
-        var displayText = TruncateText(item.Text, Math.Max(0, windowWidth - startColumn));
+        string rawText = (prefix ?? string.Empty) + (item.Text ?? string.Empty);
+        var displayText = TruncateText(rawText, Math.Max(0, windowWidth - startColumn));
 
         if (isSelected)
         {
-            // Highlight selected item in yellow
             Console.ForegroundColor = Color.Yellow;
-            Console.Write(displayText);
         }
         else
         {
-            // Display in white for non-selected items
             Console.ForegroundColor = Color.White;
+        }
+
+        if (underline)
+        {
+            Console.Write("\u001b[4m");
+            Console.Write(displayText);
+            Console.Write("\u001b[24m");
+        }
+        else
+        {
             Console.Write(displayText);
         }
     }
