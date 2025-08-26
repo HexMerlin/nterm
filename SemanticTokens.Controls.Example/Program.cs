@@ -12,7 +12,7 @@ class Program
         System.Console.InputEncoding = Encoding.UTF8;
 
         Console.ForegroundColor = Color.White;
-        Console.BackgroundColor = Color.Black;
+        Console.BackgroundColor = Color.Transparent;
 
         Console.WriteLine("SemanticTokens Controls Example");
         Console.WriteLine("==============================");
@@ -32,17 +32,17 @@ class Program
             new()
             {
                 Text = "Option A",
-                Action = () => Console.WriteLine("Doing stuff with Option A")
+                Command = () => Console.WriteLine("Doing stuff with Option A")
             },
             new()
             {
                 Text = "Option B",
-                Action = () => Console.WriteLine("Doing stuff with Option B")
+                Command = () => Console.WriteLine("Doing stuff with Option B")
             },
             new()
             {
                 Text = "Option C",
-                Action = () => Console.WriteLine("Doing stuff with Option C")
+                Command = () => Console.WriteLine("Doing stuff with Option C")
             }
         };
 
@@ -53,8 +53,8 @@ class Program
         if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
         {
             Console.WriteLine($"\nSelected: {selectedItem1.Text} and {selectedItem2.Text}");
-            selectedItem1.Action?.Invoke();
-            selectedItem2.Action?.Invoke();
+            selectedItem1.Command.Invoke();
+            selectedItem2.Command.Invoke();
         }
         else
         {

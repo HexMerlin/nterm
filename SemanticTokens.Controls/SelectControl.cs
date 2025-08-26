@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using SemanticTokens.Core;
 
 namespace Controls;
@@ -16,20 +17,16 @@ public class SelectControl : ISelectControl
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
     public SelectItem Show(IEnumerable<SelectItem> items)
     {
-        // Validate input and prepare items list
         var itemList = ValidateInput(items);
         if (itemList.Count == 0)
         {
             return SelectItem.Empty;
         }
 
-        // Use System.ConsoleState to automatically manage console state restoration
+        // Use ConsoleState to automatically manage console state restoration
         using var consoleState = new ConsoleState();
 
-        // Prepare console for selection
         PrepareConsoleForSelection();
-
-        // Clear any buffered input
         ClearInputBuffer();
 
         // Ensure there is enough space below to render the dropdown without hiding the selected line
@@ -55,13 +52,9 @@ public class SelectControl : ISelectControl
     /// <returns>A list of valid items.</returns>
     private static List<SelectItem> ValidateInput(IEnumerable<SelectItem> items)
     {
-        if (items == null)
-            throw new ArgumentNullException(nameof(items));
+        ArgumentNullException.ThrowIfNull(items);
 
-        if (Console.WindowWidth <= 0)
-            throw new InvalidOperationException("Console window width must be positive");
-
-        return [.. items.Where(item => item != null)];
+        return [.. items.Where(item => !item.IsEmpty())];
     }
 
     /// <summary>
@@ -136,7 +129,7 @@ public class SelectControl : ISelectControl
             }
 
             // Display dropdown anchored at the original cursor position
-            var renderTuple = RenderDropdown(
+            var (renderedCount, newScrollOffset) = RenderDropdown(
                 items,
                 currentIndex,
                 displayStartColumn,
@@ -144,8 +137,8 @@ public class SelectControl : ISelectControl
                 lastRenderedLineCount,
                 scrollOffset
             );
-            lastRenderedLineCount = renderTuple.renderedCount;
-            scrollOffset = renderTuple.newScrollOffset;
+            lastRenderedLineCount = renderedCount;
+            scrollOffset = newScrollOffset;
 
             // Handle user input
             var keyInfo = Console.ReadKey(true);
