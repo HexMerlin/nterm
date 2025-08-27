@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -21,15 +20,13 @@ public static class Console
     static Console()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
-
-        // New: ensure UTF‑8 input as well
         System.Console.InputEncoding = Encoding.UTF8;
 
         WriteFg(Color.FromConsoleColor(System.Console.ForegroundColor));
         WriteBg(Color.FromConsoleColor(System.Console.BackgroundColor));
         TryEnableVirtualTerminalOnWindows();
 
-        // New: Explicitly choose Backspace semantics so BS=0x08, Ctrl+Backspace toggles to DEL=0x7F.
+        // Explicitly choose Backspace semantics so BS=0x08, Ctrl+Backspace toggles to DEL=0x7F.
         // WT implements DECBKM; this stabilizes our editor logic. (CSI ? 67 h)
         Write("\x1b[?67h");
     }
@@ -39,9 +36,9 @@ public static class Console
         get => OperatingSystem.IsWindows() ? System.Console.Title : "";
         set
         {
-            if (OperatingSystem.IsWindows()) 
+            if (OperatingSystem.IsWindows())
                 System.Console.Title = value;
-    }
+        }
     }
 
     /// <summary>
@@ -93,10 +90,7 @@ public static class Console
     public static int CursorLeft => System.Console.CursorLeft;
     public static int CursorTop => System.Console.CursorTop;
 
-    // =============================
-    //         INPUT (NEW)
-    // =============================
-
+ 
     /// <summary>True if there is input available without blocking.</summary>
     public static bool KeyAvailable
     {
@@ -164,7 +158,7 @@ public static class Console
         }
 
         // Enter: CR or LF
-        if (ch == '\r' || ch == '\n')
+        if (ch == '\n' || ch == '\r')
         {
             if (!intercept) Write("\n");
             return new ConsoleKeyInfo('\n', System.ConsoleKey.Enter, false, false, false);
@@ -338,10 +332,6 @@ public static class Console
         for (int i = 0; i < runeWidth; i++)
             Write("\b \b");
     }
-
-    // =============================
-    //         OUTPUT (unchanged)
-    // =============================
 
     public static void SetCursorPosition(int left, int top)
     {
