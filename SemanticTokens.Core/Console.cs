@@ -680,4 +680,6 @@ public static class Console
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
+
+    #endregion
 }
