@@ -52,14 +52,9 @@ internal static class ConsoleEx
         // Write the minimal number of newlines to create room.
         // This may cause the terminal to scroll up if we're at the bottom.
         SetCursor(startColumn, startRow);
-        for (int i = 0; i < 4; i++)
-        {
-            Console.WriteLine();
-        }
+        Console.Write(new string('\n', Math.Min(windowHeight - 1, requiredRows)));
 
-        // Calculate how many screen scrolls happened
-        int scrolled = Math.Max(0, startRow + needed - (windowHeight - 1));
-        int adjustedStartRow = Math.Max(0, startRow - scrolled);
+        int adjustedStartRow = Math.Max(0, startRow - needed);
 
         // Restore cursor to the anchor position
         SetCursor(startColumn, adjustedStartRow);
