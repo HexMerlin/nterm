@@ -11,16 +11,29 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
 
     private int scrollOffset;
     private int previousWindowHeight = Console.WindowHeight;
+    private int previousCursorTop = Console.CursorTop;
 
     public void UpdateOnResize()
     {
-        var lineDiff = Console.WindowHeight - previousWindowHeight;
-        if (lineDiff == 0)
+        int windowDiff = Console.WindowHeight - previousWindowHeight;
+        if (windowDiff == 0)
             return;
 
-        AnchorRow = Math.Clamp(AnchorRow + lineDiff, 0, Console.WindowHeight - 1);
+        int currentCursorTop = Console.CursorTop;
+        int cursorDiff = currentCursorTop - previousCursorTop;
+
+        // Adjust anchor only when the terminal actually scrolled content
+        // Heuristic: if cursor moved by the same delta as the window height change,
+        // the viewport scrolled with the resize (e.g., when cursor was pinned to bottom).
+        // If cursor did not move, the content stayed fixed relative to the top, so keep anchor.
+        if (Math.Abs(cursorDiff) == Math.Abs(windowDiff))
+        {
+            AnchorRow = Math.Clamp(AnchorRow + cursorDiff, 0, Console.WindowHeight - 1);
+        }
+        // else: ambiguous case, avoid shifting anchor to prevent jumps
 
         previousWindowHeight = Console.WindowHeight;
+        previousCursorTop = currentCursorTop;
     }
 
     public SelectItem Show(IReadOnlyList<SelectItem> items)
@@ -116,6 +129,11 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
 
         ClearShrinkingTail(totalRendered);
         LastRenderedLineCount = totalRendered;
+
+        // Stabilize the cursor position to the anchor after rendering to make
+        // resize detection reliable (cursorDiff reflects only external changes).
+        ConsoleEx.SetCursor(AnchorColumn, AnchorRow);
+        previousCursorTop = Console.CursorTop;
         return totalRendered;
     }
 

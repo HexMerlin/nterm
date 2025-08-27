@@ -12,6 +12,7 @@ class Program
 
         Console.ForegroundColor = Color.White;
         Console.BackgroundColor = Color.Transparent;
+        Console.Title = "SemanticTokens Controls Example";
 
         Console.WriteLine("SemanticTokens Controls Example");
         Console.WriteLine("==============================");
@@ -42,7 +43,17 @@ class Program
             {
                 Text = "Option C",
                 Command = () => Console.WriteLine("Doing stuff with Option C")
-            }
+            },
+            new() { Text = "Option D" },
+            new() { Text = "Option E" },
+            new() { Text = "Option F" },
+            new() { Text = "Option G" },
+            new() { Text = "Option H" },
+            new() { Text = "Option I" },
+            new() { Text = "Option J" },
+            new() { Text = "Option K" },
+            new() { Text = "Option L" },
+            new() { Text = "Option M" },
         };
 
         var selectedItem1 = Select.Show(items);
