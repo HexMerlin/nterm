@@ -18,10 +18,20 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticTokens.Core", "Sema
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticTokens.Sixel", "SemanticTokens.Sixel\SemanticTokens.Sixel.csproj", "{5D522B77-5EAE-4D08-B73F-8C73DBD9C9DB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticTokens.Controls", "SemanticTokens.Controls\SemanticTokens.Controls.csproj", "{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SemanticTokens.Controls.Example", "SemanticTokens.Controls.Example", "{8B6DF1B8-AE86-48FF-B161-E4652D33B298}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticTokens.Controls.Example", "SemanticTokens.Controls.Example\SemanticTokens.Controls.Example.csproj", "{BD5EEEF4-5696-4072-9C19-D330D35C630A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4922FE9C-CFCB-4840-AF10-134A39A50AFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -44,9 +54,36 @@ Global
 		{5D522B77-5EAE-4D08-B73F-8C73DBD9C9DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D522B77-5EAE-4D08-B73F-8C73DBD9C9DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D522B77-5EAE-4D08-B73F-8C73DBD9C9DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Debug|x64.Build.0 = Debug|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Debug|x86.Build.0 = Debug|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Release|x64.ActiveCfg = Release|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Release|x64.Build.0 = Release|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Release|x86.ActiveCfg = Release|Any CPU
+		{960E6E8B-F422-48CB-BB16-AA44E0B15A9E}.Release|x86.Build.0 = Release|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Debug|x64.Build.0 = Debug|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Debug|x86.Build.0 = Debug|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Release|x64.ActiveCfg = Release|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Release|x64.Build.0 = Release|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Release|x86.ActiveCfg = Release|Any CPU
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BD5EEEF4-5696-4072-9C19-D330D35C630A} = {8B6DF1B8-AE86-48FF-B161-E4652D33B298}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9516A71A-7304-40C3-A06B-6353E9553991}

@@ -24,11 +24,11 @@ public class CSharpSyntaxHighlightingDemo
         //A simple C# script
         string scriptText = """
 using System;
-                
+
 static int AddFive(int initial) => initial + 5;
 
 int x = 42;
-/* 
+/*
 Some comment section here
 */
 string msg = $"Value = {x} ";
