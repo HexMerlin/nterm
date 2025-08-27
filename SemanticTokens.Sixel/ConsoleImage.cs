@@ -1,8 +1,7 @@
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using SemanticTokens.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace SemanticTokens.Sixel;
 

@@ -289,11 +289,11 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
         int lines = (int)Math.Ceiling((double)Image.Height / cellSize.Height);
         // Allocate rows for the image height
-        Console.Write(new string('\n', lines));
+        Core.Console.Write(new string('\n', lines));
         // Move up cursor the rows
-        Console.Write($"{Constants.ESC}{string.Format(Constants.CursorUp, lines)}");
+        Core.Console.Write($"{Constants.ESC}{string.Format(Constants.CursorUp, lines)}");
         // Save the cursor position
-        Console.Write($"{Constants.ESC}{Constants.CursorSave}");
+        Core.Console.Write($"{Constants.ESC}{Constants.CursorSave}");
         string beginSync = "", endSync = "";
         if (syncSupported)
         {
@@ -310,13 +310,13 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                 if (isOpaque)
                 {
                     // Restore the cursor position and then output sixel string
-                    Console.Write($"{Constants.ESC}{Constants.CursorRestore}{sixelString}");
+                    Core.Console.Write($"{Constants.ESC}{Constants.CursorRestore}{sixelString}");
                 }
                 else
                 {
                     // Restore the cursor position and erase from cursor until end of screen,
                     // and then output sixel string; do the erase and draw in one batch update if possible
-                    Console.Write($"{beginSync}{Constants.ESC}{Constants.CursorRestore}{Constants.ESC}{Constants.EraseFromCursor}{sixelString}{endSync}");
+                    Core.Console.Write($"{beginSync}{Constants.ESC}{Constants.CursorRestore}{Constants.ESC}{Constants.EraseFromCursor}{sixelString}{endSync}");
                 }
             }
         }
