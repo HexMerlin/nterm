@@ -47,74 +47,33 @@ public static class SixelEncode
     public static SixelEncoder CreateEncoder(Stream stream) => CreateEncoder(Image.Load<Rgba32>(stream));
 
     /// <summary>
-    /// Encode Image stream to Sixel string
+    /// Encode Image stream to Sixel string using original image dimensions.
     /// </summary>
     /// <param name="stream">Image stream</param>
-    /// <param name="size">Image size (for scaling), or null</param>
     /// <param name="transp">Transparency enum</param>
     /// <param name="frame"><see cref="SixLabors.ImageSharp.ImageFrame"/> index, 0=first/only frame, -1=choose best</param>
     /// <returns>Sixel string</returns>
     public static ReadOnlySpan<char> Encode(Stream stream,
-                                            Size? size = null,
                                             Transparency transp = Transparency.Default,
                                             int frame = -1)
     {
-        // First load image without any target size to see original dimensions
-        using var originalImg = Image.Load<Rgba32>(stream);
-        
-        // Reset stream position for actual processing
-        stream.Position = 0;
-        
-        DecoderOptions opt = new();
-        if (size?.Width > 0 && size?.Height > 0)
-        {
-            opt = new()
-            {
-                TargetSize = new(size?.Width ?? 1, size?.Height ?? 1),
-            };
-        }
-        
-        using var img = Image.Load<Rgba32>(opt, stream);
-        return Encode(img, size, transp, frame);
+        using var img = Image.Load<Rgba32>(stream);
+        return Encode(img, transp, frame);
     }
     /// <summary>
-    /// Encode <see cref="SixLabors.ImageSharp.Image"/> to Sixel string
+    /// Encode <see cref="SixLabors.ImageSharp.Image"/> to Sixel string using original image dimensions.
     /// </summary>
     /// <param name="img">Image data</param>
-    /// <inheritdoc cref="Encode"/>
+    /// <param name="transp">Transparency enum</param>
+    /// <param name="frame"><see cref="SixLabors.ImageSharp.ImageFrame"/> index, 0=first/only frame, -1=choose best</param>
+    /// <returns>Sixel string</returns>
     public static ReadOnlySpan<char> Encode(Image<Rgba32> img,
-                                            Size? size = null,
                                             Transparency transp = Transparency.Default,
                                             int frame = -1)
     {
-        int canvasWidth = -1, canvasHeight = -1;
-        if (size?.Width < 1 && size?.Height > 0)
-        {
-            // Keep aspect ratio
-            canvasHeight = size?.Height ?? 1;
-            canvasWidth = canvasHeight * img.Width / img.Height;
-        }
-        else if (size?.Height < 1 && size?.Width > 0)
-        {
-            // Keep aspect ratio
-            canvasWidth = size?.Width ?? 1;
-            canvasHeight = canvasWidth * img.Height / img.Width;
-        }
-        else if (size?.Height > 0 && size?.Width > 0)
-        {
-            canvasWidth = size?.Width ?? 1;
-            canvasHeight = size?.Height ?? 1;
-        }
-
-        // TODO: Use maximum size based on size of terminal window?
-        if (canvasWidth < 1)
-        {
-            canvasWidth = img.Width;
-        }
-        if (canvasHeight < 1)
-        {
-            canvasHeight = img.Height;
-        }
+        // Use original image dimensions - no resizing, no aspect ratio destruction
+        int canvasWidth = img.Width;
+        int canvasHeight = img.Height;
 
         var meta = img.Metadata;
         Rgba32? bg = null, tc = null;
@@ -170,15 +129,7 @@ public static class SixelEncode
                 break;
         }
 
-        if (canvasWidth > 1 && canvasHeight > 1 && (img.Width != canvasWidth || img.Height != canvasHeight))
-        {
-            // Force exact dimensions without aspect ratio preservation
-            img.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Size = new SixLabors.ImageSharp.Size(canvasWidth, canvasHeight),
-                Mode = ResizeMode.Stretch  // Force exact dimensions, ignore aspect ratio
-            }));
-        }
+        // No resizing - preserve original image dimensions and aspect ratio
 
         // Color Reduction
         img.Mutate(x =>

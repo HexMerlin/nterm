@@ -109,10 +109,9 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
             // Reset stream position for SIXEL encoding
             stream.Position = 0;
             
-            // Encode to SIXEL using original dimensions (size: null = use original)
+            // Encode to SIXEL using original dimensions
             ReadOnlySpan<char> sixelData = SixelEncode.Encode(
                 stream, 
-                size: null, // Use original image dimensions
                 transparency, 
                 frame: -1
             );
