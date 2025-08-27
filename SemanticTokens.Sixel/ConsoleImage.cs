@@ -1,5 +1,8 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using SemanticTokens.Core;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace SemanticTokens.Sixel;
 
@@ -16,7 +19,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <summary>
     /// Image dimensions in pixels.
     /// </summary>
-    public readonly Size DisplaySize {  get; }
+    public readonly SemanticTokens.Core.Size DisplaySize { get; }
 
     /// <summary>
     /// Optimized encoding availability.
@@ -57,13 +60,117 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="encodedData">Encoded image data or fallback text</param>
     /// <param name="displaySize">Target display size in pixels</param>
     /// <param name="hasOptimizedEncoding">Indicates whether encodedData contains optimized encoding</param>
-    public ConsoleImage(string encodedData, Size displaySize, bool hasOptimizedEncoding)
+    public ConsoleImage(string encodedData, SemanticTokens.Core.Size displaySize, bool hasOptimizedEncoding)
     {
         EncodedData = encodedData;
         DisplaySize = displaySize;
         HasOptimizedEncoding = hasOptimizedEncoding;
     }
 
+    /// <summary>
+    /// Creates ConsoleImage from file path using original image dimensions.
+    /// </summary>
+    /// <param name="filePath">Path to image file</param>
+    /// <param name="fallbackText">Text to display when SIXEL encoding fails</param>
+    /// <param name="transparency">Transparency handling mode</param>
+    /// <returns>Console image ready for output</returns>
+    /// <exception cref="FileNotFoundException">Image file not found</exception>
+    public static ConsoleImage FromFile(string filePath, 
+                                       string fallbackText = "[image]", 
+                                       Transparency transparency = Transparency.Default)
+    {
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException($"Image file not found: {filePath}");
+            
+        using var stream = File.OpenRead(filePath);
+        return FromStream(stream, fallbackText, transparency);
+    }
+
+    /// <summary>
+    /// Creates ConsoleImage from stream using original image dimensions.
+    /// </summary>
+    /// <param name="stream">Image data stream</param>
+    /// <param name="fallbackText">Text to display when SIXEL encoding fails</param>
+    /// <param name="transparency">Transparency handling mode</param>
+    /// <returns>Console image ready for output</returns>
+    public static ConsoleImage FromStream(Stream stream, 
+                                         string fallbackText = "[image]", 
+                                         Transparency transparency = Transparency.Default)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        ArgumentException.ThrowIfNullOrEmpty(fallbackText);
+
+        try
+        {
+            // Get original image dimensions
+            using var originalImg = Image.Load<Rgba32>(stream);
+            var originalSize = new SemanticTokens.Core.Size(originalImg.Width, originalImg.Height);
+            
+            // Reset stream position for SIXEL encoding
+            stream.Position = 0;
+            
+            // Encode to SIXEL using original dimensions (size: null = use original)
+            ReadOnlySpan<char> sixelData = SixelEncode.Encode(
+                stream, 
+                size: null, // Use original image dimensions
+                transparency, 
+                frame: -1
+            );
+
+            return new ConsoleImage(sixelData.ToString(), originalSize, hasOptimizedEncoding: true);
+        }
+        catch
+        {
+            // Fallback - use reasonable default size for fallback text
+            var fallbackSize = new SemanticTokens.Core.Size(320, 240);
+            return new ConsoleImage(fallbackText, fallbackSize, hasOptimizedEncoding: false);
+        }
+    }
+
+    /// <summary>
+    /// Creates ConsoleImage from embedded resource using original image dimensions.
+    /// </summary>
+    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
+    /// <param name="fallbackText">Text to display when SIXEL encoding fails</param>
+    /// <param name="transparency">Transparency handling mode</param>
+    /// <returns>Console image ready for output</returns>
+    /// <exception cref="FileNotFoundException">Embedded resource not found</exception>
+    public static ConsoleImage FromEmbeddedResource(string resourceSuffix, 
+                                                   string fallbackText = "[image]", 
+                                                   Transparency transparency = Transparency.Default)
+    {
+        return FromEmbeddedResource(resourceSuffix, Assembly.GetCallingAssembly(), fallbackText, transparency);
+    }
+
+    /// <summary>
+    /// Creates ConsoleImage from embedded resource in specific assembly using original image dimensions.
+    /// </summary>
+    /// <param name="resourceSuffix">Resource name suffix for lookup</param>
+    /// <param name="assembly">Assembly containing the embedded resources</param>
+    /// <param name="fallbackText">Text to display when SIXEL encoding fails</param>
+    /// <param name="transparency">Transparency handling mode</param>
+    /// <returns>Console image ready for output</returns>
+    /// <exception cref="FileNotFoundException">Embedded resource not found</exception>
+    public static ConsoleImage FromEmbeddedResource(string resourceSuffix, 
+                                                   Assembly assembly,
+                                                   string fallbackText = "[image]", 
+                                                   Transparency transparency = Transparency.Default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(resourceSuffix);
+        ArgumentNullException.ThrowIfNull(assembly);
+
+        string[] allResources = assembly.GetManifestResourceNames();
+        string? resourceName = allResources
+            .FirstOrDefault(n => n.EndsWith(resourceSuffix, StringComparison.OrdinalIgnoreCase));
+            
+        if (resourceName == null)
+            throw new FileNotFoundException($"Embedded resource not found: {resourceSuffix} in assembly {assembly.GetName().Name}");
+
+        using var stream = assembly.GetManifestResourceStream(resourceName) 
+            ?? throw new FileNotFoundException($"Embedded resource stream is null: {resourceName}");
+            
+        return FromStream(stream, fallbackText, transparency);
+    }
 
     /// <summary>
     /// Indicates whether this console image is equal to another console image.

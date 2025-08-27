@@ -31,23 +31,11 @@ public sealed class ConsoleImageDemo
         // Use Examples assembly since that's where the embedded resources are
         Assembly examplesAssembly = typeof(ConsoleImageDemo).Assembly;
 
-        UserAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageUser, examplesAssembly)
-            .WithCharacterSize(8, 8)
-            .WithFallbackText("[👤]")
-            .WithTransparency(Transparency.Default)
-            .Build();
+        UserAvatarImage = ConsoleImage.FromEmbeddedResource(ImageUser, examplesAssembly, "[👤]", Transparency.Default);
 
-        BotAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageBot, examplesAssembly)
-            .WithCharacterSize(8, 8)
-            .WithFallbackText("[🤖]")
-            .WithTransparency(Transparency.Default)
-            .Build();
+        BotAvatarImage = ConsoleImage.FromEmbeddedResource(ImageBot, examplesAssembly, "[🤖]", Transparency.Default);
 
-        AiAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageAI, examplesAssembly)
-            .WithCharacterSize(8, 8)
-            .WithFallbackText("[🧠]")
-            .WithTransparency(Transparency.Default)
-            .Build();
+        AiAvatarImage = ConsoleImage.FromEmbeddedResource(ImageAI, examplesAssembly, "[🧠]", Transparency.Default);
     }
 
 
