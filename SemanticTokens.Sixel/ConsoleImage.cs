@@ -33,20 +33,20 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     private readonly string EncodedData { get; }
 
     /// <summary>
-    /// Display dimensions in character grid cells.
-    /// Computed using standard character cell size assumptions.
+    /// Calculates image dimensions in character grid cells.
     /// </summary>
-    /// <returns>Character grid dimensions with estimated precision</returns>
-    public ConsoleImageCharacterSize CharacterSize => 
-        ConsoleImageCharacterSize.FromConsoleImage(this);
-
-    /// <summary>
-    /// Display dimensions in character grid cells with safety margin.
-    /// Adds +1 cell in each dimension for bulletproof robustness.
-    /// </summary>
-    /// <returns>Conservative character grid dimensions guaranteed to contain the image</returns>
-    public ConsoleImageCharacterSize SafeCharacterSize => 
-        ConsoleImageCharacterSize.FromConsoleImage(this, addSafetyMargin: true);
+    /// <param name="cellSizeInPixels">Terminal character cell size in pixels</param>
+    /// <returns>Image dimensions in character cells (width×height)</returns>
+    public SemanticTokens.Core.Size GetSizeInCharacters(SemanticTokens.Core.Size cellSizeInPixels)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Width);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Height);
+        
+        return new SemanticTokens.Core.Size(
+            (int)Math.Ceiling((double)DisplaySize.Width / cellSizeInPixels.Width),
+            (int)Math.Ceiling((double)DisplaySize.Height / cellSizeInPixels.Height)
+        );
+    }
 
     /// <summary>
     /// Console-ready image data.

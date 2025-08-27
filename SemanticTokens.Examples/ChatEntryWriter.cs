@@ -76,8 +76,9 @@ public sealed class ChatEntryWriter
         
         Console.WriteImage(AvatarImage.ConsoleData);
         
-        ConsoleImageCharacterSize imageSize = AvatarImage.CharacterSize;
-        _textLeft = _startLeft + imageSize.Columns + TextMargin;
+        var cellSize = new SemanticTokens.Core.Size(10, 20); // Standard monospace cell size
+        var imageSize = AvatarImage.GetSizeInCharacters(cellSize);
+        _textLeft = _startLeft + imageSize.Width + TextMargin;
         _textTop = _startTop;
         _currentTextLine = 0;
         _currentTextColumn = 0;
@@ -99,8 +100,9 @@ public sealed class ChatEntryWriter
         if (!_isWriting)
             throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
         
-        ConsoleImageCharacterSize imageSize = AvatarImage.CharacterSize;
-        int finalTop = _startTop + imageSize.Rows;
+        var cellSize = new SemanticTokens.Core.Size(10, 20); // Standard monospace cell size
+        var imageSize = AvatarImage.GetSizeInCharacters(cellSize);
+        int finalTop = _startTop + imageSize.Height;
         Console.SetCursorPosition(0, finalTop);
         
         _isWriting = false;
