@@ -22,9 +22,13 @@ public static class Console
     }
 
     public static string Title
-    { 
-        get => System.Console.Title;
-        set => System.Console.Title = value;
+    {
+        get => OperatingSystem.IsWindows() ? System.Console.Title : "";
+        set
+        {
+            if (OperatingSystem.IsWindows()) 
+                System.Console.Title = value;
+        }
     }
 
     /// <summary>
