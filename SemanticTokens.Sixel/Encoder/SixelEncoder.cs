@@ -18,11 +18,10 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     public Image<Rgba32> Image { get; } = img;
     public string? Format { get; } = format;
 
-    public Size CanvasSize
-    {
-        get => ToSize(Image.Size);
-        set => Resize(value);
-    }
+    /// <summary>
+    /// Image dimensions in pixels (read-only).
+    /// </summary>
+    public Size CanvasSize => ToSize(Image.Size);
 
     public Rgba32? BackgroundColor { get; init; }
     public Rgba32? TransparentColor { get; init; }
@@ -42,47 +41,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
     private static Size ToSize(SixLabors.ImageSharp.Size size) => new(size.Width, size.Height);
 
-    /// <summary>
-    /// Resize the image
-    /// </summary>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
-    /// <returns>This Encoder</returns>
-    public SixelEncoder Resize(int width, int height)
-    {
-        int canvasWidth = -1, canvasHeight = -1;
-        if (width < 1 && height > 0)
-        {
-            // Keep aspect ratio
-            canvasHeight = height;
-            canvasWidth = canvasHeight * Image.Width / Image.Height;
-        }
-        else if (height < 1 && width > 0)
-        {
-            // Keep aspect ratio
-            canvasWidth = width;
-            canvasHeight = canvasWidth * Image.Height / Image.Width;
-        }
-        else if (height > 0 && width > 0)
-        {
-            canvasWidth = width;
-            canvasHeight = height;
-        }
 
-        if (canvasWidth <= 0 || Image.Width == canvasWidth
-            || canvasHeight <= 0 || Image.Height == canvasHeight)
-            return this;
-
-        Image.Mutate(context => context.Resize(canvasWidth, canvasHeight));
-        Quantized = false;
-        return this;
-    }
-    /// <param name="size"></param>
-    /// <inheritdoc cref="Resize(int, int)"/>
-    public SixelEncoder Resize(Size size)
-    {
-        return Resize(size.Width, size.Height);
-    }
 
     /// <summary>
     /// Flag if the quantization process has been performed for avoid duplicate processing
@@ -304,11 +263,15 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <summary>
     /// Write to <see cref="Console.Out"/> Sixel strings encoded for each frame
     /// </summary>
+    /// <param name="cellSize">Terminal character cell size in pixels</param>
+    /// <param name="syncSupported">Whether terminal supports synchronized output</param>
     /// <inheritdoc cref="EncodeFramesAsync(int, int, int, int, CancellationToken)"/>
     /// <exception cref="NotSupportedException">
     /// This format does not support animation
     /// </exception>
-    public async Task Animate(int overwriteRepeat = -1,
+    public async Task Animate(SemanticTokens.Core.Size cellSize,
+                              bool syncSupported = false,
+                              int overwriteRepeat = -1,
                               int startFrame = 0,
                               int endFrame = -1,
                               CancellationToken cancellationToken = default)
@@ -324,8 +287,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
         bool isOpaque = TransparencyMode == Transparency.None;
 
-        SemanticTokens.Core.Size cursorSize = TerminalCapabilities.CellSize;
-        int lines = (int)Math.Ceiling((double)Image.Height / cursorSize.Height);
+        int lines = (int)Math.Ceiling((double)Image.Height / cellSize.Height);
         // Allocate rows for the image height
         Console.Write(new string('\n', lines));
         // Move up cursor the rows
@@ -333,7 +295,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         // Save the cursor position
         Console.Write($"{Constants.ESC}{Constants.CursorSave}");
         string beginSync = "", endSync = "";
-        if (TerminalCapabilities.IsSyncSupported)
+        if (syncSupported)
         {
             beginSync = Constants.ESC + Constants.SyncBegin;
             endSync = Constants.ESC + Constants.SyncEnd;
@@ -364,16 +326,15 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         }
     }
 
-    /// <inheritdoc cref="Animate(int, int, int, CancellationToken)"/>
-    public async Task Animate(int overwriteRepeat, CancellationToken cancellationToken)
+    /// <summary>
+    /// Animate with standard terminal assumptions (10x20 pixel cells, no sync).
+    /// </summary>
+    /// <inheritdoc cref="Animate(SemanticTokens.Core.Size, bool, int, int, int, CancellationToken)"/>
+    public async Task Animate(int overwriteRepeat = -1, CancellationToken cancellationToken = default)
     {
-        await Animate(overwriteRepeat, 0, -1, cancellationToken);
-    }
-
-    /// <inheritdoc cref="Animate(int, int, int, CancellationToken)"/>
-    public async Task Animate(CancellationToken cancellationToken)
-    {
-        await Animate(-1, 0, -1, cancellationToken);
+        // Use standard monospace cell size assumptions
+        var standardCellSize = new SemanticTokens.Core.Size(10, 20);
+        await Animate(standardCellSize, syncSupported: false, overwriteRepeat, 0, -1, cancellationToken);
     }
 
     protected virtual void Dispose(bool disposing)

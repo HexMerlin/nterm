@@ -113,7 +113,7 @@ public static class SixelEncode
                             img = img.Frames.ExportFrame(frame % frameCount);
                     }
                     else
-                        img = img.Frames.ExportFrame(GetBestFrame(img, new(canvasWidth, canvasHeight)));
+                        img = img.Frames.ExportFrame(GetBestFrame(img));
                 }
                 break;
 #endif
@@ -375,41 +375,36 @@ public static class SixelEncode
 
 #if IMAGESHARP4 // ImageSharp v4.0 adds support for CUR and ICO files
     /// <summary>
-    /// Determine best-sized ImageFrame (for CUR and ICO)
+    /// Determine best ImageFrame with highest quality (for CUR and ICO).
     /// </summary>
     /// <param name="stream">Image Stream</param>
-    /// <param name="size">Size, null=largest ImageFrame</param>
     /// <returns>int index of best ImageFrame</returns>
-    public static int GetBestFrame(Stream stream, Size? size)
+    public static int GetBestFrame(Stream stream)
     {
-        return GetBestFrame(Image.Load<Rgba32>(new(), stream), size);
+        return GetBestFrame(Image.Load<Rgba32>(new(), stream));
     }
+    
+    /// <summary>
+    /// Determine best ImageFrame with highest quality (for CUR and ICO).
+    /// </summary>
     /// <param name="img">Image data</param>
-    /// <inheritdoc cref="GetBestFrame"></inheritdoc>
-    public static int GetBestFrame(Image<Rgba32> img, Size? size)
+    /// <returns>int index of best ImageFrame</returns>
+    public static int GetBestFrame(Image<Rgba32> img)
     {
-        size ??= new(-1, -1);
-        int? sizeDim;
         int bestFrame = 0, bestDim = 0, maxBpp = 0, i = 0;
-        if (size?.Width > size?.Height)
-            sizeDim = size?.Width;
-        else
-            sizeDim = size?.Height;
+        
         foreach (var frame in img.Frames)
         {
             var meta = frame.Metadata.GetIcoMetadata();
-            DebugPrint("  " + i + ":" + meta.EncodingWidth + "x" + meta.EncodingHeight + "x" + (int)meta.BmpBitsPerPixel + "b", lf: true);
             if ((int)meta.BmpBitsPerPixel >= maxBpp)
             {
                 maxBpp = (int)meta.BmpBitsPerPixel;
                 int w = meta.EncodingWidth;
-                //int h = meta.EncodingHeight;
                 if (w == 0) // oddly, 0 means 256
                     w = 256;
-                if ((bestDim <= 0) ||
-                    ((sizeDim is null || sizeDim <= 0) && w > bestDim) ||
-                    (sizeDim is not null && sizeDim > 0 && w >= sizeDim && w < bestDim) ||
-                    (w > bestDim))
+                    
+                // Choose largest dimension with highest bit depth
+                if (w > bestDim)
                 {
                     bestDim = w;
                     bestFrame = i;
@@ -417,7 +412,6 @@ public static class SixelEncode
             }
             i++;
         }
-        DebugPrint("Best ImageFrame: " + bestFrame, lf: true);
         return bestFrame;
     }
 #endif
