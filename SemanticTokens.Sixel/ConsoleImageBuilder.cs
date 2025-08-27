@@ -129,7 +129,7 @@ public sealed class ConsoleImageBuilder
     /// <summary>
     /// Constructs perfect ConsoleImage with optimal encoding.
     /// </summary>
-    /// <returns>Immutable ConsoleImage ready for Console.WriteImage()</returns>
+    /// <returns>Immutable ConsoleImage ready for console output</returns>
     /// <exception cref="FileNotFoundException">Image source not found</exception>
     /// <exception cref="InvalidOperationException">Image encoding failed</exception>
     public ConsoleImage Build()
@@ -147,7 +147,7 @@ public sealed class ConsoleImageBuilder
 
     private ConsoleImage BuildFromStream(Stream imageStream)
     {
-        SemanticTokens.Core.Size targetSize = ComputeTargetSize(); //WE MUST NOT CALL THIS!!
+        SemanticTokens.Core.Size targetSize = ComputeTargetSize();
         
         try
         {
@@ -173,33 +173,26 @@ public sealed class ConsoleImageBuilder
 
     private SemanticTokens.Core.Size ComputeTargetSize()
     {
-        // Character-based sizing takes precedence (authority-driven)
+        // Character-based sizing with fixed cell size assumption
         if (_targetCharacterSize.HasValue)
         {
             Size charSize = _targetCharacterSize.Value;
-            Size cellSize = TerminalCapabilities.CellSize;
+            // Use standard monospace character cell size (10x20 pixels)
+            const int CellWidth = 10;
+            const int CellHeight = 20;
             
             if (_keepAspectRatio)
             {
-                // For aspect ratio preservation, adjust character grid to maintain square pixels
-                // when cell dimensions are not square
-                if (cellSize.Width != cellSize.Height)
-                {
-                    // Calculate square pixel dimensions using the requested character count
-                    // We'll use the smaller dimension to ensure square pixels
-                    int targetPixelDimension = Math.Min(
-                        charSize.Width * cellSize.Width,
-                        charSize.Height * cellSize.Height
-                    );
-
-                    Size result = new Size(targetPixelDimension, targetPixelDimension);
-                    return result;
-                }
+                // For aspect ratio preservation, use square pixels based on smaller dimension
+                int targetPixelDimension = Math.Min(
+                    charSize.Width * CellWidth,
+                    charSize.Height * CellHeight
+                );
+                return new Size(targetPixelDimension, targetPixelDimension);
             }
 
-            // Standard character-based sizing (no aspect ratio adjustment)
-            Size standardResult = new Size(charSize.Width * cellSize.Width, charSize.Height * cellSize.Height);
-            return standardResult;
+            // Standard character-based sizing
+            return new Size(charSize.Width * CellWidth, charSize.Height * CellHeight);
         }
 
         // Use explicit pixel size if provided

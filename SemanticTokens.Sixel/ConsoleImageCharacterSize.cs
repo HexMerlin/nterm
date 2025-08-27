@@ -39,18 +39,20 @@ public readonly struct ConsoleImageCharacterSize : IEquatable<ConsoleImageCharac
     }
 
     /// <summary>
-    /// Calculates character dimensions from pixel size and terminal capabilities.
+    /// Calculates character dimensions from pixel size using standard cell size assumptions.
     /// </summary>
     /// <param name="pixelSize">Image size in pixels</param>
     /// <param name="addSafetyMargin">Add +1 cell in each dimension for guaranteed robustness</param>
     /// <returns>Character grid dimensions with precision indicator</returns>
     public static ConsoleImageCharacterSize FromPixelSize(SemanticTokens.Core.Size pixelSize, bool addSafetyMargin = false)
     {
-        Size cellSize = TerminalCapabilities.CellSize;
+        // Use standard monospace character cell size (10x20 pixels)
+        const int CellWidth = 10;
+        const int CellHeight = 20;
         
         // Calculate exact character dimensions using ceiling to ensure bounding box coverage
-        int columns = (int)Math.Ceiling((double)pixelSize.Width / cellSize.Width);
-        int rows = (int)Math.Ceiling((double)pixelSize.Height / cellSize.Height);
+        int columns = (int)Math.Ceiling((double)pixelSize.Width / CellWidth);
+        int rows = (int)Math.Ceiling((double)pixelSize.Height / CellHeight);
         
         // Add safety margin for bulletproof robustness if requested
         if (addSafetyMargin)
@@ -59,10 +61,10 @@ public readonly struct ConsoleImageCharacterSize : IEquatable<ConsoleImageCharac
             rows += 1;
         }
         
-        // Determine precision based on detection confidence and safety margin
+        // Use estimated precision since we're using standard assumptions
         CharacterSizePrecision precision = addSafetyMargin 
             ? CharacterSizePrecision.Exact  // Safety margin guarantees exactness
-            : DeterminePrecision(cellSize);
+            : CharacterSizePrecision.Estimated;
         
         return new ConsoleImageCharacterSize(columns, rows, precision);
     }
@@ -76,20 +78,7 @@ public readonly struct ConsoleImageCharacterSize : IEquatable<ConsoleImageCharac
     public static ConsoleImageCharacterSize FromConsoleImage(ConsoleImage image, bool addSafetyMargin = false) =>
         FromPixelSize(image.DisplaySize, addSafetyMargin);
 
-    private static CharacterSizePrecision DeterminePrecision(Size cellSize)
-    {
-        // Default size indicates detection failure - use estimated precision
-        if (cellSize.Width == 10 && cellSize.Height == 20)
-            return CharacterSizePrecision.Estimated;
-            
-        // Very small or very large cells might indicate detection issues
-        if (cellSize.Width < 6 || cellSize.Width > 20 || 
-            cellSize.Height < 10 || cellSize.Height > 40)
-            return CharacterSizePrecision.Approximate;
-            
-        // Standard ranges indicate reliable detection
-        return CharacterSizePrecision.Exact;
-    }
+
 
     /// <summary>
     /// Indicates whether this size is equal to another size.

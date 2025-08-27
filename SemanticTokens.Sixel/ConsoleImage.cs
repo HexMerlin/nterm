@@ -5,11 +5,11 @@ namespace SemanticTokens.Sixel;
 
 /// <summary>
 /// Immutable console image data container.
-/// Gold standard user-facing type for console image operations.
+/// Gold standard user-facing type for SIXEL image operations.
 /// </summary>
 /// <remarks>
-/// Pure data container with console-ready encoded image data.
-/// Provides immediate output via Console.WriteImage() integration.
+/// Pure data container with SIXEL-encoded image data ready for console output.
+/// Contains either optimized SIXEL encoding or fallback text representation.
 /// </remarks>
 public readonly struct ConsoleImage : IEquatable<ConsoleImage>
 {
@@ -21,7 +21,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <summary>
     /// Optimized encoding availability.
     /// </summary>
-    /// <returns><see langword="true"/> <b>iff</b> optimized data encoded and terminal capable.</returns>
+    /// <returns><see langword="true"/> <b>iff</b> optimized SIXEL data encoded successfully.</returns>
     public readonly bool HasOptimizedEncoding { get; }
 
     /// <summary>
@@ -31,9 +31,9 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
 
     /// <summary>
     /// Display dimensions in character grid cells.
-    /// Computed based on terminal capabilities and pixel dimensions.
+    /// Computed using standard character cell size assumptions.
     /// </summary>
-    /// <returns>Character grid dimensions with precision indicator</returns>
+    /// <returns>Character grid dimensions with estimated precision</returns>
     public ConsoleImageCharacterSize CharacterSize => 
         ConsoleImageCharacterSize.FromConsoleImage(this);
 
@@ -45,11 +45,10 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     public ConsoleImageCharacterSize SafeCharacterSize => 
         ConsoleImageCharacterSize.FromConsoleImage(this, addSafetyMargin: true);
 
-
     /// <summary>
     /// Console-ready image data.
     /// </summary>
-    /// <returns>Complete data ready for Console.WriteImage() - optimized or fallback text.</returns>
+    /// <returns>Complete SIXEL data ready for console output - optimized encoding or fallback text.</returns>
     public ReadOnlySpan<char> ConsoleData => EncodedData.AsSpan();
 
     /// <summary>
