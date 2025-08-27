@@ -1,11 +1,11 @@
 using SemanticTokens.Sixel.Encoder;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
-using Size = SemanticTokens.Core.Size;
+using Color = SemanticTokens.Core.Color;
 using Constants = SemanticTokens.Core.Constants;
+using Size = SemanticTokens.Core.Size;
 
 namespace SemanticTokens.Sixel;
 
@@ -75,9 +75,9 @@ public static class SixelEncode
         int canvasWidth = img.Width;
         int canvasHeight = img.Height;
 
-        var meta = img.Metadata;
+        SixLabors.ImageSharp.Metadata.ImageMetadata meta = img.Metadata;
         Rgba32? bg = null, tc = null;
-        var format = meta.DecodedImageFormat?.Name.ToUpperInvariant();
+        string? format = meta.DecodedImageFormat?.Name.ToUpperInvariant();
         int frameCount = img.Frames.Count;
 
         // Detect images with backgrounds that might be made transparent
@@ -140,7 +140,7 @@ public static class SixelEncode
         var imageFrame = img.Frames.RootFrame;
 
         // Building a color palette
-        ReadOnlySpan<SemanticTokens.Core.Color> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
+        ReadOnlySpan<Color> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
         Size frameSize = new(imageFrame.Width, imageFrame.Height);  // Use actual frame dimensions
 
         return EncodeFrame(imageFrame, colorPalette, frameSize, transp, tc, bg);
@@ -156,8 +156,8 @@ public static class SixelEncode
     /// <param name="bg">Background <see cref="SixLabors.ImageSharp.PixelFormats.Rgba32"/> set for the image</param>
     /// <inheritdoc cref="Encode(Image{Rgba32}, Size?, Transparency, int)"/>
     public static string EncodeFrame(ImageFrame<Rgba32> frame,
-                                     ReadOnlySpan<SemanticTokens.Core.Color> colorPalette,
-                                     SemanticTokens.Core.Size frameSize,
+                                     ReadOnlySpan<Color> colorPalette,
+                                     Size frameSize,
                                      Transparency transp = Transparency.Default,
                                      Rgba32? tc = null,
                                      Rgba32? bg = null)
@@ -205,7 +205,7 @@ public static class SixelEncode
                     if (transp == Transparency.Background && rgba == bg)
                         continue;
 
-                    SemanticTokens.Core.Color sixelColor = rgba.ToSixelColor(transp, tc, bg);
+                    Color sixelColor = rgba.ToSixelColor(transp, tc, bg);
                     if (sixelColor.A == 0)
                         continue;
                     int idx = colorPalette.IndexOf(sixelColor);
@@ -346,12 +346,12 @@ public static class SixelEncode
     /// <summary>
     /// Build color palette for Sixel
     /// </summary>
-    public static SemanticTokens.Core.Color[] GetColorPalette(ImageFrame<Rgba32> frame,
+    public static Color[] GetColorPalette(ImageFrame<Rgba32> frame,
                                                Transparency transp = Transparency.Default,
                                                Rgba32? tc = null,
                                                Rgba32? bg = null)
     {
-        HashSet<SemanticTokens.Core.Color> palette = new();
+        HashSet<Color> palette = new();
         frame.ProcessPixelRows(accessor =>
         {
             HashSet<Rgba32> pixcelHash = new();
@@ -362,7 +362,7 @@ public static class SixelEncode
                 {
                     if (pixcelHash.Add(row[x]))
                     {
-                        SemanticTokens.Core.Color c = row[x].ToSixelColor(transp, tc, bg);
+                        Color c = row[x].ToSixelColor(transp, tc, bg);
                         if (c.A == 0)
                             continue;
                         palette.Add(c);

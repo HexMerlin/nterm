@@ -2,6 +2,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Size = SemanticTokens.Core.Size;
 
 namespace SemanticTokens.Sixel;
 
@@ -18,7 +19,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <summary>
     /// Image dimensions in pixels.
     /// </summary>
-    public readonly SemanticTokens.Core.Size DisplaySize { get; }
+    public readonly Size DisplaySize { get; }
 
     /// <summary>
     /// Optimized encoding availability.
@@ -36,12 +37,12 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// </summary>
     /// <param name="cellSizeInPixels">Terminal character cell size in pixels</param>
     /// <returns>Image dimensions in character cells (width×height)</returns>
-    public SemanticTokens.Core.Size GetSizeInCharacters(SemanticTokens.Core.Size cellSizeInPixels)
+    public Size GetSizeInCharacters(Size cellSizeInPixels)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Height);
         
-        return new SemanticTokens.Core.Size(
+        return new Size(
             (int)Math.Ceiling((double)DisplaySize.Width / cellSizeInPixels.Width),
             (int)Math.Ceiling((double)DisplaySize.Height / cellSizeInPixels.Height)
         );
@@ -59,7 +60,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="encodedData">Encoded image data or fallback text</param>
     /// <param name="displaySize">Target display size in pixels</param>
     /// <param name="hasOptimizedEncoding">Indicates whether encodedData contains optimized encoding</param>
-    public ConsoleImage(string encodedData, SemanticTokens.Core.Size displaySize, bool hasOptimizedEncoding)
+    public ConsoleImage(string encodedData, Size displaySize, bool hasOptimizedEncoding)
     {
         EncodedData = encodedData;
         DisplaySize = displaySize;
@@ -103,7 +104,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
         {
             // Get original image dimensions
             using var originalImg = Image.Load<Rgba32>(stream);
-            var originalSize = new SemanticTokens.Core.Size(originalImg.Width, originalImg.Height);
+            var originalSize = new Size(originalImg.Width, originalImg.Height);
             
             // Reset stream position for SIXEL encoding
             stream.Position = 0;
@@ -120,7 +121,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
         catch
         {
             // Fallback - use reasonable default size for fallback text
-            var fallbackSize = new SemanticTokens.Core.Size(320, 240);
+            var fallbackSize = new Size(320, 240);
             return new ConsoleImage(fallbackText, fallbackSize, hasOptimizedEncoding: false);
         }
     }
