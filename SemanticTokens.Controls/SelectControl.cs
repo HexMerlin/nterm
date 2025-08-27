@@ -82,9 +82,6 @@ public class SelectControl : ISelectControl
     /// <returns>The selected item.</returns>
     private static SelectItem RunSelectionLoop(List<SelectItem> items, ConsoleState consoleState)
     {
-        int currentIndex = 0;
-        bool selectionMade = false;
-        SelectItem selectedItem = SelectItem.Empty;
         // Initialize dropdown view and ensure initial space below anchor
         var view = new SelectDropdownView(
             consoleState.OriginalCursorLeft,
@@ -92,68 +89,11 @@ public class SelectControl : ISelectControl
             MaxVisibleItems
         );
 
-        while (!selectionMade)
-        {
-            view.UpdateOnResize(items.Count);
-
-            // Display dropdown anchored at the original cursor position
-            view.Render(items, currentIndex);
-
-            // Handle user input
-            var keyInfo = Console.ReadKey(true);
-            var (result, newIndex) = HandleUserInput(items, currentIndex, keyInfo);
-            currentIndex = newIndex;
-
-            if (!result.IsEmpty())
-            {
-                selectedItem = result;
-                selectionMade = true;
-            }
-            else if (IsCancel(keyInfo))
-            {
-                // On cancel, clear any rendered lines and exit cleanly
-                ConsoleEx.ClearArea(view.AnchorColumn, view.AnchorRow, view.LastRenderedLineCount);
-                // Restore cursor to original position
-                ConsoleEx.SetCursor(view.AnchorColumn, view.AnchorRow);
-                return SelectItem.Empty;
-            }
-        }
+        var selectedItem = view.Show(items);
 
         // Clean exit: show only the final selected item, clear below, and place cursor after text
-        RenderFinalSelection(
-            selectedItem,
-            view.AnchorColumn,
-            view.AnchorRow,
-            view.LastRenderedLineCount,
-            consoleState
-        );
+        RenderFinalSelection(selectedItem, view.AnchorColumn, view.AnchorRow, consoleState);
         return selectedItem;
-    }
-
-    private static bool IsCancel(ConsoleKeyInfo keyInfo) => keyInfo.Key == ConsoleKey.Escape;
-
-    /// <summary>
-    /// Handles user input and returns the result along with the new index.
-    /// </summary>
-    /// <param name="items">The list of items.</param>
-    /// <param name="currentIndex">The current selected index.</param>
-    /// <param name="keyInfo">The key that was pressed.</param>
-    /// <returns>A tuple containing the selected item (or SelectItem.Empty) and the new index.</returns>
-    private static (SelectItem result, int newIndex) HandleUserInput(
-        List<SelectItem> items,
-        int currentIndex,
-        ConsoleKeyInfo keyInfo
-    )
-    {
-        return keyInfo.Key switch
-        {
-            ConsoleKey.UpArrow
-                => (SelectItem.Empty, (currentIndex + items.Count - 1) % items.Count),
-            ConsoleKey.DownArrow => (SelectItem.Empty, (currentIndex + 1) % items.Count),
-            ConsoleKey.Enter => (items[currentIndex], currentIndex),
-            ConsoleKey.Escape => (SelectItem.Empty, currentIndex),
-            _ => (SelectItem.Empty, currentIndex),
-        };
     }
 
     /// <summary>
@@ -187,12 +127,11 @@ public class SelectControl : ISelectControl
         SelectItem selectedItem,
         int startColumn,
         int startRow,
-        int lastRenderedLineCount,
         ConsoleState consoleState
     )
     {
         // Clear selected line from startColumn and rows below that were used
-        ConsoleEx.ClearArea(startColumn, startRow, lastRenderedLineCount);
+        //ConsoleEx.ClearArea(startColumn, startRow, lastRenderedLineCount);
 
         // Restore original color for final output
         Console.ForegroundColor = consoleState.OriginalForeground;
