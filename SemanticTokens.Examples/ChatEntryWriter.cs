@@ -79,7 +79,7 @@ public sealed class ChatEntryWriter
         var cellSize = new SemanticTokens.Core.Size(10, 20); // Standard monospace cell size
         var imageSize = AvatarImage.GetSizeInCharacters(cellSize);
         _textLeft = _startLeft + imageSize.Width + TextMargin;
-        _textTop = _startTop;
+        _textTop = _startTop + 1;
         _currentTextLine = 0;
         _currentTextColumn = 0;
         _isWriting = true;
