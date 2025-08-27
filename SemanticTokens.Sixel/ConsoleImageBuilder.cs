@@ -147,28 +147,25 @@ public sealed class ConsoleImageBuilder
 
     private ConsoleImage BuildFromStream(Stream imageStream)
     {
-        SemanticTokens.Core.Size targetSize = ComputeTargetSize();
+        SemanticTokens.Core.Size targetSize = ComputeTargetSize(); //WE MUST NOT CALL THIS!!
         
-        // Optimized single execution path
-        if (TerminalCapabilities.IsSixelSupported)
+        try
         {
-            try
-            {
-                // Encode to SIXEL using optimized pipeline
-                ReadOnlySpan<char> sixelData = SixelEncode.Encode(
-                    imageStream, 
-                    new Size(targetSize.Width, targetSize.Height), 
-                    _transparency, 
-                    frame: -1
-                );
+            // Encode to SIXEL using optimized pipeline
+            ReadOnlySpan<char> sixelData = SixelEncode.Encode(
+                imageStream, 
+                new Size(targetSize.Width, targetSize.Height), 
+                _transparency, 
+                frame: -1
+            );
 
-                return new ConsoleImage(sixelData.ToString(), targetSize, hasOptimizedEncoding: true);
-            }
-            catch
-            {
-                // Fail-fast to fallback on any encoding error
-            }
+            return new ConsoleImage(sixelData.ToString(), targetSize, hasOptimizedEncoding: true);
         }
+        catch
+        {
+            // Fail-fast to fallback on any encoding error
+        }
+        
 
         // Fallback path - terminal doesn't support SIXEL or encoding failed
         return new ConsoleImage(_fallbackText, targetSize, hasOptimizedEncoding: false);
