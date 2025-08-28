@@ -34,8 +34,7 @@ public sealed class ConsoleState : IDisposable
     /// </summary>
     public void Dispose()
     {
-        // Restore colors
-        Console.BackgroundColor = OriginalBackground;
+        // Restore default foreground color
         Console.ForegroundColor = OriginalForeground;
 
         // Restore cursor visibility if supported
