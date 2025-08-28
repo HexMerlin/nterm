@@ -2,6 +2,9 @@
 
 public readonly partial struct Color
 {
+    public static Color Transparent => new(transparent);
+    private const uint transparent = 0x00000000u; // ARGB with 0 alpha
+
     public static Color ActiveBorder => new(activeBorder);
     private const uint activeBorder = 0xFFB4B4B4u;
 
@@ -494,9 +497,6 @@ public readonly partial struct Color
     public static Color Tomato => new(tomato);
     private const uint tomato = 0xFFFF6347u;
 
-    public static Color Transparent => new(transparent);
-    private const uint transparent = 0x00000000u;
-
     public static Color Turquoise => new(turquoise);
     private const uint turquoise = 0xFF40E0D0u;
 
@@ -547,6 +547,7 @@ public readonly partial struct Color
         uint hexValue = color.ToUint();
         knownName = hexValue switch
         {
+            transparent => nameof(Transparent),
             activeBorder => nameof(ActiveBorder),
             activeCaption => nameof(ActiveCaption),
             aliceBlue => nameof(AliceBlue),

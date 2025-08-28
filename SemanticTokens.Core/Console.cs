@@ -17,16 +17,20 @@ public static class Console
 
     private static readonly Lock writeLock = new();
 
+    private static Color lastFg = Color.Transparent;
+    private static Color lastBg = Color.Transparent;
+
     static Console()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
         System.Console.InputEncoding = Encoding.UTF8;
 
-        TryEnableVirtualTerminalOnWindows(); // enable VT output + raw-ish input on Win
-        TryEnableRawTerminalOnPosix();       // raw input on Linux/macOS (only if tty)
+        Windows.TryEnableVirtualTerminalOnWindows(); // enable VT output + raw-ish input on Win
+        Posix.TryEnableRawTerminalOnPosix();       // raw input on Linux/macOS (only if tty)
 
         // Backspace semantics (DECBKM) to stabilize BS vs DEL handling.
-        Write("\x1b[?67h");
+        WriteInternal("\x1b[?67h");
+
     }
 
     public static string Title
@@ -47,37 +51,16 @@ public static class Console
     /// Changing this property affects all subsequent console output, including
     /// standard Console.Write() and Console.WriteLine() operations.
     /// </remarks>
-    public static Color ForegroundColor
-    {
-        get => field;
-        set
-        {
-            if (value.IsIgnored) return; //value is ignored color - skip setting
-            if (value == field) return;
-            field = value;
-            WriteFg(value);
-        }
-    }
+    public static Color ForegroundColor { get; set; }
 
     /// <summary>
-    /// 24-bit background color of the console. Setting this property immediately
-    /// writes the corresponding ANSI escape sequence to stdout.
+    /// Default background color of the console.
     /// </summary>
     /// <remarks>
-    /// Changing this property affects all subsequent console output, including
-    /// standard Console.Write() and Console.WriteLine() operations.
+    /// Use <see cref="Clear(Color, bool)"/> to set
+    /// the default background color for all subsequent console output.
     /// </remarks>
-    public static Color BackgroundColor
-    {
-        get => field;
-        set
-        {
-            if (value.IsIgnored) return; //value is ignored color - skip setting
-            if (value == field) return;
-            field = value;
-            WriteBg(value);
-        }
-    }
+    public static Color BackgroundColor { get; private set; }
 
     public static int WindowTop => System.Console.WindowTop;
     public static int WindowLeft => System.Console.WindowLeft;
@@ -108,8 +91,189 @@ public static class Console
     /// <param name="backspaceCount">Number of backspaces to emit (default=1)</param>
     public static void Backspace(int backspaceCount = 1)
     {
-        EchoBackspace(backspaceCount);
+        if (backspaceCount == 1) //fast path for single
+        {
+            Write("\b \b");
+            return;
+        }
+        StringBuilder sb = new();
+        for (int i = 0; i < backspaceCount; i++)
+        {
+            sb.Append("\b \b");
+        }
+        Write(sb.ToString());
     }
+   
+    public static void Reset()
+    {
+        lock (writeLock)
+        {
+            WriteInternal($"{Constants.ESC}{Constants.SGR_RESET}");
+        }
+    }
+
+    /// <summary>
+    /// Clears the entire console screen and moves the cursor to the home position (1,1).
+    /// </summary>
+    /// <param name="backgroundColor">Optional new background color to set when clearing.</param>
+    /// <param name="clearScrollback"></param>
+    /// <remarks>
+    /// If a background color is specified, it is also set as the current <see cref="BackgroundColor"/>.
+    /// If no background color is specified, the current <see cref="BackgroundColor"/> is used.
+    /// </remarks>
+    public static void Clear(Color backgroundColor = default, bool clearScrollback = false)
+    {
+        lock (writeLock)
+        {
+            if (backgroundColor != default)
+                BackgroundColor = backgroundColor;
+
+            WriteBg(BackgroundColor);
+            WriteInternal($"{Constants.ESC}{Constants.EraseDisplayAll}");
+            WriteInternal($"{Constants.ESC}{Constants.CursorHome}");
+
+            if (clearScrollback)
+                WriteInternal($"{Constants.ESC}{Constants.EraseScrollback}");
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write(char ch, Color foreground = default, Color background = default)
+    {
+        lock (writeLock)
+        {
+            if (foreground == default)
+                foreground = ForegroundColor;
+
+            if (background == default)
+                background = BackgroundColor;
+
+            if (foreground != lastFg)
+            {
+                WriteFg(foreground);
+                lastFg = foreground;
+            }
+
+            if (background != lastBg)
+            {
+                WriteBg(background);
+                lastBg = background;
+            }
+
+            WriteInternal(ch);
+        }
+    }
+
+    /// <summary>
+    /// Writes a string with specified colors.
+    /// </summary>
+    /// <param name="str">String to write</param>
+    /// <param name="foreground">Foreground color</param>
+    /// <param name="background">Background color. Optional.</param>
+    /// <remarks>
+    /// Sets colors using properties then delegates to non-colored Write method.
+    /// </remarks>
+    public static void Write(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    {
+        lock (writeLock)
+        {
+            if (str.IsEmpty) return;
+
+            if (foreground == default)
+                foreground = ForegroundColor;
+
+            if (background == default)
+                background = BackgroundColor;
+
+            if (foreground != lastFg)
+            {
+                WriteFg(foreground);
+                lastFg = foreground;
+            }
+
+            if (background != lastBg)
+            {
+                WriteBg(background);
+                lastBg = background;
+            }
+
+            WriteInternal(str);
+        }
+    }
+  
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static void WriteInternal(char ch)
+    {
+        lock (writeLock)
+        {
+            Span<byte> charBuf = stackalloc byte[4];
+            int charLen = EncodeCharUtf8(ch, charBuf);
+            Stdout.Write(charBuf[..charLen]);
+        }
+    }
+
+    internal static void WriteInternal(ReadOnlySpan<char> str)
+    {
+        lock (writeLock)
+        {
+            // Optimize for common short strings with stack allocation
+            if (str.Length <= 256)
+            {
+                Span<byte> buffer = stackalloc byte[str.Length * 4]; // Max UTF-8 expansion
+                int bytesWritten = EncodeStringUtf8(str, buffer);
+                Stdout.Write(buffer[..bytesWritten]);
+            }
+            else
+            {
+                // For longer strings, use chunked processing to avoid large stack allocation
+                const int chunkSize = 256;
+                Span<byte> buffer = stackalloc byte[chunkSize * 4];
+
+                for (int i = 0; i < str.Length; i += chunkSize)
+                {
+                    ReadOnlySpan<char> chunk = str.Slice(i, Math.Min(chunkSize, str.Length - i));
+                    int bytesWritten = EncodeStringUtf8(chunk, buffer);
+                    Stdout.Write(buffer[..bytesWritten]);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes a string followed by a line terminator with specified colors.
+    /// </summary>
+    /// <param name="str">String to write</param>
+    /// <param name="foreground">Foreground color</param>
+    /// <param name="background">Background color. Optional.</param>
+    /// <remarks>
+    /// Sets colors using properties then delegates to non-colored WriteLine method.
+    /// Uses LF (\n) line terminator only, never CRLF (\r\n).
+    /// </remarks>
+    public static void WriteLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    {
+        Write(str, foreground, background);
+        WriteLine();
+    }
+
+    public static void WriteLine()
+    {
+        Stdout.Write("\n"u8);
+    }
+
+   /// <summary>
+   /// Writes pre-encoded image data to console.
+   /// </summary>
+   /// <param name="imageData">Complete image data including all control sequences</param>
+   /// <remarks>
+   /// Ultra-optimized direct image output. Image data must be complete and ready for terminal consumption.
+   /// Leverages existing optimized UTF-8 encoding infrastructure for maximum performance.
+   /// </remarks>
+   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteImage(ReadOnlySpan<char> imageData)
+    {
+        Write(imageData);
+    }
+
 
     /// <summary>
     /// Read next Unicode scalar from stdin (decoded from UTF‑8). Returns -1 on EOF.
@@ -160,7 +324,7 @@ public static class Console
         if (ch == 0x08 || ch == 0x7F)
         {
             bool isCtrl = (ch == 0x7F);
-            if (!intercept) EchoBackspace(1);
+            if (!intercept) Backspace(1);
             return new ConsoleKeyInfo('\b', System.ConsoleKey.Backspace, false, false, isCtrl);
         }
 
@@ -182,8 +346,8 @@ public static class Console
     /// - Ctrl+Backspace → delete previous word
     /// - Enter returns the line
     /// </summary>
-    /// <param name="restoreOnExit">If true, erases the line on Enter; otherwise leaves it on screen.</param>
-    public static string ReadLine(bool restoreOnExit = false)
+    /// <param name="clearOnExit">If true, erases the line on Enter; otherwise leaves it on screen.</param>
+    public static string ReadLine(bool clearOnExit = false)
     {
         StringBuilder sb = new StringBuilder(128);
 
@@ -193,7 +357,7 @@ public static class Console
 
             if (key.Key == System.ConsoleKey.Enter)
             {
-                if (restoreOnExit)
+                if (clearOnExit)
                 {
                     Backspace(sb.Length);
                 }
@@ -210,7 +374,7 @@ public static class Console
                     if (toErase > 0)
                     {
                         sb.Remove(sb.Length - toErase, toErase);
-                        EchoBackspace(toErase);
+                        Backspace(toErase);
                     }
                 }
                 else
@@ -222,7 +386,7 @@ public static class Console
                         if (sb.Length >= 2 && char.IsLowSurrogate(sb[^1]) && char.IsHighSurrogate(sb[^2]))
                             removeLen = 2;
                         sb.Remove(sb.Length - removeLen, removeLen);
-                        EchoBackspace(removeLen);
+                        Backspace(removeLen);
                     }
                 }
                 continue;
@@ -236,6 +400,44 @@ public static class Console
             }
         }
     }
+
+    public static void SetCursorPosition(int left, int top)
+    {
+        lock (writeLock)
+        {
+            if (left < 0) left = 0;
+            if (top < 0) top = 0;
+
+            int minWidth = Math.Max(System.Console.WindowWidth, 1);
+            int minHeight = Math.Max(System.Console.WindowHeight, 1);
+
+            if (left >= System.Console.BufferWidth)
+                left = System.Console.BufferWidth - 1;
+
+            if (top >= System.Console.BufferHeight)
+            {
+                int newHeight = top + 1;
+                try
+                {
+                    System.Console.SetBufferSize(Math.Max(Console.BufferWidth, minWidth), Math.Max(newHeight, minHeight));
+                }
+                catch
+                {
+                    top = System.Console.BufferHeight - 1;
+                }
+            }
+
+            System.Console.SetCursorPosition(left, top);
+        }
+    }
+
+    private static void WriteBg(Color c) =>
+        WriteInternal($"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
+
+    private static void WriteFg(Color c) =>
+        WriteInternal($"{Constants.ESC}{Constants.SGR_FG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
+
+    #region Private Methods
 
     private static int ComputeWordEraseCount(StringBuilder sb)
     {
@@ -343,220 +545,6 @@ public static class Console
         return new ConsoleKeyInfo('\x1b', System.ConsoleKey.Escape, false, false, false);
     }
 
-    private static void EchoBackspace(int runeWidth)
-    {
-        if (runeWidth == 1) //fast path for single
-        {
-            Write("\b \b");
-            return;
-        }
-        StringBuilder sb = new();
-        for (int i = 0; i < runeWidth; i++) {
-            sb.Append("\b \b");
-        }
-        Write(sb.ToString());
-    }
-
-    public static void SetCursorPosition(int left, int top)
-    {
-        lock (writeLock)
-        {
-            if (left < 0) left = 0;
-            if (top < 0) top = 0;
-
-            int minWidth = Math.Max(System.Console.WindowWidth, 1);
-            int minHeight = Math.Max(System.Console.WindowHeight, 1);
-
-            if (left >= System.Console.BufferWidth)
-                left = System.Console.BufferWidth - 1;
-
-            if (top >= System.Console.BufferHeight)
-            {
-                int newHeight = top + 1;
-                try
-                {
-                    System.Console.SetBufferSize(Math.Max(Console.BufferWidth, minWidth), Math.Max(newHeight, minHeight));
-                }
-                catch
-                {
-                    top = System.Console.BufferHeight - 1;
-                }
-            }
-
-            System.Console.SetCursorPosition(left, top);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write(char ch)
-    {
-        lock (writeLock)
-        {
-            Span<byte> charBuf = stackalloc byte[4];
-            int charLen = EncodeCharUtf8(ch, charBuf);
-            Stdout.Write(charBuf[..charLen]);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write(char ch, Color foreground, Color background = default)
-    {
-        ForegroundColor = foreground;
-        BackgroundColor = background;
-        Write(ch);
-    }
-
-    /// <summary>
-    /// Writes a string using current foreground and background colors.
-    /// </summary>
-    /// <param name="str">String to write</param>
-    /// <remarks>
-    /// Optimized for both short and long strings using bulk UTF-8 encoding.
-    /// Uses current ForegroundColor and BackgroundColor properties.
-    /// </remarks>
-    public static void Write(ReadOnlySpan<char> str)
-    {
-        lock (writeLock)
-        {
-            if (str.IsEmpty) return;
-
-            // Optimize for common short strings with stack allocation
-            if (str.Length <= 256)
-            {
-                Span<byte> buffer = stackalloc byte[str.Length * 4]; // Max UTF-8 expansion
-                int bytesWritten = EncodeStringUtf8(str, buffer);
-                Stdout.Write(buffer[..bytesWritten]);
-            }
-            else
-            {
-                // For longer strings, use chunked processing to avoid large stack allocation
-                const int chunkSize = 256;
-                Span<byte> buffer = stackalloc byte[chunkSize * 4];
-
-                for (int i = 0; i < str.Length; i += chunkSize)
-                {
-                    ReadOnlySpan<char> chunk = str.Slice(i, Math.Min(chunkSize, str.Length - i));
-                    int bytesWritten = EncodeStringUtf8(chunk, buffer);
-                    Stdout.Write(buffer[..bytesWritten]);
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Writes a string with specified colors.
-    /// </summary>
-    /// <param name="str">String to write</param>
-    /// <param name="foreground">Foreground color</param>
-    /// <param name="background">Background color. Optional.</param>
-    /// <remarks>
-    /// Sets colors using properties then delegates to non-colored Write method.
-    /// </remarks>
-    public static void Write(ReadOnlySpan<char> str, Color foreground, Color background = default)
-    {
-        ForegroundColor = foreground;
-        BackgroundColor = background;
-        Write(str);
-    }
-
-    /// <summary>
-    /// Writes a string followed by a line terminator using current colors.
-    /// </summary>
-    /// <param name="str">String to write (empty string writes just newline)</param>
-    /// <remarks>
-    /// Uses LF (\n) line terminator only, never CRLF (\r\n).
-    /// Optimized for both short and long strings using bulk UTF-8 encoding.
-    /// </remarks>
-    public static void WriteLine(ReadOnlySpan<char> str = "")
-    {
-        lock (writeLock)
-        {
-            if (str.IsEmpty)
-            {
-                // Just write LF
-                Stdout.Write("\n"u8);
-                return;
-            }
-
-            // Optimize for common short strings with stack allocation
-            if (str.Length <= 255) // Reserve 1 char for \n
-            {
-                Span<byte> buffer = stackalloc byte[(str.Length + 1) * 4]; // +1 for \n, max UTF-8 expansion
-                int bytesWritten = EncodeStringUtf8(str, buffer);
-                buffer[bytesWritten++] = (byte)'\n'; // Add LF
-                Stdout.Write(buffer[..bytesWritten]);
-            }
-            else
-            {
-                // For longer strings, write string then newline separately
-                Write(str);
-                Stdout.Write("\n"u8);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Writes a string followed by a line terminator with specified colors.
-    /// </summary>
-    /// <param name="str">String to write</param>
-    /// <param name="foreground">Foreground color</param>
-    /// <param name="background">Background color. Optional.</param>
-    /// <remarks>
-    /// Sets colors using properties then delegates to non-colored WriteLine method.
-    /// Uses LF (\n) line terminator only, never CRLF (\r\n).
-    /// </remarks>
-    public static void WriteLine(ReadOnlySpan<char> str, Color foreground, Color background = default)
-    {
-        ForegroundColor = foreground;
-        BackgroundColor = background;
-        WriteLine(str);
-    }
-
-    /// <summary>
-    /// Writes pre-encoded image data to console.
-    /// </summary>
-    /// <param name="imageData">Complete image data including all control sequences</param>
-    /// <remarks>
-    /// Ultra-optimized direct image output. Image data must be complete and ready for terminal consumption.
-    /// Leverages existing optimized UTF-8 encoding infrastructure for maximum performance.
-    /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteImage(ReadOnlySpan<char> imageData)
-    {
-        Write(imageData);
-    }
-
-    public static void Reset()
-    {
-        lock (writeLock)
-        {
-            Write($"{Constants.ESC}{Constants.SGR_RESET}");
-        }
-    }
-
-    public static void Clear(Color backgroundColor = default, bool clearScrollback = false)
-    {
-        lock (writeLock)
-        {
-            BackgroundColor = backgroundColor; //is ignored if no value is provided
-
-            WriteBg(BackgroundColor);
-            Write($"{Constants.ESC}{Constants.EraseDisplayAll}");
-            Write($"{Constants.ESC}{Constants.CursorHome}");
-
-            if (clearScrollback)
-                Write($"{Constants.ESC}{Constants.EraseScrollback}");
-        }
-    }
-
-    private static void WriteBg(Color c) =>
-        Write($"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
-
-    private static void WriteFg(Color c) =>
-        Write($"{Constants.ESC}{Constants.SGR_FG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
-
-    #region Private Methods
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int EncodeStringUtf8(ReadOnlySpan<char> chars, Span<byte> dest)
     {
@@ -654,102 +642,15 @@ public static class Console
         return 1;
     }
 
-    // ===== Console mode / P-Invoke =====
+    // ===== P-Invoke =====
 
-    private static void TryEnableVirtualTerminalOnWindows()
-    {
-        if (!OperatingSystem.IsWindows()) return;
+    [DllImport("kernel32.dll", SetLastError = true)] internal static extern nint GetStdHandle(int nStdHandle);
+    [DllImport("kernel32.dll", SetLastError = true)] internal static extern uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
 
-        const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
-        const uint ENABLE_VIRTUAL_TERMINAL_INPUT = 0x0200;
+    internal const int STD_OUTPUT_HANDLE = -11;
+    internal const int STD_INPUT_HANDLE = -10;
 
-        const uint ENABLE_PROCESSED_INPUT = 0x0001; // keep so Ctrl+C still works
-        const uint ENABLE_LINE_INPUT = 0x0002; // cooked mode (we will clear)
-        const uint ENABLE_ECHO_INPUT = 0x0004; // host echo (we will clear)
-        const uint ENABLE_QUICK_EDIT_MODE = 0x0040; // (must be cleared with EXTENDED_FLAGS)
-        const uint ENABLE_EXTENDED_FLAGS = 0x0080;
-
-        nint hout = GetStdHandle(STD_OUTPUT_HANDLE);
-        if (hout != nint.Zero && GetConsoleMode(hout, out uint outMode))
-        {
-            _ = SetConsoleMode(hout, outMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-        }
-
-        nint hin = GetStdHandle(STD_INPUT_HANDLE);
-        if (hin != nint.Zero && GetConsoleMode(hin, out uint inMode))
-        {
-            inMode |= ENABLE_EXTENDED_FLAGS; // allow clearing QUICK_EDIT
-            inMode &= ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_QUICK_EDIT_MODE); // raw-ish
-            inMode |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
-            _ = SetConsoleMode(hin, inMode);
-        }
-
-
-        [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
-        [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
-       
-    }
-    [DllImport("kernel32.dll", SetLastError = true)] private static extern nint GetStdHandle(int nStdHandle);
-    [DllImport("kernel32.dll", SetLastError = true)] private static extern uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
-
-    private const int STD_OUTPUT_HANDLE = -11;
-    private const int STD_INPUT_HANDLE = -10;
-
-    private const uint WAIT_OBJECT_0 = 0x00000000;
-
-    internal static class PosixTermios
-    {
-        [StructLayout(LayoutKind.Sequential)]
-        public struct termios
-        {
-            public uint c_iflag, c_oflag, c_cflag, c_lflag;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public byte[] c_cc;
-            public uint c_ispeed, c_ospeed;
-        }
-
-        [DllImport("libc", SetLastError = true)] public static extern int tcgetattr(int fd, out termios t);
-        [DllImport("libc", SetLastError = true)] public static extern int tcsetattr(int fd, int optional_actions, in termios t);
-
-        public const int TCSANOW = 0;
-        public const int VMIN = 6;
-        public const int VTIME = 5;
-
-        // Flags we will clear
-        public const uint ICANON = 0x00000100;
-        public const uint ECHO = 0x00000008;
-        public const uint ICRNL = 0x00000100;
-        public const uint IXON = 0x00000400;
-    }
-
-    private static PosixTermios.termios _orig;
-    private static bool _posixRaw;
-
-
-    private static void TryEnableRawTerminalOnPosix()
-    {
-        if (OperatingSystem.IsWindows()) return;
-        if (PosixTermios.tcgetattr(0, out PosixTermios.termios t) != 0) return; // fd 0 = stdin
-
-        _orig = t;
-
-        // Make a copy and set raw-ish mode
-        t.c_lflag &= ~(PosixTermios.ICANON | PosixTermios.ECHO);
-        t.c_iflag &= ~(PosixTermios.ICRNL | PosixTermios.IXON);
-        t.c_cc ??= new byte[32];
-        t.c_cc[PosixTermios.VMIN] = 1;   // return as soon as 1 byte is available
-        t.c_cc[PosixTermios.VTIME] = 0;  // no read timeout
-
-        if (PosixTermios.tcsetattr(0, PosixTermios.TCSANOW, t) == 0)
-            _posixRaw = true;
-
-        // (Optional) restore on exit:
-        AppDomain.CurrentDomain.ProcessExit += (_, __) =>
-        {
-            if (_posixRaw)
-                PosixTermios.tcsetattr(0, PosixTermios.TCSANOW, _orig);
-        };
-    }
+    internal const uint WAIT_OBJECT_0 = 0x00000000;
 
     #endregion
 }

@@ -94,7 +94,7 @@ public static class DiscreteScroller
             int targetInWin = Math.Clamp(TargetTopFromWindowTop, 0, windowHeight - 1);
             int linesToWrite = Math.Max(1, windowHeight - targetInWin); // create a blank zone
 
-            Console.Write(new string('\n', linesToWrite));
+            Console.WriteInternal(new string('\n', linesToWrite));
 
             int newWindowTop = Console.WindowTop;
             int targetTop = Math.Min(newWindowTop + targetInWin, Math.Max(0, Console.BufferHeight - 1));
