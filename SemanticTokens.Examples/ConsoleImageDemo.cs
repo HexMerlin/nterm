@@ -49,7 +49,6 @@ public sealed class ConsoleImageDemo
     /// </remarks>
     public async Task RunAsync()
     {
-        Console.BackgroundColor = Color.Navy;
         DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         Console.WriteLine();

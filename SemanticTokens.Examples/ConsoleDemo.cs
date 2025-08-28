@@ -36,10 +36,7 @@ public class ConsoleDemo
         Console.ForegroundColor = Color.Yellow;
         Console.WriteLine("This is in YELLOW using Console.ForegroundColor");
 
-        // Test 2: New Console property-based API
-        Console.ForegroundColor = Color.Red;
-        Console.BackgroundColor = Color.Blue;
-        Console.WriteLine("This is RED on BLUE using Console properties!");
+        Console.WriteLine("This is RED on BLUE!", Color.Red, Color.Blue);
 
         Console.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
         Console.WriteLine($"Current Console.BackgroundColor : {Console.BackgroundColor}");
@@ -52,7 +49,6 @@ public class ConsoleDemo
 
         // Test 4: 24-bit color that doesn't exist in ConsoleColor enum
         Console.ForegroundColor = Color.Chocolate;
-        Console.BackgroundColor = Color.Black;
         Console.WriteLine("This is CHOCOLATE colored text!");
         Console.WriteLine($"Current Console.ForegroundColor : {Console.ForegroundColor}");
         //Yes, Console outputs nearest matching color DarkYellow

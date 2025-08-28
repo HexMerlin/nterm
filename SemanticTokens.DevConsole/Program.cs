@@ -11,10 +11,9 @@ internal static class Program
 {
     private static async Task Main()
     {
-        Console.Clear(Color.Navy);
-
+       
         Console.Title = "Showing some Console Demos";
-              
+        Console.Clear(new Color(0, 0, 40));
         //comment out to run specific demo
 
         ConsoleDemo demo1 = new ConsoleDemo();

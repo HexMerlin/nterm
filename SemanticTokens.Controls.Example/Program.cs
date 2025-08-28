@@ -8,7 +8,7 @@ class Program
     static void Main(string[] args)
     {
         Console.ForegroundColor = Color.White;
-        Console.BackgroundColor = Color.Transparent;
+
         Console.Title = "SemanticTokens Controls Example";
 
         Console.WriteLine("SemanticTokens Controls Example");

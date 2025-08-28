@@ -107,9 +107,8 @@ public sealed class ChatEntryWriter
         
         _isWriting = false;
 
-        //restore original colors before exiting
+        //restore original foreground color before exiting
         Console.ForegroundColor = DefaultForegroundColor;
-        Console.BackgroundColor = DefaultBackgroundColor;
     }
 
     /// <summary>
