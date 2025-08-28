@@ -2,6 +2,11 @@
 
 public static class DiscreteScroller
 {
+    private static readonly Lock writeLock = new();
+
+    private static readonly Lock scrollLock = new();
+
+    private static readonly string Notice = BuildNotice();
 
     /// <summary>
     /// Ensures there is sufficient empty space (headroom) below the cursor for upcoming output.
@@ -30,10 +35,13 @@ public static class DiscreteScroller
     /// </example>
     public static bool EnsureHeadroom()
     {
-        const int DefaultHeadroom = 15; // sensible default for streaming output
-        bool didScroll = EnsureHeadroom(DefaultHeadroom, 0);
-        if (didScroll) PrintNotice();
-        return didScroll;
+        lock (scrollLock)
+        {
+            const int DefaultHeadroom = 10; // sensible default for streaming output
+            bool didScroll = EnsureHeadroom(DefaultHeadroom, 0);
+            if (didScroll) Console.WriteLine(Notice);
+            return didScroll;
+        }
     }
 
     /// <summary>
@@ -70,27 +78,30 @@ public static class DiscreteScroller
     /// </example>
     public static bool EnsureHeadroom(int HeadroomRows, int TargetTopFromWindowTop = 0)
     {
-        int windowHeight = Math.Max(1, Console.WindowHeight);
-        int windowTop = Console.WindowTop;
-        int bufferHeight = Math.Max(windowHeight, Console.BufferHeight);
-        int bottomVisible = windowTop + windowHeight - 1;
+        lock (writeLock)
+        {
+            int windowHeight = Math.Max(1, Console.WindowHeight);
+            int windowTop = Console.WindowTop;
+            int bufferHeight = Math.Max(windowHeight, Console.BufferHeight);
+            int bottomVisible = windowTop + windowHeight - 1;
 
-        int cursorTop = Math.Min(Console.CursorTop, bufferHeight - 1);
-        int rowsFromBottom = bottomVisible - cursorTop;
+            int cursorTop = Math.Min(Console.CursorTop, bufferHeight - 1);
+            int rowsFromBottom = bottomVisible - cursorTop;
 
-        if (rowsFromBottom >= HeadroomRows)
-            return false;
+            if (rowsFromBottom >= HeadroomRows)
+                return false;
 
-        int targetInWin = Math.Clamp(TargetTopFromWindowTop, 0, windowHeight - 1);
-        int linesToWrite = Math.Max(1, windowHeight - targetInWin); // create a blank zone
+            int targetInWin = Math.Clamp(TargetTopFromWindowTop, 0, windowHeight - 1);
+            int linesToWrite = Math.Max(1, windowHeight - targetInWin); // create a blank zone
 
-        Console.Write(new string('\n', linesToWrite));
+            Console.Write(new string('\n', linesToWrite));
 
-        int newWindowTop = Console.WindowTop;
-        int targetTop = Math.Min(newWindowTop + targetInWin, Math.Max(0, Console.BufferHeight - 1));
+            int newWindowTop = Console.WindowTop;
+            int targetTop = Math.Min(newWindowTop + targetInWin, Math.Max(0, Console.BufferHeight - 1));
 
-        try { Console.SetCursorPosition(0, targetTop); } catch { /* redirected output etc. */ }
-        return true;
+            try { Console.SetCursorPosition(0, targetTop); } catch { /* redirected output etc. */ }
+            return true;
+        }
     }
 
     /// <summary>
@@ -112,40 +123,21 @@ public static class DiscreteScroller
     /// </example>
     public static void NewPage()
     {
-        // Using WindowHeight as Headroom guarantees at least one page scroll.
-        EnsureHeadroom(Math.Max(1, Console.WindowHeight), 0);
-        PrintNotice();
-    }
-
-    // ---- INTERNAL (tiny + focused) -----------------------------------------
-
-    private static void PrintNotice()
-    {
-        string line = BuildNotice();
-        Console.WriteLine(line);
+        lock (scrollLock)
+        {
+            // Using WindowHeight as Headroom guarantees at least one page scroll.
+            EnsureHeadroom(Math.Max(1, Console.WindowHeight), 0);
+            Console.WriteLine(Notice);
+        }
     }
 
     private static string BuildNotice()
     {
         bool unicodeOk = UnicodeFriendly();
-        string arrow = unicodeOk ? "▲" : "^";
-        string dash = unicodeOk ? "─" : "-";
+        char arrow = unicodeOk ? '▲' : '^';
+        char dash = unicodeOk ? '─' : '-';
         string text = "Earlier output above — scroll up to see more";
-
-        int width = SafeWidth();
-        string core = $"  {arrow}  {text}  {arrow}  ";
-
-        if (core.Length > width)
-        {
-            int keep = Math.Max(0, width - ("  " + arrow + "    " + arrow + "  ").Length - 1);
-            string truncated = text.Length > keep ? text.Substring(0, keep) + "…" : text;
-            core = $"  {arrow}  {truncated}  {arrow}  ";
-        }
-
-        int rem = Math.Max(0, width - core.Length);
-        string left = new string(dash[0], rem / 2);
-        string right = new string(dash[0], width - core.Length - left.Length);
-        return left + core + right;
+        return $"                           {arrow}  {text}  {arrow}  ";
     }
 
     private static int SafeWidth() { try { return Math.Max(20, Console.WindowWidth); } catch { return 80; } }

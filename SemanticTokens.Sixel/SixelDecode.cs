@@ -61,17 +61,14 @@ public static class SixelDecode
                 break;
         }
 
-        Size canvasSize = new Size(200, 200);
-        ResizeOptions resizeOption = new ResizeOptions()
-        {
-            Mode = ResizeMode.BoxPad,
-            Position = AnchorPositionMode.TopLeft,
-        };
+        // Start with reasonable initial size - will be adjusted based on raster attributes
+        int canvasWidth = 800;
+        int canvasHeight = 600;
 
 #if IMAGESHARP4 // ImageSharp v4.0
-        Image<Rgba32> image = new(new Configuration(), canvasSize.Width, canvasSize.Height, SemanticTokens.Core.Color.Transparent.ToRgba32());
+        Image<Rgba32> image = new(new Configuration(), canvasWidth, canvasHeight, SemanticTokens.Core.Color.Transparent.ToRgba32());
 #else
-        Image<Rgba32> image = new(canvasSize.Width, canvasSize.Height, SemanticTokens.Core.Color.Transparent.ToRgba32());
+        Image<Rgba32> image = new(canvasWidth, canvasHeight, SemanticTokens.Core.Color.Transparent.ToRgba32());
 #endif
 
 
@@ -112,10 +109,19 @@ public static class SixelDecode
                     if (param.Count < 4)
                         throw new InvalidDataException($"Invalid Header: {string.Join(';', param)}");
 
-                    canvasSize.Width = param[2];
-                    canvasSize.Height = param[3];
-                    resizeOption.Size = canvasSize;
-                    image.Mutate(x => x.Resize(resizeOption));
+                    canvasWidth = param[2];
+                    canvasHeight = param[3];
+                    
+                    // Resize image if raster attributes specify different size
+                    if (image.Width != canvasWidth || image.Height != canvasHeight)
+                    {
+                        image.Mutate(x => x.Resize(new ResizeOptions
+                        {
+                            Size = new SixLabors.ImageSharp.Size(canvasWidth, canvasHeight),
+                            Mode = ResizeMode.BoxPad,
+                            Position = AnchorPositionMode.TopLeft,
+                        }));
+                    }
                     continue;
                 case 0x23: // '#'
                     colorN = -1;
@@ -149,22 +155,28 @@ public static class SixelDecode
                 case 0x2d: // '-'
                     currentX = 0;
                     currentY += 6;
-                    if (canvasSize.Height < currentY + 6)
-                    {
-                        canvasSize.Height *= 2;
-                        resizeOption.Size = canvasSize;
-                        image.Mutate(x => x.Resize(resizeOption));
-                    }
+                    // Track maximum Y but don't resize during parsing
                     break;
                 case > 0x3E and < 0x7F:
                     sixelBit = currentChar - 0x3F;
 
-                    if (canvasSize.Width < currentX + repeatCount)
+                    // Ensure image is large enough for drawing
+                    int requiredWidth = currentX + repeatCount;
+                    int requiredHeight = currentY + 6;
+                    
+                    if (image.Width < requiredWidth || image.Height < requiredHeight)
                     {
-                        canvasSize.Width *= 2;
-                        resizeOption.Size = canvasSize;
-                        image.Mutate(x => x.Resize(resizeOption));
+                        int newWidth = Math.Max(image.Width, requiredWidth);
+                        int newHeight = Math.Max(image.Height, requiredHeight);
+                        
+                        image.Mutate(x => x.Resize(new ResizeOptions
+                        {
+                            Size = new SixLabors.ImageSharp.Size(newWidth, newHeight),
+                            Mode = ResizeMode.BoxPad,
+                            Position = AnchorPositionMode.TopLeft,
+                        }));
                     }
+                    
                     for (int x = currentX; x < currentX + repeatCount; x++)
                     {
                         int y = currentY;

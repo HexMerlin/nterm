@@ -10,16 +10,8 @@ public class CurEncoder : SixelEncoder
     public CurEncoder(Image<Rgba32> img) : base(img, "CUR")
     {
         Metadata = img.Metadata.GetCurMetadata();
-        // Ensure the image size is within the ICO/CUR limits
-        // Set the size of the image to 256 x 256 if the image is too large
-        if (img.Width > 256)
-        {
-            Resize(256, -1);
-        }
-        else if (img.Height > 256)
-        {
-            Resize(-1, 256);
-        }
+        // Note: CUR format supports images up to 256x256 pixels
+        // For larger images, the frame selection logic will choose appropriate size
     }
 
     public CurMetadata Metadata { get; }
@@ -46,12 +38,12 @@ public class CurEncoder : SixelEncoder
         var metadata = frame.Metadata.GetIcoMetadata();
         var size = new Size(metadata.EncodingWidth == 0 ? 256 : metadata.EncodingWidth,
                             metadata.EncodingHeight == 0 ? 256 : metadata.EncodingHeight);
-        return Sixel.EncodeFrame(frame,
-                                 GetColorPalette(frame),
-                                 size,
-                                 TransparencyMode,
-                                 TransparentColor,
-                                 BackgroundColor);
+        return SixelEncode.EncodeFrame(frame,
+                                       GetColorPalette(frame),
+                                       size,
+                                       TransparencyMode,
+                                       TransparentColor,
+                                       BackgroundColor);
     }
 
     public override int GetFrameDelay(int frameIndex)
@@ -61,13 +53,12 @@ public class CurEncoder : SixelEncoder
     }
 
     /// <summary>
-    /// Determine best-sized ImageFrame (for CUR and ICO)
+    /// Determine best-quality ImageFrame (for CUR and ICO)
     /// </summary>
-    /// <param name="size">Size, null=largest ImageFrame</param>
     /// <returns>int index of best ImageFrame</returns>
-    public int GetBestFrame(Size? size = null)
+    public int GetBestFrame()
     {
-        return Sixel.GetBestFrame(Image, size);
+        return SixelEncode.GetBestFrame(Image);
     }
 }
 #endif

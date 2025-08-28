@@ -31,23 +31,11 @@ public sealed class ConsoleImageDemo
         // Use Examples assembly since that's where the embedded resources are
         Assembly examplesAssembly = typeof(ConsoleImageDemo).Assembly;
 
-        UserAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageUser, examplesAssembly)
-            .WithCharacterSize(8, 8)
-            .WithFallbackText("[👤]")
-            .WithTransparency(Transparency.Default)
-            .Build();
+        UserAvatarImage = ConsoleImage.FromEmbeddedResource(ImageUser, examplesAssembly, "[👤]", Transparency.Default);
 
-        BotAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageBot, examplesAssembly)
-            .WithCharacterSize(8, 8)
-            .WithFallbackText("[🤖]")
-            .WithTransparency(Transparency.Default)
-            .Build();
+        BotAvatarImage = ConsoleImage.FromEmbeddedResource(ImageBot, examplesAssembly, "[🤖]", Transparency.Default);
 
-        AiAvatarImage = ConsoleImageBuilder.FromEmbeddedResource(ImageAI, examplesAssembly)
-            .WithCharacterSize(8, 8)
-            .WithFallbackText("[🧠]")
-            .WithTransparency(Transparency.Default)
-            .Build();
+        AiAvatarImage = ConsoleImage.FromEmbeddedResource(ImageAI, examplesAssembly, "[🧠]", Transparency.Default);
     }
 
 
@@ -62,6 +50,7 @@ public sealed class ConsoleImageDemo
     public async Task RunAsync()
     {
         Console.BackgroundColor = Color.Navy;
+        DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         Console.WriteLine();
         Console.WriteLine("=== Streaming Chat Demo ===");
@@ -80,6 +69,7 @@ public sealed class ConsoleImageDemo
         
         userEntry.EndWrite();
         Console.WriteLine();
+        DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         // Bot response with different streaming patterns
         ChatEntryWriter botEntry = new ChatEntryWriter(BotAvatarImage);
@@ -110,6 +100,7 @@ public sealed class ConsoleImageDemo
         
         botEntry.EndWrite();
         Console.WriteLine();
+        DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         // AI response showcasing different colors and timing
         ChatEntryWriter aiEntry = new ChatEntryWriter(AiAvatarImage);
@@ -124,7 +115,7 @@ public sealed class ConsoleImageDemo
         await WriteStreamingText(aiEntry, "with perfect image-text alignment! 🚀", Color.Lime, 60);
         
         aiEntry.EndWrite();
-        Console.WriteLine();
+        Console.Write("\n\n\n");
 
         Console.ForegroundColor = Color.White;
         Console.WriteLine("=== Demo Complete ===");

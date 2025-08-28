@@ -5,24 +5,40 @@ using System.Text;
 namespace SemanticTokens.Core;
 
 /// <summary>
-/// Optimized 24-bit color console writer.
+/// Optimized 24‑bit color console writer with VT output and RAW VT input.
+/// Keeps SIXEL output exactly as before; replaces reading with a tiny VT-aware editor
+/// so Backspace deletes a char and Ctrl+Backspace deletes a word on Windows Terminal.
 /// </summary>
 public static class Console
 {
     private static readonly Stream Stdout = System.Console.OpenStandardOutput();
+    private static readonly Stream Stdin = System.Console.OpenStandardInput();
+    private static readonly Decoder Utf8Decoder = Encoding.UTF8.GetDecoder();
+
+    private static readonly Lock writeLock = new();
 
     static Console()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
+        System.Console.InputEncoding = Encoding.UTF8;
+
         WriteFg(Color.FromConsoleColor(System.Console.ForegroundColor));
         WriteBg(Color.FromConsoleColor(System.Console.BackgroundColor));
         TryEnableVirtualTerminalOnWindows();
+
+        // Explicitly choose Backspace semantics so BS=0x08, Ctrl+Backspace toggles to DEL=0x7F.
+        // WT implements DECBKM; this stabilizes our editor logic. (CSI ? 67 h)
+        Write("\x1b[?67h");
     }
 
     public static string Title
-    { 
-        get => System.Console.Title;
-        set => System.Console.Title = value;
+    {
+        get => OperatingSystem.IsWindows() ? System.Console.Title : "";
+        set
+        {
+            if (OperatingSystem.IsWindows())
+                System.Console.Title = value;
+        }
     }
 
     /// <summary>
@@ -66,94 +82,303 @@ public static class Console
     }
 
     public static int WindowTop => System.Console.WindowTop;
-
     public static int WindowLeft => System.Console.WindowLeft;
-
     public static int WindowWidth => System.Console.WindowWidth;
-
     public static int WindowHeight => System.Console.WindowHeight;
     public static int BufferWidth => System.Console.BufferWidth;
-
     public static int BufferHeight => System.Console.BufferHeight;
-
     public static int CursorLeft => System.Console.CursorLeft;
-
     public static int CursorTop => System.Console.CursorTop;
 
-    public static int Read() => System.Console.Read();
-
-    public static ConsoleKeyInfo ReadKey(bool intercept = false) => System.Console.ReadKey(intercept); 
-
-    public static string? ReadLine() => System.Console.ReadLine();
-
-    public static bool KeyAvailable => System.Console.KeyAvailable;
-
-    public static void SetCursorPosition(int left, int top)
+ 
+    /// <summary>True if there is input available without blocking.</summary>
+    public static bool KeyAvailable
     {
-        if (left < 0) left = 0;
-        if (top < 0) top = 0;
-
-        // Ensure width is valid relative to the window
-        int minWidth = Math.Max(System.Console.WindowWidth, 1);
-        int minHeight = Math.Max(System.Console.WindowHeight, 1);
-
-        // Clamp left to current width (or expand first if you prefer)
-        if (left >= System.Console.BufferWidth)
-            left = System.Console.BufferWidth - 1;
-
-        // Expand buffer height if needed
-        if (top >= System.Console.BufferHeight)
+        get
         {
-            int newHeight = top + 1; // or add margin, e.g. + 50
-            try
+            if (!OperatingSystem.IsWindows())
+                return System.Console.KeyAvailable;
+
+            nint hin = GetStdHandle(STD_INPUT_HANDLE);
+            return WaitForSingleObject(hin, 0) == WAIT_OBJECT_0;
+        }
+    }
+
+    /// <summary>
+    /// Read next Unicode scalar from stdin (decoded from UTF‑8). Returns -1 on EOF.
+    /// </summary>
+    public static int Read()
+    {
+        Span<byte> inBuf = stackalloc byte[4];
+        Span<char> outBuf = stackalloc char[2];
+        int inCount = 0;
+
+        while (true)
+        {
+            int b = Stdin.ReadByte();
+            if (b < 0) return -1;
+
+            inBuf[inCount++] = (byte)b;
+
+            Utf8Decoder.Convert(inBuf[..inCount], outBuf, false,
+                out int bytesUsed, out int charsUsed, out bool completed);
+
+            if (charsUsed > 0)
+                return outBuf[0];
+
+            // Guard: if we somehow collected 4 bytes and still no char, emit replacement
+            if (inCount == 4)
+                return '?';
+        }
+    }
+
+    /// <summary>
+    /// Read a key (VT‑aware). Distinguishes Backspace vs Ctrl+Backspace via BS(0x08) vs DEL(0x7F).
+    /// Handles basic CSI/SS3 cursor keys and Delete (CSI 3~).
+    /// </summary>
+    public static ConsoleKeyInfo ReadKey(bool intercept = false)
+    {
+        int ch = Read();
+        if (ch == -1) return default;
+
+        // ESC‑prefixed sequences
+        if (ch == 0x1B)
+        {
+            return DecodeEscapeSequence(intercept);
+        }
+
+        // Backspace family: BS (0x08) and DEL (0x7F)
+        // DECBKM set => Backspace sends BS; Ctrl+Backspace toggles to DEL (WT implements this).
+        // We normalize both to ConsoleKey.Backspace and set Control=true for DEL so callers can tell.
+        if (ch == 0x08 || ch == 0x7F)
+        {
+            bool isCtrl = (ch == 0x7F);
+            if (!intercept) EchoBackspace(1);
+            return new ConsoleKeyInfo('\b', System.ConsoleKey.Backspace, false, false, isCtrl);
+        }
+
+        // Enter: CR or LF
+        if (ch == '\n' || ch == '\r')
+        {
+            if (!intercept) Write("\n");
+            return new ConsoleKeyInfo('\n', System.ConsoleKey.Enter, false, false, false);
+        }
+
+        // Regular printable
+        if (!intercept) Write((char)ch);
+        return new ConsoleKeyInfo((char)ch, KeyFromChar((char)ch), false, false, false);
+    }
+
+    /// <summary>
+    /// Simple cooked line editor:
+    /// - Backspace → delete 1 char (rune‑aware)
+    /// - Ctrl+Backspace → delete previous word
+    /// - Enter returns the line
+    /// </summary>
+    public static string ReadLine()
+    {
+        var sb = new StringBuilder(128);
+
+        while (true)
+        {
+            var key = ReadKey(intercept: true);
+
+            if (key.Key == System.ConsoleKey.Enter)
             {
-                System.Console.SetBufferSize(Math.Max(Console.BufferWidth, minWidth), Math.Max(newHeight, minHeight));
+                Write("\n");
+                return sb.ToString();
             }
-            catch
+
+            if (key.Key == System.ConsoleKey.Backspace)
             {
-                // Fallback: clamp if the host doesn't allow resizing
-                top = System.Console.BufferHeight - 1;
+                if (key.Modifiers.HasFlag(ConsoleModifiers.Control))
+                {
+                    // Ctrl+Backspace: delete previous word
+                    int toErase = ComputeWordEraseCount(sb);
+                    if (toErase > 0)
+                    {
+                        sb.Remove(sb.Length - toErase, toErase);
+                        EchoBackspace(toErase);
+                    }
+                }
+                else
+                {
+                    // Plain Backspace: delete one rune
+                    if (sb.Length > 0)
+                    {
+                        int removeLen = 1;
+                        if (sb.Length >= 2 && char.IsLowSurrogate(sb[^1]) && char.IsHighSurrogate(sb[^2]))
+                            removeLen = 2;
+                        sb.Remove(sb.Length - removeLen, removeLen);
+                        EchoBackspace(removeLen);
+                    }
+                }
+                continue;
+            }
+
+            // Ignore other control keys in this minimal editor
+            if (!char.IsControl(key.KeyChar))
+            {
+                sb.Append(key.KeyChar);
+                Write(key.KeyChar);
+            }
+        }
+    }
+
+    private static int ComputeWordEraseCount(StringBuilder sb)
+    {
+        if (sb.Length == 0) return 0;
+
+        int i = sb.Length;
+        // 1) Skip any trailing spaces
+        while (i > 0 && char.IsWhiteSpace(sb[i - 1])) i--;
+        // 2) Then consume non-space run as the "word"
+        int end = i;
+        while (i > 0 && !char.IsWhiteSpace(sb[i - 1])) i--;
+        return end - i;
+    }
+
+    private static System.ConsoleKey KeyFromChar(char ch)
+    {
+        if (ch >= 'A' && ch <= 'Z') return (System.ConsoleKey)ch;
+        if (ch >= 'a' && ch <= 'z') return (System.ConsoleKey)char.ToUpperInvariant(ch);
+        if (ch >= '0' && ch <= '9') return (System.ConsoleKey)('D' + (ch - '0'));
+        return System.ConsoleKey.NoName;
+    }
+
+    private static ConsoleKeyInfo DecodeEscapeSequence(bool intercept)
+    {
+        // Read a small burst of pending bytes to coalesce an ESC sequence.
+        Span<byte> buf = stackalloc byte[8];
+        int n = 0;
+        var start = Environment.TickCount64;
+
+        while (n < buf.Length)
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                if (WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0) != WAIT_OBJECT_0) break;
+            }
+            else if (!System.Console.KeyAvailable) break;
+
+            int b = Stdin.ReadByte();
+            if (b < 0) break;
+            buf[n++] = (byte)b;
+
+            if (Environment.TickCount64 - start > 2) break; // short idle window
+        }
+
+        ReadOnlySpan<byte> seq = buf[..n];
+
+        if (seq.Length == 0)
+        {
+            if (!intercept) Write("\x1b");
+            return new ConsoleKeyInfo('\x1b', System.ConsoleKey.Escape, false, false, false);
+        }
+
+        // CSI: ESC [ ... final
+        if (seq[0] == (byte)'[')
+        {
+            if (seq.Length >= 1)
+            {
+                byte final = seq[^1];
+                switch (final)
+                {
+                    case (byte)'A': return new ConsoleKeyInfo('\0', System.ConsoleKey.UpArrow, false, false, false);
+                    case (byte)'B': return new ConsoleKeyInfo('\0', System.ConsoleKey.DownArrow, false, false, false);
+                    case (byte)'C': return new ConsoleKeyInfo('\0', System.ConsoleKey.RightArrow, false, false, false);
+                    case (byte)'D': return new ConsoleKeyInfo('\0', System.ConsoleKey.LeftArrow, false, false, false);
+                    case (byte)'H': return new ConsoleKeyInfo('\0', System.ConsoleKey.Home, false, false, false);
+                    case (byte)'F': return new ConsoleKeyInfo('\0', System.ConsoleKey.End, false, false, false);
+                    case (byte)'~':
+                        int num = 0;
+                        for (int i = 1; i < seq.Length - 1; i++)
+                            if (seq[i] >= '0' && seq[i] <= '9')
+                                num = num * 10 + (seq[i] - '0');
+                        return num switch
+                        {
+                            2 => new ConsoleKeyInfo('\0', System.ConsoleKey.Insert, false, false, false),
+                            3 => new ConsoleKeyInfo('\0', System.ConsoleKey.Delete, false, false, false),
+                            5 => new ConsoleKeyInfo('\0', System.ConsoleKey.PageUp, false, false, false),
+                            6 => new ConsoleKeyInfo('\0', System.ConsoleKey.PageDown, false, false, false),
+                            _ => new ConsoleKeyInfo('\0', System.ConsoleKey.NoName, false, false, false)
+                        };
+                }
             }
         }
 
-        System.Console.SetCursorPosition(left, top);
+        // SS3: ESC O ...
+        if (seq.Length >= 2 && seq[0] == (byte)'O')
+        {
+            return seq[1] switch
+            {
+                (byte)'P' => new ConsoleKeyInfo('\0', System.ConsoleKey.F1, false, false, false),
+                (byte)'Q' => new ConsoleKeyInfo('\0', System.ConsoleKey.F2, false, false, false),
+                (byte)'R' => new ConsoleKeyInfo('\0', System.ConsoleKey.F3, false, false, false),
+                (byte)'S' => new ConsoleKeyInfo('\0', System.ConsoleKey.F4, false, false, false),
+                (byte)'H' => new ConsoleKeyInfo('\0', System.ConsoleKey.Home, false, false, false),
+                (byte)'F' => new ConsoleKeyInfo('\0', System.ConsoleKey.End, false, false, false),
+                _ => new ConsoleKeyInfo('\0', System.ConsoleKey.NoName, false, false, false)
+            };
+        }
+
+        // Unknown sequence → deliver a literal ESC (don’t swallow input).
+        if (!intercept) Write("\x1b");
+        return new ConsoleKeyInfo('\x1b', System.ConsoleKey.Escape, false, false, false);
     }
 
-    /// <summary>
-    /// Writes a character using current foreground and background colors.
-    /// </summary>
-    /// <param name="ch">Character to write</param>
-    /// <remarks>
-    /// Uses the current ForegroundColor and BackgroundColor properties.
-    /// No ANSI escape sequences are written since colors are already set.
-    /// </remarks>
+    private static void EchoBackspace(int runeWidth)
+    {
+        for (int i = 0; i < runeWidth; i++)
+            Write("\b \b");
+    }
+
+    public static void SetCursorPosition(int left, int top)
+    {
+        lock (writeLock)
+        {
+            if (left < 0) left = 0;
+            if (top < 0) top = 0;
+
+            int minWidth = Math.Max(System.Console.WindowWidth, 1);
+            int minHeight = Math.Max(System.Console.WindowHeight, 1);
+
+            if (left >= System.Console.BufferWidth)
+                left = System.Console.BufferWidth - 1;
+
+            if (top >= System.Console.BufferHeight)
+            {
+                int newHeight = top + 1;
+                try
+                {
+                    System.Console.SetBufferSize(Math.Max(Console.BufferWidth, minWidth), Math.Max(newHeight, minHeight));
+                }
+                catch
+                {
+                    top = System.Console.BufferHeight - 1;
+                }
+            }
+
+            System.Console.SetCursorPosition(left, top);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(char ch)
     {
-        Span<byte> charBuf = stackalloc byte[4]; // Max UTF-8 char length
-        int charLen = EncodeCharUtf8(ch, charBuf);
-        Stdout.Write(charBuf[..charLen]);
+        lock (writeLock)
+        {
+            Span<byte> charBuf = stackalloc byte[4];
+            int charLen = EncodeCharUtf8(ch, charBuf);
+            Stdout.Write(charBuf[..charLen]);
+        }
     }
 
-
-    /// <summary>
-    /// Writes a character with specified colors using optimized color caching.
-    /// </summary>
-    /// <param name="ch">Character to write</param>
-    /// <param name="foreground">Foreground color.</param>
-    /// <param name="background">Background color. Optional.</param>
-    /// <remarks>
-    /// Updates the ForegroundColor and BackgroundColor properties if colors have changed.
-    /// Avoids redundant color escape sequences when colors haven't changed.
-    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Write(char ch, Color foreground, Color background = default)
     {
-        // Set colors using properties (which handle ANSI output automatically)
         ForegroundColor = foreground;
         BackgroundColor = background;
-        
-        // Write the character
         Write(ch);
     }
 
@@ -167,26 +392,29 @@ public static class Console
     /// </remarks>
     public static void Write(ReadOnlySpan<char> str)
     {
-        if (str.IsEmpty) return;
-        
-        // Optimize for common short strings with stack allocation
-        if (str.Length <= 256)
+        lock (writeLock)
         {
-            Span<byte> buffer = stackalloc byte[str.Length * 4]; // Max UTF-8 expansion
-            int bytesWritten = EncodeStringUtf8(str, buffer);
-            Stdout.Write(buffer[..bytesWritten]);
-        }
-        else
-        {
-            // For longer strings, use chunked processing to avoid large stack allocation
-            const int chunkSize = 256;
-            Span<byte> buffer = stackalloc byte[chunkSize * 4];
-            
-            for (int i = 0; i < str.Length; i += chunkSize)
+            if (str.IsEmpty) return;
+
+            // Optimize for common short strings with stack allocation
+            if (str.Length <= 256)
             {
-                ReadOnlySpan<char> chunk = str.Slice(i, Math.Min(chunkSize, str.Length - i));
-                int bytesWritten = EncodeStringUtf8(chunk, buffer);
+                Span<byte> buffer = stackalloc byte[str.Length * 4]; // Max UTF-8 expansion
+                int bytesWritten = EncodeStringUtf8(str, buffer);
                 Stdout.Write(buffer[..bytesWritten]);
+            }
+            else
+            {
+                // For longer strings, use chunked processing to avoid large stack allocation
+                const int chunkSize = 256;
+                Span<byte> buffer = stackalloc byte[chunkSize * 4];
+
+                for (int i = 0; i < str.Length; i += chunkSize)
+                {
+                    ReadOnlySpan<char> chunk = str.Slice(i, Math.Min(chunkSize, str.Length - i));
+                    int bytesWritten = EncodeStringUtf8(chunk, buffer);
+                    Stdout.Write(buffer[..bytesWritten]);
+                }
             }
         }
     }
@@ -217,26 +445,29 @@ public static class Console
     /// </remarks>
     public static void WriteLine(ReadOnlySpan<char> str = "")
     {
-        if (str.IsEmpty)
+        lock (writeLock)
         {
-            // Just write LF
-            Stdout.Write("\n"u8);
-            return;
-        }
-        
-        // Optimize for common short strings with stack allocation
-        if (str.Length <= 255) // Reserve 1 char for \n
-        {
-            Span<byte> buffer = stackalloc byte[(str.Length + 1) * 4]; // +1 for \n, max UTF-8 expansion
-            int bytesWritten = EncodeStringUtf8(str, buffer);
-            buffer[bytesWritten++] = (byte)'\n'; // Add LF
-            Stdout.Write(buffer[..bytesWritten]);
-        }
-        else
-        {
-            // For longer strings, write string then newline separately
-            Write(str);
-            Stdout.Write("\n"u8);
+            if (str.IsEmpty)
+            {
+                // Just write LF
+                Stdout.Write("\n"u8);
+                return;
+            }
+
+            // Optimize for common short strings with stack allocation
+            if (str.Length <= 255) // Reserve 1 char for \n
+            {
+                Span<byte> buffer = stackalloc byte[(str.Length + 1) * 4]; // +1 for \n, max UTF-8 expansion
+                int bytesWritten = EncodeStringUtf8(str, buffer);
+                buffer[bytesWritten++] = (byte)'\n'; // Add LF
+                Stdout.Write(buffer[..bytesWritten]);
+            }
+            else
+            {
+                // For longer strings, write string then newline separately
+                Write(str);
+                Stdout.Write("\n"u8);
+            }
         }
     }
 
@@ -271,106 +502,52 @@ public static class Console
         Write(imageData);
     }
 
-    public static void Reset() =>
-        Write($"{Constants.ESC}{Constants.SGR_RESET}");
+    public static void Reset()
+    {
+        lock (writeLock)
+        {
+            Write($"{Constants.ESC}{Constants.SGR_RESET}");
+        }
+    }
 
     public static void Clear(Color backgroundColor = default, bool clearScrollback = false)
     {
-        BackgroundColor = backgroundColor; //is ignored if no value is provided
+        lock (writeLock)
+        {
+            BackgroundColor = backgroundColor; //is ignored if no value is provided
 
-        //Apply current background color(and foreground if you want a default too)
-        
-        WriteBg(BackgroundColor);
-        // WriteFg(ForegroundColor); // uncomment if you want default fg reapplied
+            WriteBg(BackgroundColor);
+            Write($"{Constants.ESC}{Constants.EraseDisplayAll}");
+            Write($"{Constants.ESC}{Constants.CursorHome}");
 
-        // Erase full display and home cursor
-        Write($"{Constants.ESC}{Constants.EraseDisplayAll}");
-        Write($"{Constants.ESC}{Constants.CursorHome}");
-
-        // Optionally clear scrollback
-        if (clearScrollback)
-            Write($"{Constants.ESC}{Constants.EraseScrollback}");
-
-        //Reset SGR state to keep your BG / FG active as defaults
-        // If you want to go back to terminal theme defaults instead, call WriteReset()
+            if (clearScrollback)
+                Write($"{Constants.ESC}{Constants.EraseScrollback}");
+        }
     }
 
-
     private static void WriteBg(Color c) =>
-      Write($"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
+        Write($"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
 
     private static void WriteFg(Color c) =>
         Write($"{Constants.ESC}{Constants.SGR_FG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
 
     #region Private Methods
 
-    /// <summary>
-    /// Writes ANSI foreground color escape sequence to stdout.
-    /// </summary>
-    /// <param name="color">Foreground color to set</param>
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //private static void WriteForegroundColorToStdout(Color color)
-    //{
-    //    Span<byte> buf = stackalloc byte[32]; // ESC[38;2;255;255;255m = max 19 bytes
-    //    ReadOnlySpan<byte> prefix = "\x1B[38;2;"u8; // ESC[38;2; in single operation
-    //    int i = 0;
-        
-    //    prefix.CopyTo(buf);
-    //    i += prefix.Length;
-    //    i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
-    //    i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
-    //    i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
-        
-    //    Stdout.Write(buf[..i]);
-    //}
-
-    /// <summary>
-    /// Writes ANSI background color escape sequence to stdout.
-    /// </summary>
-    /// <param name="color">Background color to set</param>
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //private static void WriteBackgroundColorToStdout(Color color)
-    //{
-    //    Span<byte> buf = stackalloc byte[32]; // ESC[48;2;255;255;255m = max 19 bytes
-    //    ReadOnlySpan<byte> prefix = "\x1B[48;2;"u8; // ESC[48;2; in single operation
-    //    int i = 0;
-        
-    //    prefix.CopyTo(buf);
-    //    i += prefix.Length;
-    //    i += WriteUInt8(color.R, buf[i..]); buf[i++] = (byte)';';
-    //    i += WriteUInt8(color.G, buf[i..]); buf[i++] = (byte)';';
-    //    i += WriteUInt8(color.B, buf[i..]); buf[i++] = (byte)'m';
-        
-    //    Stdout.Write(buf[..i]);
-    //}
-
-    /// <summary>
-    /// Encodes a string span to UTF-8 bytes optimized for console output.
-    /// </summary>
-    /// <param name="chars">Characters to encode</param>
-    /// <param name="dest">Destination buffer for UTF-8 bytes</param>
-    /// <returns>Number of UTF-8 bytes written</returns>
-    /// <remarks>
-    /// Optimized bulk UTF-8 encoding using the same logic as EncodeCharUtf8.
-    /// Handles ASCII fast path and full Unicode character ranges efficiently.
-    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int EncodeStringUtf8(ReadOnlySpan<char> chars, Span<byte> dest)
     {
         int bytesWritten = 0;
-        
+
         for (int i = 0; i < chars.Length; i++)
         {
             char ch = chars[i];
-            
-            // ASCII fast path - most common case
+
             if (ch <= 0x7F)
             {
                 dest[bytesWritten++] = (byte)ch;
                 continue;
             }
-            
-            // Non-ASCII character - use existing encoding logic
+
             if (ch < 0xD800 || ch > 0xDFFF)
             {
                 if (ch <= 0x7FF)
@@ -387,11 +564,9 @@ public static class Console
             }
             else
             {
-                // Invalid surrogate pair - replace with ?
                 dest[bytesWritten++] = (byte)'?';
             }
         }
-        
         return bytesWritten;
     }
 
@@ -455,34 +630,46 @@ public static class Console
         return 1;
     }
 
+    // ===== Console mode / P-Invoke =====
+
     private static void TryEnableVirtualTerminalOnWindows()
     {
         if (!OperatingSystem.IsWindows()) return;
 
         const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
         const uint ENABLE_VIRTUAL_TERMINAL_INPUT = 0x0200;
-        const int STD_OUTPUT_HANDLE = -11;
-        const int STD_INPUT_HANDLE = -10;
 
-        // Output: enable VT processing for SGR/OSC writes
+        const uint ENABLE_PROCESSED_INPUT = 0x0001; // keep so Ctrl+C still works
+        const uint ENABLE_LINE_INPUT = 0x0002; // cooked mode (we will clear)
+        const uint ENABLE_ECHO_INPUT = 0x0004; // host echo (we will clear)
+        const uint ENABLE_QUICK_EDIT_MODE = 0x0040; // (must be cleared with EXTENDED_FLAGS)
+        const uint ENABLE_EXTENDED_FLAGS = 0x0080;
+
         nint hout = GetStdHandle(STD_OUTPUT_HANDLE);
         if (hout != nint.Zero && GetConsoleMode(hout, out uint outMode))
         {
-            SetConsoleMode(hout, outMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            _ = SetConsoleMode(hout, outMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
         }
 
-        // Input: enable VT input so OSC replies arrive as input chars
         nint hin = GetStdHandle(STD_INPUT_HANDLE);
         if (hin != nint.Zero && GetConsoleMode(hin, out uint inMode))
         {
-            SetConsoleMode(hin, inMode | ENABLE_VIRTUAL_TERMINAL_INPUT);
+            inMode |= ENABLE_EXTENDED_FLAGS; // allow clearing QUICK_EDIT
+            inMode &= ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_QUICK_EDIT_MODE); // raw-ish
+            inMode |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
+            _ = SetConsoleMode(hin, inMode);
         }
     }
 
+    private const int STD_OUTPUT_HANDLE = -11;
+    private const int STD_INPUT_HANDLE = -10;
+
+    private const uint WAIT_OBJECT_0 = 0x00000000;
 
     [DllImport("kernel32.dll", SetLastError = true)] private static extern nint GetStdHandle(int nStdHandle);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
 
-    #endregion Private Methods
+    #endregion
 }
