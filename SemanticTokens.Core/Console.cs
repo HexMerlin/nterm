@@ -25,10 +25,6 @@ public static class Console
         TryEnableVirtualTerminalOnWindows(); // enable VT output + raw-ish input on Win
         TryEnableRawTerminalOnPosix();       // raw input on Linux/macOS (only if tty)
 
-        // Now it’s safe to emit VT that should take effect everywhere:
-        WriteFg(Color.FromConsoleColor(System.Console.ForegroundColor));
-        WriteBg(Color.FromConsoleColor(System.Console.BackgroundColor));
-
         // Backspace semantics (DECBKM) to stabilize BS vs DEL handling.
         Write("\x1b[?67h");
     }
@@ -701,8 +697,6 @@ public static class Console
 
     private const uint WAIT_OBJECT_0 = 0x00000000;
 
-
-    // Add near the other P/Invoke bits (POSIX)
     internal static class PosixTermios
     {
         [StructLayout(LayoutKind.Sequential)]
@@ -721,7 +715,7 @@ public static class Console
         public const int VMIN = 6;
         public const int VTIME = 5;
 
-        // flags we’ll clear
+        // Flags we will clear
         public const uint ICANON = 0x00000100;
         public const uint ECHO = 0x00000008;
         public const uint ICRNL = 0x00000100;
@@ -731,7 +725,7 @@ public static class Console
     private static PosixTermios.termios _orig;
     private static bool _posixRaw;
 
-    // Call this from the static ctor (next to TryEnableVirtualTerminalOnWindows)
+
     private static void TryEnableRawTerminalOnPosix()
     {
         if (OperatingSystem.IsWindows()) return;
@@ -739,7 +733,7 @@ public static class Console
 
         _orig = t;
 
-        // make a copy and set raw-ish mode
+        // Make a copy and set raw-ish mode
         t.c_lflag &= ~(PosixTermios.ICANON | PosixTermios.ECHO);
         t.c_iflag &= ~(PosixTermios.ICRNL | PosixTermios.IXON);
         t.c_cc ??= new byte[32];
