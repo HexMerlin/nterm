@@ -57,21 +57,26 @@ class Program
         };
 
         var selectedItem1 = Select.Show(items);
-        Console.Write(" and now select another option: ");
-        var selectedItem2 = Select.Show(items);
-
-        if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
+        if (selectedItem1.IsEmpty())
         {
-            Console.WriteLine($"\nSelected: {selectedItem1.Text} and {selectedItem2.Text}");
-            selectedItem1.Command.Invoke();
-            selectedItem2.Command.Invoke();
+            Console.WriteLine("Selection cancelled");
         }
         else
         {
-            Console.WriteLine("\nSelection cancelled");
-        }
+            Console.Write(" and now select another option: ");
+            var selectedItem2 = Select.Show(items);
 
-        //SelectDemo.Run();
+            if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
+            {
+                Console.WriteLine($"\nSelected: {selectedItem1.Text} and {selectedItem2.Text}");
+                selectedItem1.Command.Invoke();
+                selectedItem2.Command.Invoke();
+            }
+            else
+            {
+                Console.WriteLine("Selection cancelled");
+            }
+        }
 
         Console.WriteLine("\nPress any key to exit...");
         Console.ReadKey();

@@ -4,6 +4,9 @@ namespace SemanticTokens.Controls;
 
 /// <summary>
 /// Implementation of a CLI select control that allows users to choose from a list of items.
+/// When the item is selected it will be printed at the cursor position as normal text.
+///
+/// For more control and advanced usage, use <see cref="SelectDropdownView"/> directly.
 /// </summary>
 public class SelectControl : ISelectControl
 {
@@ -16,20 +19,19 @@ public class SelectControl : ISelectControl
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
     public SelectItem Show(IEnumerable<SelectItem> items)
     {
-        var itemList = ValidateInput(items);
+        List<SelectItem> itemList = ValidateInput(items);
         if (itemList.Count == 0)
         {
             return SelectItem.Empty;
         }
 
-        // Use ConsoleState to automatically manage console state restoration
-        using var consoleState = new ConsoleState();
-
         PrepareConsoleForSelection();
         ClearInputBuffer();
 
         // Run the selection loop using the view
-        return RunSelectionLoop(itemList, consoleState);
+        SelectItem selectedItem = ShowDropdown(itemList);
+        RenderFinalSelection(selectedItem);
+        return selectedItem;
     }
 
     /// <summary>
@@ -75,25 +77,21 @@ public class SelectControl : ISelectControl
     }
 
     /// <summary>
-    /// Runs the main selection loop.
+    /// Shows the select dropdown.
     /// </summary>
     /// <param name="items">The list of items to select from.</param>
     /// <param name="consoleState">The console state for position tracking.</param>
     /// <returns>The selected item.</returns>
-    private static SelectItem RunSelectionLoop(List<SelectItem> items, ConsoleState consoleState)
+    private static SelectItem ShowDropdown(List<SelectItem> items)
     {
+        // Use ConsoleState to automatically manage console state restoration
+        using ConsoleState consoleState = new();
+
         // Initialize dropdown view and ensure initial space below anchor
-        var view = new SelectDropdownView(
-            consoleState.OriginalCursorLeft,
-            consoleState.OriginalCursorTop,
-            MaxVisibleItems
-        );
+        SelectDropdownView view =
+            new(consoleState.OriginalCursorLeft, consoleState.OriginalCursorTop, MaxVisibleItems);
 
-        var selectedItem = view.Show(items);
-
-        // Clean exit: show only the final selected item, clear below, and place cursor after text
-        RenderFinalSelection(selectedItem, view.AnchorColumn, view.AnchorRow, consoleState);
-        return selectedItem;
+        return view.Show(items);
     }
 
     /// <summary>
@@ -123,32 +121,12 @@ public class SelectControl : ISelectControl
     /// Clears any previously rendered dropdown lines and shows only the selected item.
     /// Ensures cursor ends after the selected text.
     /// </summary>
-    private static void RenderFinalSelection(
-        SelectItem selectedItem,
-        int startColumn,
-        int startRow,
-        ConsoleState consoleState
-    )
+    private static void RenderFinalSelection(SelectItem selectedItem)
     {
-        // Clear selected line from startColumn and rows below that were used
-        //ConsoleEx.ClearArea(startColumn, startRow, lastRenderedLineCount);
-
-        // Restore original color for final output
-        Console.ForegroundColor = consoleState.OriginalForeground;
-
-        // Write only the selected item's text and place cursor after it
-        ConsoleEx.SetCursor(startColumn, startRow);
         string displayText = TruncateText(
             selectedItem.Text,
-            Math.Max(0, Console.WindowWidth - startColumn)
+            Math.Max(0, Console.WindowWidth - Console.CursorLeft)
         );
         Console.Write(displayText);
-
-        // Move cursor to end of the written text
-        int finalColumn = Math.Min(
-            Console.WindowWidth - 1,
-            startColumn + (displayText?.Length ?? 0)
-        );
-        ConsoleEx.SetCursor(finalColumn, startRow);
     }
 }

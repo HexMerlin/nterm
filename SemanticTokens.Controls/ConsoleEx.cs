@@ -21,6 +21,8 @@ internal static class ConsoleEx
         if (row < 0 || row >= Console.WindowHeight)
             return;
         SetCursor(startColumn, row);
+        // Erase to the end of the line (reset line width)
+        // \u001b is the escape character, [K is the erase command
         Console.Write("\u001b[K");
         SetCursor(startColumn, row);
     }
@@ -37,29 +39,40 @@ internal static class ConsoleEx
         }
     }
 
-    public static int EnsureSpaceBelow(int startColumn, int startRow, int requiredRows)
+    /// <summary>
+    /// Makes space for the required rows below the anchor and sets the cursor to it.
+    /// </summary>
+    /// <param name="columnAnchor">The column of the anchor.</param>
+    /// <param name="rowAnchor">The row of the anchor.</param>
+    /// <param name="requiredRows">The number of rows to make space for.</param>
+    /// <returns>The new row of the anchor after making space.</returns>
+    public static int EnsureSpaceBelowAnchor(int columnAnchor, int rowAnchor, int requiredRows)
     {
         int windowHeight = Console.WindowHeight;
-        // Reserve up to MaxVisibleItems rows BELOW the current line for the list viewport
-        int requiredBelow = Math.Min(4, Math.Max(1, requiredRows));
-        int rowsBelow = Math.Max(0, windowHeight - 1 - startRow);
-        int needed = Math.Max(0, requiredBelow - rowsBelow);
-        if (needed == 0)
+        if (windowHeight < 2)
         {
-            return startRow;
+            // No space below, so don't move the anchor.
+            return rowAnchor;
         }
 
-        // Write the minimal number of newlines to create room.
-        // This may cause the terminal to scroll up if we're at the bottom.
-        SetCursor(startColumn, startRow);
-        Console.Write(new string('\n', needed));
+        // Reserve up to MaxVisibleItems rows BELOW the current line for the list viewport
+        int requiredBelow = Math.Min(4, Math.Max(1, requiredRows));
+        int rowsBelow = Math.Max(0, windowHeight - 1 - rowAnchor);
+        int needed = Math.Max(0, requiredBelow - rowsBelow);
+        if (needed == 0 || needed > windowHeight - 1)
+        {
+            return rowAnchor;
+        }
 
-        // Calculate how many screen scrolls happened
-        int scrolled = Math.Max(0, startRow + needed - (windowHeight - 1));
-        int adjustedStartRow = Math.Max(0, startRow - scrolled);
+        // Write the required number of newlines (from start row) to create room.
+        // This may cause the terminal to scroll up if we're at the bottom.
+        SetCursor(columnAnchor, rowAnchor);
+        Console.Write(new string('\n', Math.Min(windowHeight - 1, requiredRows)));
+
+        int adjustedStartRow = Math.Max(0, rowAnchor - needed);
 
         // Restore cursor to the anchor position
-        SetCursor(startColumn, adjustedStartRow);
+        SetCursor(columnAnchor, adjustedStartRow);
 
         return adjustedStartRow;
     }
