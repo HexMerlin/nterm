@@ -7,9 +7,6 @@ class Program
 {
     static void Main(string[] args)
     {
-        System.Console.OutputEncoding = Encoding.UTF8;
-        System.Console.InputEncoding = Encoding.UTF8;
-
         Console.ForegroundColor = Color.White;
         Console.BackgroundColor = Color.Transparent;
         Console.Title = "SemanticTokens Controls Example";
