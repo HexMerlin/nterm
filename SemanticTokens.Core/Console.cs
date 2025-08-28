@@ -105,6 +105,15 @@ public static class Console
     }
 
     /// <summary>
+    /// Exactly the same on-screen effect as a user pressing Backspace.
+    /// </summary>
+    /// <param name="backspaceCount">Number of backspaces to emit (default=1)</param>
+    public static void Backspace(int backspaceCount = 1)
+    {
+        EchoBackspace(backspaceCount);
+    }
+
+    /// <summary>
     /// Read next Unicode scalar from stdin (decoded from UTF‑8). Returns -1 on EOF.
     /// </summary>
     public static int Read()
@@ -175,9 +184,10 @@ public static class Console
     /// - Ctrl+Backspace → delete previous word
     /// - Enter returns the line
     /// </summary>
-    public static string ReadLine()
+    /// <param name="restoreOnExit">If true, erases the line on Enter; otherwise leaves it on screen.</param>
+    public static string ReadLine(bool restoreOnExit = false)
     {
-        var sb = new StringBuilder(128);
+        StringBuilder sb = new StringBuilder(128);
 
         while (true)
         {
@@ -185,7 +195,11 @@ public static class Console
 
             if (key.Key == System.ConsoleKey.Enter)
             {
-                Write("\n");
+                if (restoreOnExit)
+                {
+                    Backspace(sb.Length);
+                }
+                else Write("\n");
                 return sb.ToString();
             }
 
@@ -329,8 +343,16 @@ public static class Console
 
     private static void EchoBackspace(int runeWidth)
     {
-        for (int i = 0; i < runeWidth; i++)
+        if (runeWidth == 1) //fast path for single
+        {
             Write("\b \b");
+            return;
+        }
+        StringBuilder sb = new();
+        for (int i = 0; i < runeWidth; i++) {
+            sb.Append("\b \b");
+        }
+        Write(sb.ToString());
     }
 
     public static void SetCursorPosition(int left, int top)
