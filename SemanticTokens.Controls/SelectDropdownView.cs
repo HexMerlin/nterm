@@ -44,16 +44,13 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
             }
             else if (IsCancel(keyInfo))
             {
-                // On cancel, clear any rendered lines and exit cleanly
-                ConsoleEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
-                LastRenderedLineCount = 0;
-                // Restore cursor to original position
-                ConsoleEx.SetCursor(AnchorColumn, AnchorRow);
-                return SelectItem.Empty;
+                selectedItem = SelectItem.Empty;
+                selectionMade = true;
             }
         }
 
         ConsoleEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
+        ConsoleEx.SetCursor(AnchorColumn, AnchorRow);
 
         return selectedItem;
     }
