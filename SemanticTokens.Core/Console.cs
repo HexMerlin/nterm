@@ -22,12 +22,14 @@ public static class Console
         System.Console.OutputEncoding = Encoding.UTF8;
         System.Console.InputEncoding = Encoding.UTF8;
 
+        TryEnableVirtualTerminalOnWindows(); // enable VT output + raw-ish input on Win
+        TryEnableRawTerminalOnPosix();       // raw input on Linux/macOS (only if tty)
+
+        // Now it’s safe to emit VT that should take effect everywhere:
         WriteFg(Color.FromConsoleColor(System.Console.ForegroundColor));
         WriteBg(Color.FromConsoleColor(System.Console.BackgroundColor));
-        TryEnableVirtualTerminalOnWindows();
 
-        // Explicitly choose Backspace semantics so BS=0x08, Ctrl+Backspace toggles to DEL=0x7F.
-        // WT implements DECBKM; this stabilizes our editor logic. (CSI ? 67 h)
+        // Backspace semantics (DECBKM) to stabilize BS vs DEL handling.
         Write("\x1b[?67h");
     }
 
@@ -243,12 +245,16 @@ public static class Console
     {
         if (sb.Length == 0) return 0;
 
-        int i = sb.Length;
-        // 1) Skip any trailing spaces
+        int end = sb.Length;
+        int i = end;
+
+        // 1) Skip any trailing spaces (these should be erased too)
         while (i > 0 && char.IsWhiteSpace(sb[i - 1])) i--;
-        // 2) Then consume non-space run as the "word"
-        int end = i;
+
+        // 2) Then consume the non-space run as the "word"
         while (i > 0 && !char.IsWhiteSpace(sb[i - 1])) i--;
+
+        // Erase count = trailing spaces + word
         return end - i;
     }
 
@@ -681,17 +687,75 @@ public static class Console
             inMode |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
             _ = SetConsoleMode(hin, inMode);
         }
+
+
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
+       
     }
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern nint GetStdHandle(int nStdHandle);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
 
     private const int STD_OUTPUT_HANDLE = -11;
     private const int STD_INPUT_HANDLE = -10;
 
     private const uint WAIT_OBJECT_0 = 0x00000000;
 
-    [DllImport("kernel32.dll", SetLastError = true)] private static extern nint GetStdHandle(int nStdHandle);
-    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
-    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
-    [DllImport("kernel32.dll", SetLastError = true)] private static extern uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
+
+    // Add near the other P/Invoke bits (POSIX)
+    internal static class PosixTermios
+    {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct termios
+        {
+            public uint c_iflag, c_oflag, c_cflag, c_lflag;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] c_cc;
+            public uint c_ispeed, c_ospeed;
+        }
+
+        [DllImport("libc", SetLastError = true)] public static extern int tcgetattr(int fd, out termios t);
+        [DllImport("libc", SetLastError = true)] public static extern int tcsetattr(int fd, int optional_actions, in termios t);
+
+        public const int TCSANOW = 0;
+        public const int VMIN = 6;
+        public const int VTIME = 5;
+
+        // flags we’ll clear
+        public const uint ICANON = 0x00000100;
+        public const uint ECHO = 0x00000008;
+        public const uint ICRNL = 0x00000100;
+        public const uint IXON = 0x00000400;
+    }
+
+    private static PosixTermios.termios _orig;
+    private static bool _posixRaw;
+
+    // Call this from the static ctor (next to TryEnableVirtualTerminalOnWindows)
+    private static void TryEnableRawTerminalOnPosix()
+    {
+        if (OperatingSystem.IsWindows()) return;
+        if (PosixTermios.tcgetattr(0, out PosixTermios.termios t) != 0) return; // fd 0 = stdin
+
+        _orig = t;
+
+        // make a copy and set raw-ish mode
+        t.c_lflag &= ~(PosixTermios.ICANON | PosixTermios.ECHO);
+        t.c_iflag &= ~(PosixTermios.ICRNL | PosixTermios.IXON);
+        t.c_cc ??= new byte[32];
+        t.c_cc[PosixTermios.VMIN] = 1;   // return as soon as 1 byte is available
+        t.c_cc[PosixTermios.VTIME] = 0;  // no read timeout
+
+        if (PosixTermios.tcsetattr(0, PosixTermios.TCSANOW, t) == 0)
+            _posixRaw = true;
+
+        // (Optional) restore on exit:
+        AppDomain.CurrentDomain.ProcessExit += (_, __) =>
+        {
+            if (_posixRaw)
+                PosixTermios.tcsetattr(0, PosixTermios.TCSANOW, _orig);
+        };
+    }
 
     #endregion
 }
