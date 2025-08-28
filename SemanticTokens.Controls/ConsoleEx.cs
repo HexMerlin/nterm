@@ -40,11 +40,17 @@ internal static class ConsoleEx
     public static int EnsureSpaceBelow(int startColumn, int startRow, int requiredRows)
     {
         int windowHeight = Console.WindowHeight;
+        if (windowHeight < 2)
+        {
+            // No space below, so don't move the anchor.
+            return startRow;
+        }
+
         // Reserve up to MaxVisibleItems rows BELOW the current line for the list viewport
         int requiredBelow = Math.Min(4, Math.Max(1, requiredRows));
         int rowsBelow = Math.Max(0, windowHeight - 1 - startRow);
         int needed = Math.Max(0, requiredBelow - rowsBelow);
-        if (needed == 0)
+        if (needed == 0 || needed > windowHeight - 1)
         {
             return startRow;
         }

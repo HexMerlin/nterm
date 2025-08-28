@@ -15,7 +15,15 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
 
     public void UpdateOnResize()
     {
-        int windowDiff = Console.WindowHeight - previousWindowHeight;
+        int windowHeight = Console.WindowHeight;
+
+        if (windowHeight < 2)
+        {
+            AnchorRow = Console.CursorTop;
+            return;
+        }
+
+        int windowDiff = windowHeight - previousWindowHeight;
         if (windowDiff == 0)
             return;
 
@@ -28,11 +36,11 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
         // If cursor did not move, the content stayed fixed relative to the top, so keep anchor.
         if (Math.Abs(cursorDiff) == Math.Abs(windowDiff))
         {
-            AnchorRow = Math.Clamp(AnchorRow + cursorDiff, 0, Console.WindowHeight - 1);
+            AnchorRow = Math.Clamp(AnchorRow + cursorDiff, 0, windowHeight - 1);
         }
         // else: ambiguous case, avoid shifting anchor to prevent jumps
 
-        previousWindowHeight = Console.WindowHeight;
+        previousWindowHeight = windowHeight;
         previousCursorTop = currentCursorTop;
     }
 
