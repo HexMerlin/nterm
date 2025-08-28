@@ -13,7 +13,52 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
     private int previousWindowHeight = Console.WindowHeight;
     private int previousCursorTop = Console.CursorTop;
 
-    public void UpdateOnResize()
+    public SelectItem Show(IReadOnlyList<SelectItem> items)
+    {
+        int currentIndex = 0;
+        bool selectionMade = false;
+        SelectItem selectedItem = SelectItem.Empty;
+
+        while (!selectionMade)
+        {
+            UpdateOnResize();
+
+            int requiredRowsBelow = Math.Min(maxVisibleItems, Math.Max(1, items.Count));
+            AnchorRow = ConsoleEx.EnsureSpaceBelowAnchor(
+                AnchorColumn,
+                AnchorRow,
+                requiredRowsBelow
+            );
+            // Display dropdown anchored at the original cursor position
+            Render(items, currentIndex);
+
+            // Handle user input
+            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+            (SelectItem result, int newIndex) = HandleUserInput(items, currentIndex, keyInfo);
+            currentIndex = newIndex;
+
+            if (!result.IsEmpty())
+            {
+                selectedItem = result;
+                selectionMade = true;
+            }
+            else if (IsCancel(keyInfo))
+            {
+                // On cancel, clear any rendered lines and exit cleanly
+                ConsoleEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
+                LastRenderedLineCount = 0;
+                // Restore cursor to original position
+                ConsoleEx.SetCursor(AnchorColumn, AnchorRow);
+                return SelectItem.Empty;
+            }
+        }
+
+        ConsoleEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
+
+        return selectedItem;
+    }
+
+    private void UpdateOnResize()
     {
         int windowHeight = Console.WindowHeight;
 
@@ -44,47 +89,6 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
         previousCursorTop = currentCursorTop;
     }
 
-    public SelectItem Show(IReadOnlyList<SelectItem> items)
-    {
-        int currentIndex = 0;
-        bool selectionMade = false;
-        SelectItem selectedItem = SelectItem.Empty;
-
-        while (!selectionMade)
-        {
-            UpdateOnResize();
-
-            int requiredRowsBelow = Math.Min(maxVisibleItems, Math.Max(1, items.Count));
-            AnchorRow = ConsoleEx.EnsureSpaceBelow(AnchorColumn, AnchorRow, requiredRowsBelow);
-            // Display dropdown anchored at the original cursor position
-            Render(items, currentIndex);
-
-            // Handle user input
-            var keyInfo = Console.ReadKey(true);
-            var (result, newIndex) = HandleUserInput(items, currentIndex, keyInfo);
-            currentIndex = newIndex;
-
-            if (!result.IsEmpty())
-            {
-                selectedItem = result;
-                selectionMade = true;
-            }
-            else if (IsCancel(keyInfo))
-            {
-                // On cancel, clear any rendered lines and exit cleanly
-                ConsoleEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
-                LastRenderedLineCount = 0;
-                // Restore cursor to original position
-                ConsoleEx.SetCursor(AnchorColumn, AnchorRow);
-                return SelectItem.Empty;
-            }
-        }
-
-        ConsoleEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
-
-        return selectedItem;
-    }
-
     private static bool IsCancel(ConsoleKeyInfo keyInfo) => keyInfo.Key == ConsoleKey.Escape;
 
     /// <summary>
@@ -111,10 +115,8 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
         };
     }
 
-    public int Render(IReadOnlyList<SelectItem> items, int selectedIndex)
+    private int Render(IReadOnlyList<SelectItem> items, int selectedIndex)
     {
-        ClampStartPosition();
-
         int rowsToRender = CalculateRowsToRender();
         scrollOffset = CalculateScrollOffset(
             selectedIndex,
@@ -143,12 +145,6 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
         ConsoleEx.SetCursor(AnchorColumn, AnchorRow);
         previousCursorTop = Console.CursorTop;
         return totalRendered;
-    }
-
-    private void ClampStartPosition()
-    {
-        AnchorColumn = Math.Clamp(AnchorColumn, 0, Math.Max(0, Console.WindowWidth - 1));
-        AnchorRow = Math.Clamp(AnchorRow, 0, Math.Max(0, Console.WindowHeight - 1));
     }
 
     private int CalculateRowsToRender()
