@@ -26,11 +26,11 @@ public static class Console
         System.Console.InputEncoding = Encoding.UTF8;
 
         Windows.TryEnableVirtualTerminalOnWindows(); // enable VT output + raw-ish input on Win
-        Posix.TryEnableRawTerminalOnPosix();       // raw input on Linux/macOS (only if tty)
+        //
+        //Posix.TryEnableRawTerminalOnPosix(); // raw input on Linux/macOS (only if tty)
 
         // Backspace semantics (DECBKM) to stabilize BS vs DEL handling.
         WriteInternal("\x1b[?67h");
-
     }
 
     public static string Title
@@ -71,7 +71,6 @@ public static class Console
     public static int CursorLeft => System.Console.CursorLeft;
     public static int CursorTop => System.Console.CursorTop;
 
- 
     /// <summary>True if there is input available without blocking.</summary>
     public static bool KeyAvailable
     {
@@ -103,7 +102,7 @@ public static class Console
         }
         Write(sb.ToString());
     }
-   
+
     public static void Reset()
     {
         lock (writeLock)
@@ -173,11 +172,16 @@ public static class Console
     /// <remarks>
     /// Sets colors using properties then delegates to non-colored Write method.
     /// </remarks>
-    public static void Write(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    public static void Write(
+        ReadOnlySpan<char> str,
+        Color foreground = default,
+        Color background = default
+    )
     {
         lock (writeLock)
         {
-            if (str.IsEmpty) return;
+            if (str.IsEmpty)
+                return;
 
             if (foreground == default)
                 foreground = ForegroundColor;
@@ -200,7 +204,7 @@ public static class Console
             WriteInternal(str);
         }
     }
-  
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void WriteInternal(char ch)
     {
@@ -249,7 +253,11 @@ public static class Console
     /// Sets colors using properties then delegates to non-colored WriteLine method.
     /// Uses LF (\n) line terminator only, never CRLF (\r\n).
     /// </remarks>
-    public static void WriteLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    public static void WriteLine(
+        ReadOnlySpan<char> str,
+        Color foreground = default,
+        Color background = default
+    )
     {
         Write(str, foreground, background);
         WriteLine();
@@ -260,20 +268,19 @@ public static class Console
         Stdout.Write("\n"u8);
     }
 
-   /// <summary>
-   /// Writes pre-encoded image data to console.
-   /// </summary>
-   /// <param name="imageData">Complete image data including all control sequences</param>
-   /// <remarks>
-   /// Ultra-optimized direct image output. Image data must be complete and ready for terminal consumption.
-   /// Leverages existing optimized UTF-8 encoding infrastructure for maximum performance.
-   /// </remarks>
-   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /// <summary>
+    /// Writes pre-encoded image data to console.
+    /// </summary>
+    /// <param name="imageData">Complete image data including all control sequences</param>
+    /// <remarks>
+    /// Ultra-optimized direct image output. Image data must be complete and ready for terminal consumption.
+    /// Leverages existing optimized UTF-8 encoding infrastructure for maximum performance.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteImage(ReadOnlySpan<char> imageData)
     {
         Write(imageData);
     }
-
 
     /// <summary>
     /// Read next Unicode scalar from stdin (decoded from UTF‑8). Returns -1 on EOF.
@@ -287,12 +294,19 @@ public static class Console
         while (true)
         {
             int b = Stdin.ReadByte();
-            if (b < 0) return -1;
+            if (b < 0)
+                return -1;
 
             inBuf[inCount++] = (byte)b;
 
-            Utf8Decoder.Convert(inBuf[..inCount], outBuf, false,
-                out int bytesUsed, out int charsUsed, out bool completed);
+            Utf8Decoder.Convert(
+                inBuf[..inCount],
+                outBuf,
+                false,
+                out int bytesUsed,
+                out int charsUsed,
+                out bool completed
+            );
 
             if (charsUsed > 0)
                 return outBuf[0];
@@ -310,7 +324,8 @@ public static class Console
     public static ConsoleKeyInfo ReadKey(bool intercept = false)
     {
         int ch = Read();
-        if (ch == -1) return default;
+        if (ch == -1)
+            return default;
 
         // ESC‑prefixed sequences
         if (ch == 0x1B)
@@ -324,19 +339,22 @@ public static class Console
         if (ch == 0x08 || ch == 0x7F)
         {
             bool isCtrl = (ch == 0x7F);
-            if (!intercept) Backspace(1);
+            if (!intercept)
+                Backspace(1);
             return new ConsoleKeyInfo('\b', System.ConsoleKey.Backspace, false, false, isCtrl);
         }
 
         // Enter: CR or LF
         if (ch == '\n' || ch == '\r')
         {
-            if (!intercept) Write("\n");
+            if (!intercept)
+                Write("\n");
             return new ConsoleKeyInfo('\n', System.ConsoleKey.Enter, false, false, false);
         }
 
         // Regular printable
-        if (!intercept) Write((char)ch);
+        if (!intercept)
+            Write((char)ch);
         return new ConsoleKeyInfo((char)ch, KeyFromChar((char)ch), false, false, false);
     }
 
@@ -361,7 +379,8 @@ public static class Console
                 {
                     Backspace(sb.Length);
                 }
-                else Write("\n");
+                else
+                    Write("\n");
                 return sb.ToString();
             }
 
@@ -383,7 +402,11 @@ public static class Console
                     if (sb.Length > 0)
                     {
                         int removeLen = 1;
-                        if (sb.Length >= 2 && char.IsLowSurrogate(sb[^1]) && char.IsHighSurrogate(sb[^2]))
+                        if (
+                            sb.Length >= 2
+                            && char.IsLowSurrogate(sb[^1])
+                            && char.IsHighSurrogate(sb[^2])
+                        )
                             removeLen = 2;
                         sb.Remove(sb.Length - removeLen, removeLen);
                         Backspace(removeLen);
@@ -405,8 +428,10 @@ public static class Console
     {
         lock (writeLock)
         {
-            if (left < 0) left = 0;
-            if (top < 0) top = 0;
+            if (left < 0)
+                left = 0;
+            if (top < 0)
+                top = 0;
 
             int minWidth = Math.Max(System.Console.WindowWidth, 1);
             int minHeight = Math.Max(System.Console.WindowHeight, 1);
@@ -419,7 +444,10 @@ public static class Console
                 int newHeight = top + 1;
                 try
                 {
-                    System.Console.SetBufferSize(Math.Max(Console.BufferWidth, minWidth), Math.Max(newHeight, minHeight));
+                    System.Console.SetBufferSize(
+                        Math.Max(Console.BufferWidth, minWidth),
+                        Math.Max(newHeight, minHeight)
+                    );
                 }
                 catch
                 {
@@ -432,25 +460,32 @@ public static class Console
     }
 
     private static void WriteBg(Color c) =>
-        WriteInternal($"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
+        WriteInternal(
+            $"{Constants.ESC}{Constants.SGR_BG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}"
+        );
 
     private static void WriteFg(Color c) =>
-        WriteInternal($"{Constants.ESC}{Constants.SGR_FG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}");
+        WriteInternal(
+            $"{Constants.ESC}{Constants.SGR_FG_TRUECOLOR_PREFIX}{c.R};{c.G};{c.B}{Constants.SGR_END}"
+        );
 
     #region Private Methods
 
     private static int ComputeWordEraseCount(StringBuilder sb)
     {
-        if (sb.Length == 0) return 0;
+        if (sb.Length == 0)
+            return 0;
 
         int end = sb.Length;
         int i = end;
 
         // 1) Skip any trailing spaces (these should be erased too)
-        while (i > 0 && char.IsWhiteSpace(sb[i - 1])) i--;
+        while (i > 0 && char.IsWhiteSpace(sb[i - 1]))
+            i--;
 
         // 2) Then consume the non-space run as the "word"
-        while (i > 0 && !char.IsWhiteSpace(sb[i - 1])) i--;
+        while (i > 0 && !char.IsWhiteSpace(sb[i - 1]))
+            i--;
 
         // Erase count = trailing spaces + word
         return end - i;
@@ -458,9 +493,12 @@ public static class Console
 
     private static System.ConsoleKey KeyFromChar(char ch)
     {
-        if (ch >= 'A' && ch <= 'Z') return (System.ConsoleKey)ch;
-        if (ch >= 'a' && ch <= 'z') return (System.ConsoleKey)char.ToUpperInvariant(ch);
-        if (ch >= '0' && ch <= '9') return (System.ConsoleKey)('D' + (ch - '0'));
+        if (ch >= 'A' && ch <= 'Z')
+            return (System.ConsoleKey)ch;
+        if (ch >= 'a' && ch <= 'z')
+            return (System.ConsoleKey)char.ToUpperInvariant(ch);
+        if (ch >= '0' && ch <= '9')
+            return (System.ConsoleKey)('D' + (ch - '0'));
         return System.ConsoleKey.NoName;
     }
 
@@ -475,22 +513,27 @@ public static class Console
         {
             if (OperatingSystem.IsWindows())
             {
-                if (WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0) != WAIT_OBJECT_0) break;
+                if (WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0) != WAIT_OBJECT_0)
+                    break;
             }
-            else if (!System.Console.KeyAvailable) break;
+            else if (!System.Console.KeyAvailable)
+                break;
 
             int b = Stdin.ReadByte();
-            if (b < 0) break;
+            if (b < 0)
+                break;
             buf[n++] = (byte)b;
 
-            if (Environment.TickCount64 - start > 2) break; // short idle window
+            if (Environment.TickCount64 - start > 2)
+                break; // short idle window
         }
 
         ReadOnlySpan<byte> seq = buf[..n];
 
         if (seq.Length == 0)
         {
-            if (!intercept) Write("\x1b");
+            if (!intercept)
+                Write("\x1b");
             return new ConsoleKeyInfo('\x1b', System.ConsoleKey.Escape, false, false, false);
         }
 
@@ -502,12 +545,48 @@ public static class Console
                 byte final = seq[^1];
                 switch (final)
                 {
-                    case (byte)'A': return new ConsoleKeyInfo('\0', System.ConsoleKey.UpArrow, false, false, false);
-                    case (byte)'B': return new ConsoleKeyInfo('\0', System.ConsoleKey.DownArrow, false, false, false);
-                    case (byte)'C': return new ConsoleKeyInfo('\0', System.ConsoleKey.RightArrow, false, false, false);
-                    case (byte)'D': return new ConsoleKeyInfo('\0', System.ConsoleKey.LeftArrow, false, false, false);
-                    case (byte)'H': return new ConsoleKeyInfo('\0', System.ConsoleKey.Home, false, false, false);
-                    case (byte)'F': return new ConsoleKeyInfo('\0', System.ConsoleKey.End, false, false, false);
+                    case (byte)'A':
+                        return new ConsoleKeyInfo(
+                            '\0',
+                            System.ConsoleKey.UpArrow,
+                            false,
+                            false,
+                            false
+                        );
+                    case (byte)'B':
+                        return new ConsoleKeyInfo(
+                            '\0',
+                            System.ConsoleKey.DownArrow,
+                            false,
+                            false,
+                            false
+                        );
+                    case (byte)'C':
+                        return new ConsoleKeyInfo(
+                            '\0',
+                            System.ConsoleKey.RightArrow,
+                            false,
+                            false,
+                            false
+                        );
+                    case (byte)'D':
+                        return new ConsoleKeyInfo(
+                            '\0',
+                            System.ConsoleKey.LeftArrow,
+                            false,
+                            false,
+                            false
+                        );
+                    case (byte)'H':
+                        return new ConsoleKeyInfo(
+                            '\0',
+                            System.ConsoleKey.Home,
+                            false,
+                            false,
+                            false
+                        );
+                    case (byte)'F':
+                        return new ConsoleKeyInfo('\0', System.ConsoleKey.End, false, false, false);
                     case (byte)'~':
                         int num = 0;
                         for (int i = 1; i < seq.Length - 1; i++)
@@ -515,11 +594,46 @@ public static class Console
                                 num = num * 10 + (seq[i] - '0');
                         return num switch
                         {
-                            2 => new ConsoleKeyInfo('\0', System.ConsoleKey.Insert, false, false, false),
-                            3 => new ConsoleKeyInfo('\0', System.ConsoleKey.Delete, false, false, false),
-                            5 => new ConsoleKeyInfo('\0', System.ConsoleKey.PageUp, false, false, false),
-                            6 => new ConsoleKeyInfo('\0', System.ConsoleKey.PageDown, false, false, false),
-                            _ => new ConsoleKeyInfo('\0', System.ConsoleKey.NoName, false, false, false)
+                            2
+                                => new ConsoleKeyInfo(
+                                    '\0',
+                                    System.ConsoleKey.Insert,
+                                    false,
+                                    false,
+                                    false
+                                ),
+                            3
+                                => new ConsoleKeyInfo(
+                                    '\0',
+                                    System.ConsoleKey.Delete,
+                                    false,
+                                    false,
+                                    false
+                                ),
+                            5
+                                => new ConsoleKeyInfo(
+                                    '\0',
+                                    System.ConsoleKey.PageUp,
+                                    false,
+                                    false,
+                                    false
+                                ),
+                            6
+                                => new ConsoleKeyInfo(
+                                    '\0',
+                                    System.ConsoleKey.PageDown,
+                                    false,
+                                    false,
+                                    false
+                                ),
+                            _
+                                => new ConsoleKeyInfo(
+                                    '\0',
+                                    System.ConsoleKey.NoName,
+                                    false,
+                                    false,
+                                    false
+                                )
                         };
                 }
             }
@@ -541,7 +655,8 @@ public static class Console
         }
 
         // Unknown sequence → deliver a literal ESC (don’t swallow input).
-        if (!intercept) Write("\x1b");
+        if (!intercept)
+            Write("\x1b");
         return new ConsoleKeyInfo('\x1b', System.ConsoleKey.Escape, false, false, false);
     }
 
@@ -590,7 +705,7 @@ public static class Console
     /// <returns>Number of ASCII bytes written (1-3 digits)</returns>
     /// <remarks>
     /// <para>
-    /// Uses base-10 arithmetic (constants 10, 100) because ANSI color escape sequences 
+    /// Uses base-10 arithmetic (constants 10, 100) because ANSI color escape sequences
     /// require decimal RGB values, not binary or hexadecimal representation.
     /// </para>
     /// <para>
@@ -599,14 +714,18 @@ public static class Console
     /// <para>
     /// Handles three ranges efficiently:
     /// • 0-9: Single digit → "0" to "9" (1 byte)
-    /// • 10-99: Two digits → "10" to "99" (2 bytes)  
+    /// • 10-99: Two digits → "10" to "99" (2 bytes)
     /// • 100-255: Three digits → "100" to "255" (3 bytes)
     /// </para>
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUInt8(byte value, Span<byte> dest)
     {
-        if (value < 10) { dest[0] = (byte)('0' + value); return 1; }
+        if (value < 10)
+        {
+            dest[0] = (byte)('0' + value);
+            return 1;
+        }
         if (value < 100)
         {
             dest[0] = (byte)('0' + (value / 10));
@@ -624,7 +743,11 @@ public static class Console
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int EncodeCharUtf8(char ch, Span<byte> dest)
     {
-        if (ch <= 0x7F) { dest[0] = (byte)ch; return 1; }
+        if (ch <= 0x7F)
+        {
+            dest[0] = (byte)ch;
+            return 1;
+        }
         if (ch < 0xD800 || ch > 0xDFFF)
         {
             if (ch <= 0x7FF)
@@ -644,8 +767,11 @@ public static class Console
 
     // ===== P-Invoke =====
 
-    [DllImport("kernel32.dll", SetLastError = true)] internal static extern nint GetStdHandle(int nStdHandle);
-    [DllImport("kernel32.dll", SetLastError = true)] internal static extern uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern nint GetStdHandle(int nStdHandle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern uint WaitForSingleObject(nint hHandle, uint dwMilliseconds);
 
     internal const int STD_OUTPUT_HANDLE = -11;
     internal const int STD_INPUT_HANDLE = -10;
