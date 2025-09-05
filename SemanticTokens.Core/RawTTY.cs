@@ -3,6 +3,12 @@ using Microsoft.Win32.SafeHandles;
 
 namespace SemanticTokens.Core;
 
+/// <summary>
+/// Raw TTY input for Linux and macOS.
+/// </summary>
+/// <remarks>
+/// This class is used to get raw TTY input for Linux and macOS.
+/// </remarks>
 public class RawTTY : IDisposable
 {
     const int O_RDONLY = 0;
@@ -51,6 +57,7 @@ public class RawTTY : IDisposable
     {
         if (OperatingSystem.IsWindows())
         {
+            // On Windows, set stream to null but do not throw in constructor
             _stream = Stream.Null;
             return;
         }
@@ -68,6 +75,8 @@ public class RawTTY : IDisposable
 
         var raw = _orig;
         cfmakeraw(ref raw);
+
+        raw.c_oflag = _orig.c_oflag; // keep output processing (incl. NL -> CRLF) as before
 
         // Ensure blocking read of at least 1 byte
         if (raw.c_cc == null || raw.c_cc.Length < 7)
