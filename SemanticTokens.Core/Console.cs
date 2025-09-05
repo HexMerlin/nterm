@@ -12,6 +12,14 @@ namespace SemanticTokens.Core;
 public static class Console
 {
     private static readonly Stream Stdout = System.Console.OpenStandardOutput();
+
+    /// <summary>
+    /// Raw TTY input for Linux and macOS.
+    /// </summary>
+    /// <remarks>
+    /// This is only a field in order to dispose of it when the program exits.
+    /// </remarks>
+    private static readonly RawTTY rawTTY;
     private static readonly Stream Stdin = System.Console.OpenStandardInput();
     private static readonly Decoder Utf8Decoder = Encoding.UTF8.GetDecoder();
 
@@ -26,11 +34,14 @@ public static class Console
         System.Console.InputEncoding = Encoding.UTF8;
 
         Windows.TryEnableVirtualTerminalOnWindows(); // enable VT output + raw-ish input on Win
-        //
-        //Posix.TryEnableRawTerminalOnPosix(); // raw input on Linux/macOS (only if tty)
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+        {
+            rawTTY = new RawTTY();
+            Stdin = rawTTY.GetStream();
+        }
 
         // Backspace semantics (DECBKM) to stabilize BS vs DEL handling.
-        WriteInternal("\x1b[?67h");
+        //WriteInternal("\x1b[?67h");
     }
 
     public static string Title
@@ -644,12 +655,57 @@ public static class Console
         {
             return seq[1] switch
             {
-                (byte)'P' => new ConsoleKeyInfo('\0', System.ConsoleKey.F1, false, false, false),
+                // Function keys (VT100 PF1-PF4)
+                (byte)'P'
+                    => new ConsoleKeyInfo('\0', System.ConsoleKey.F1, false, false, false),
                 (byte)'Q' => new ConsoleKeyInfo('\0', System.ConsoleKey.F2, false, false, false),
                 (byte)'R' => new ConsoleKeyInfo('\0', System.ConsoleKey.F3, false, false, false),
                 (byte)'S' => new ConsoleKeyInfo('\0', System.ConsoleKey.F4, false, false, false),
-                (byte)'H' => new ConsoleKeyInfo('\0', System.ConsoleKey.Home, false, false, false),
+                // Application cursor keys (DECCKM)
+                (byte)'A'
+                    => new ConsoleKeyInfo('\0', System.ConsoleKey.UpArrow, false, false, false),
+                (byte)'B'
+                    => new ConsoleKeyInfo('\0', System.ConsoleKey.DownArrow, false, false, false),
+                (byte)'C'
+                    => new ConsoleKeyInfo('\0', System.ConsoleKey.RightArrow, false, false, false),
+                (byte)'D'
+                    => new ConsoleKeyInfo('\0', System.ConsoleKey.LeftArrow, false, false, false),
+                // Home/End in SS3 form
+                (byte)'H'
+                    => new ConsoleKeyInfo('\0', System.ConsoleKey.Home, false, false, false),
                 (byte)'F' => new ConsoleKeyInfo('\0', System.ConsoleKey.End, false, false, false),
+                // Keypad Enter in application mode
+                (byte)'M'
+                    => new ConsoleKeyInfo('\0', System.ConsoleKey.Enter, false, false, false),
+                // Application keypad digits and operators
+                (byte)'p'
+                    => new ConsoleKeyInfo('0', System.ConsoleKey.NumPad0, false, false, false),
+                (byte)'q'
+                    => new ConsoleKeyInfo('1', System.ConsoleKey.NumPad1, false, false, false),
+                (byte)'r'
+                    => new ConsoleKeyInfo('2', System.ConsoleKey.NumPad2, false, false, false),
+                (byte)'s'
+                    => new ConsoleKeyInfo('3', System.ConsoleKey.NumPad3, false, false, false),
+                (byte)'t'
+                    => new ConsoleKeyInfo('4', System.ConsoleKey.NumPad4, false, false, false),
+                (byte)'u'
+                    => new ConsoleKeyInfo('5', System.ConsoleKey.NumPad5, false, false, false),
+                (byte)'v'
+                    => new ConsoleKeyInfo('6', System.ConsoleKey.NumPad6, false, false, false),
+                (byte)'w'
+                    => new ConsoleKeyInfo('7', System.ConsoleKey.NumPad7, false, false, false),
+                (byte)'x'
+                    => new ConsoleKeyInfo('8', System.ConsoleKey.NumPad8, false, false, false),
+                (byte)'y'
+                    => new ConsoleKeyInfo('9', System.ConsoleKey.NumPad9, false, false, false),
+                (byte)'n'
+                    => new ConsoleKeyInfo('.', System.ConsoleKey.Decimal, false, false, false),
+                (byte)'m'
+                    => new ConsoleKeyInfo('-', System.ConsoleKey.Subtract, false, false, false),
+                (byte)'k' => new ConsoleKeyInfo('+', System.ConsoleKey.Add, false, false, false),
+                (byte)'j'
+                    => new ConsoleKeyInfo('*', System.ConsoleKey.Multiply, false, false, false),
+                (byte)'o' => new ConsoleKeyInfo('/', System.ConsoleKey.Divide, false, false, false),
                 _ => new ConsoleKeyInfo('\0', System.ConsoleKey.NoName, false, false, false)
             };
         }

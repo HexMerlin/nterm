@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
@@ -47,12 +45,15 @@ public class RawTTY : IDisposable
 
     private int _fd = -1;
     private termios _orig;
-    private readonly FileStream _stream;
+    private readonly Stream _stream;
 
     public RawTTY()
     {
         if (OperatingSystem.IsWindows())
+        {
+            _stream = Stream.Null;
             return;
+        }
 
         // Prefer /dev/tty to bypass redirection
         _fd = open("/dev/tty", O_RDONLY);
