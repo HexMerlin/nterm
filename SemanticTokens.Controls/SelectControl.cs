@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using SemanticTokens.Core;
 
 namespace SemanticTokens.Controls;
@@ -17,8 +18,11 @@ public class SelectControl : ISelectControl
     /// </summary>
     /// <param name="items">The list of items to display.</param>
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
-    public SelectItem Show(IEnumerable<SelectItem> items)
+    public SelectItem Show(IEnumerable<SelectItem> items, int numberOfVisibleItems = 4)
     {
+        // Use ConsoleState to automatically manage console state restoration
+        using ConsoleState consoleState = new();
+
         List<SelectItem> itemList = ValidateInput(items);
         if (itemList.Count == 0)
         {
@@ -28,8 +32,11 @@ public class SelectControl : ISelectControl
         PrepareConsoleForSelection();
         ClearInputBuffer();
 
-        // Run the selection loop using the view
-        SelectItem selectedItem = ShowDropdown(itemList);
+        SelectDropdownView view =
+            new(consoleState.OriginalCursorLeft, consoleState.OriginalCursorTop);
+
+        SelectItem selectedItem = view.Show(itemList, numberOfVisibleItems);
+
         RenderFinalSelection(selectedItem);
         return selectedItem;
     }
@@ -58,6 +65,7 @@ public class SelectControl : ISelectControl
         catch (PlatformNotSupportedException)
         {
             // Cursor visibility not supported on this platform
+            Debug.WriteLine("Cursor visibility manipulation not supported on this platform.");
         }
     }
 
@@ -74,24 +82,6 @@ public class SelectControl : ISelectControl
             Console.ReadKey(true);
             clearedKeys++;
         }
-    }
-
-    /// <summary>
-    /// Shows the select dropdown.
-    /// </summary>
-    /// <param name="items">The list of items to select from.</param>
-    /// <param name="consoleState">The console state for position tracking.</param>
-    /// <returns>The selected item.</returns>
-    private static SelectItem ShowDropdown(List<SelectItem> items)
-    {
-        // Use ConsoleState to automatically manage console state restoration
-        using ConsoleState consoleState = new();
-
-        // Initialize dropdown view and ensure initial space below anchor
-        SelectDropdownView view =
-            new(consoleState.OriginalCursorLeft, consoleState.OriginalCursorTop, MaxVisibleItems);
-
-        return view.Show(items);
     }
 
     /// <summary>

@@ -61,7 +61,7 @@ class Program
         else
         {
             Console.Write(" and now select another option: ");
-            var selectedItem2 = Select.Show(items);
+            var selectedItem2 = Select.Show(items, 1);
 
             if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
             {
@@ -74,6 +74,9 @@ class Program
                 Console.WriteLine("Selection cancelled");
             }
         }
+
+        Console.Write("Type something else here: ");
+        var userInput2 = Console.ReadLine();
 
         Console.WriteLine("\nPress any key to exit...");
         Console.ReadKey();

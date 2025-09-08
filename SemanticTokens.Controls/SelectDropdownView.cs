@@ -2,18 +2,17 @@ using SemanticTokens.Core;
 
 namespace SemanticTokens.Controls;
 
-internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int maxVisibleItems)
+internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
 {
     public int AnchorColumn { get; private set; } = anchorColumn;
     public int AnchorRow { get; private set; } = anchorRow;
-    private readonly int maxVisibleItems = maxVisibleItems;
     private int LastRenderedLineCount { get; set; }
 
     private int scrollOffset;
     private int previousWindowHeight = Console.WindowHeight;
     private int previousCursorTop = Console.CursorTop;
 
-    public SelectItem Show(IReadOnlyList<SelectItem> items)
+    public SelectItem Show(IReadOnlyList<SelectItem> items, int numberOfVisibleItems = 4)
     {
         int currentIndex = 0;
         bool selectionMade = false;
@@ -23,14 +22,14 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
         {
             UpdateOnResize();
 
-            int requiredRowsBelow = Math.Min(maxVisibleItems, Math.Max(1, items.Count));
+            int requiredRowsBelow = Math.Min(numberOfVisibleItems, Math.Max(1, items.Count));
             AnchorRow = ConsoleEx.EnsureSpaceBelowAnchor(
                 AnchorColumn,
                 AnchorRow,
                 requiredRowsBelow
             );
             // Display dropdown anchored at the original cursor position
-            Render(items, currentIndex);
+            Render(items, currentIndex, numberOfVisibleItems);
 
             // Handle user input
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
@@ -112,9 +111,9 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
         };
     }
 
-    private int Render(IReadOnlyList<SelectItem> items, int selectedIndex)
+    private int Render(IReadOnlyList<SelectItem> items, int selectedIndex, int numberOfVisibleItems)
     {
-        int rowsToRender = CalculateRowsToRender();
+        int rowsToRender = CalculateRowsToRender(numberOfVisibleItems);
         scrollOffset = CalculateScrollOffset(
             selectedIndex,
             rowsToRender,
@@ -144,11 +143,11 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
         return totalRendered;
     }
 
-    private int CalculateRowsToRender()
+    private int CalculateRowsToRender(int numberOfVisibleItems)
     {
         int windowHeight = Console.WindowHeight;
         int availableRowsBelow = Math.Max(0, windowHeight - 1 - AnchorRow);
-        int rowsToRender = Math.Min(maxVisibleItems, availableRowsBelow);
+        int rowsToRender = Math.Min(numberOfVisibleItems, availableRowsBelow);
         return Math.Max(0, rowsToRender);
     }
 
@@ -179,6 +178,9 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow, int ma
         int offset
     )
     {
+        if (rowsToRender <= 1)
+            return 0;
+
         int windowHeight = Console.WindowHeight;
         int actuallyRenderedRows = 0;
 

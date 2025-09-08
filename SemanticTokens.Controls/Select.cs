@@ -15,8 +15,8 @@ public static class Select
     /// </summary>
     /// <param name="items">The list of items to display.</param>
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
-    public static SelectItem Show(IEnumerable<SelectItem> items)
+    public static SelectItem Show(IEnumerable<SelectItem> items, int numberOfVisibleItems = 4)
     {
-        return Control.Show(items);
+        return Control.Show(items, numberOfVisibleItems);
     }
 }

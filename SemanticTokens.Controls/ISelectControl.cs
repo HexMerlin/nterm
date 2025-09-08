@@ -10,5 +10,5 @@ public interface ISelectControl
     /// </summary>
     /// <param name="items">The list of items to display.</param>
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
-    SelectItem Show(IEnumerable<SelectItem> items);
+    SelectItem Show(IEnumerable<SelectItem> items, int numberOfVisibleItems = 4);
 }
