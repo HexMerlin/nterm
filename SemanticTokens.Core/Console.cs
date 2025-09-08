@@ -19,7 +19,7 @@ public static class Console
     /// <remarks>
     /// This is only a field in order to dispose of it when the program exits.
     /// </remarks>
-    private static readonly RawTTY rawTTY;
+    private static readonly RawTTY? rawTTY;
     private static readonly Stream Stdin = System.Console.OpenStandardInput();
     private static readonly Decoder Utf8Decoder = Encoding.UTF8.GetDecoder();
 

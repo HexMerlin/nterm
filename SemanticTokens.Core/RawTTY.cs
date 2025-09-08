@@ -15,7 +15,11 @@ public class RawTTY : IDisposable
     const int STDIN_FILENO = 0;
 
     [StructLayout(LayoutKind.Sequential)]
+#pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
+#pragma warning disable IDE1006 // Naming Styles
     struct termios
+#pragma warning restore IDE1006 // Naming Styles
+#pragma warning restore CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
     {
         public uint c_iflag,
             c_oflag,
