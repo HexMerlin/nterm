@@ -107,63 +107,6 @@ public class RawTTY : IDisposable
         Unknown
     }
 
-    static Key ParseEscape(byte[] buf, int len, out int consumed)
-    {
-        // buf[0] == 0x1B guaranteed by caller
-        consumed = 1;
-        if (len < 2)
-            return Key.Unknown;
-
-        byte b1 = buf[1];
-        consumed = 2;
-
-        if (b1 == (byte)'O') // SS3 form: ESC O <final>
-        {
-            if (len < 3)
-                return Key.Unknown;
-            byte fin = buf[2];
-            consumed = 3;
-            return fin switch
-            {
-                (byte)'A' => Key.ArrowUp,
-                (byte)'B' => Key.ArrowDown,
-                (byte)'C' => Key.ArrowRight,
-                (byte)'D' => Key.ArrowLeft,
-                _ => Key.Unknown
-            };
-        }
-        else if (b1 == (byte)'[') // CSI form: ESC [ [params...] <final>
-        {
-            int i = 2;
-            // optional params: digits ; digits ; ... (e.g., "1;2")
-            while (i < len)
-            {
-                byte ch = buf[i];
-                if ((ch >= (byte)'0' && ch <= (byte)'9') || ch == (byte)';' || ch == (byte)'?')
-                {
-                    i++;
-                    continue;
-                }
-                // ch should be the final byte in ranges @A–Z or ~, etc.
-                consumed = i + 1;
-                return ch switch
-                {
-                    (byte)'A' => Key.ArrowUp,
-                    (byte)'B' => Key.ArrowDown,
-                    (byte)'C' => Key.ArrowRight,
-                    (byte)'D' => Key.ArrowLeft,
-                    // add more finals here, e.g. '~' for Home/End/PgUp/PgDn variants
-                    _ => Key.Unknown
-                };
-            }
-            // ran out of bytes before final
-            return Key.Unknown;
-        }
-
-        // Some terminals send ESC <printable> for Alt+key; treat as Unknown here
-        return Key.Unknown;
-    }
-
     public void Dispose()
     {
         if (_fd >= 0)
