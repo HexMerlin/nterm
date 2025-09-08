@@ -2,7 +2,7 @@ using SemanticTokens.Core;
 
 namespace SemanticTokens.Controls;
 
-internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
+internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 {
     public int AnchorColumn { get; private set; } = anchorColumn;
     public int AnchorRow { get; private set; } = anchorRow;
@@ -12,11 +12,11 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
     private int previousWindowHeight = Console.WindowHeight;
     private int previousCursorTop = Console.CursorTop;
 
-    public SelectItem Show(IReadOnlyList<SelectItem> items, int numberOfVisibleItems = 4)
+    public SelectItem<T> Show(IReadOnlyList<SelectItem<T>> items, int numberOfVisibleItems = 4)
     {
         int currentIndex = 0;
         bool selectionMade = false;
-        SelectItem selectedItem = SelectItem.Empty;
+        SelectItem<T> selectedItem = SelectItem<T>.Empty;
 
         while (!selectionMade)
         {
@@ -33,7 +33,7 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
 
             // Handle user input
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-            (SelectItem result, int newIndex) = HandleUserInput(items, currentIndex, keyInfo);
+            (SelectItem<T> result, int newIndex) = HandleUserInput(items, currentIndex, keyInfo);
             currentIndex = newIndex;
 
             if (!result.IsEmpty())
@@ -43,7 +43,7 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
             }
             else if (IsCancel(keyInfo))
             {
-                selectedItem = SelectItem.Empty;
+                selectedItem = SelectItem<T>.Empty;
                 selectionMade = true;
             }
         }
@@ -94,8 +94,8 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
     /// <param name="currentIndex">The current selected index.</param>
     /// <param name="keyInfo">The key that was pressed.</param>
     /// <returns>A tuple containing the selected item (or SelectItem.Empty) and the new index.</returns>
-    private static (SelectItem result, int newIndex) HandleUserInput(
-        IReadOnlyList<SelectItem> items,
+    private static (SelectItem<T> result, int newIndex) HandleUserInput(
+        IReadOnlyList<SelectItem<T>> items,
         int currentIndex,
         ConsoleKeyInfo keyInfo
     )
@@ -103,15 +103,19 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
         return keyInfo.Key switch
         {
             ConsoleKey.UpArrow
-                => (SelectItem.Empty, (currentIndex + items.Count - 1) % items.Count),
-            ConsoleKey.DownArrow => (SelectItem.Empty, (currentIndex + 1) % items.Count),
+                => (SelectItem<T>.Empty, (currentIndex + items.Count - 1) % items.Count),
+            ConsoleKey.DownArrow => (SelectItem<T>.Empty, (currentIndex + 1) % items.Count),
             ConsoleKey.Enter => (items[currentIndex], currentIndex),
-            ConsoleKey.Escape => (SelectItem.Empty, currentIndex),
-            _ => (SelectItem.Empty, currentIndex),
+            ConsoleKey.Escape => (SelectItem<T>.Empty, currentIndex),
+            _ => (SelectItem<T>.Empty, currentIndex),
         };
     }
 
-    private int Render(IReadOnlyList<SelectItem> items, int selectedIndex, int numberOfVisibleItems)
+    private int Render(
+        IReadOnlyList<SelectItem<T>> items,
+        int selectedIndex,
+        int numberOfVisibleItems
+    )
     {
         int rowsToRender = CalculateRowsToRender(numberOfVisibleItems);
         scrollOffset = CalculateScrollOffset(
@@ -172,7 +176,7 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
     }
 
     private int RenderViewport(
-        IReadOnlyList<SelectItem> items,
+        IReadOnlyList<SelectItem<T>> items,
         int selectedIndex,
         int rowsToRender,
         int offset
@@ -228,7 +232,7 @@ internal sealed class SelectDropdownView(int anchorColumn, int anchorRow)
     }
 
     private static void DisplayItem(
-        SelectItem item,
+        SelectItem<T> item,
         bool isSelected,
         int startColumn,
         int startRow,

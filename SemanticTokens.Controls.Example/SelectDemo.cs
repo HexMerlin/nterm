@@ -15,11 +15,11 @@ public static class SelectDemo
         Console.WriteLine(
             "Test 1: Basic selection (use arrow keys, Enter to select, Escape to cancel)"
         );
-        var items = new List<SelectItem>
+        var items = new List<SelectItem<Action>>
         {
-            new() { Text = "Item 1", Command = () => Console.WriteLine("Item 1 selected"), },
-            new() { Text = "Item 2", Command = () => Console.WriteLine("Item 2 selected") },
-            new() { Text = "Item 3", Command = () => Console.WriteLine("Item 3 selected") }
+            new() { Text = "Item 1", Value = () => Console.WriteLine("Item 1 selected"), },
+            new() { Text = "Item 2", Value = () => Console.WriteLine("Item 2 selected") },
+            new() { Text = "Item 3", Value = () => Console.WriteLine("Item 3 selected") }
         };
 
         Console.Write("Select an item: ");
@@ -28,7 +28,7 @@ public static class SelectDemo
         if (!selectedItem.IsEmpty())
         {
             Console.WriteLine($"Selected: {selectedItem.Text}");
-            selectedItem.Command.Invoke();
+            selectedItem.Value.Invoke();
         }
         else
         {
@@ -42,7 +42,7 @@ public static class SelectDemo
 
         // Test 2: Empty list
         Console.WriteLine("Test 2: Empty list");
-        var emptyItems = new List<SelectItem>();
+        var emptyItems = new List<SelectItem<Action>>();
         var emptyResult = Select.Show(emptyItems);
 
         if (emptyResult.IsEmpty())
@@ -57,13 +57,9 @@ public static class SelectDemo
 
         // Test 3: Single item
         Console.WriteLine("Test 3: Single item");
-        var singleItem = new List<SelectItem>
+        var singleItem = new List<SelectItem<Action>>
         {
-            new()
-            {
-                Text = "Only Option",
-                Command = () => Console.WriteLine("Only option selected")
-            }
+            new() { Text = "Only Option", Value = () => Console.WriteLine("Only option selected") }
         };
 
         var singleResult = Select.Show(singleItem);
@@ -71,7 +67,7 @@ public static class SelectDemo
         if (!singleResult.IsEmpty())
         {
             Console.WriteLine($"Selected: {singleResult.Text}");
-            singleResult.Command.Invoke();
+            singleResult.Value.Invoke();
         }
 
         Console.WriteLine();
@@ -81,20 +77,20 @@ public static class SelectDemo
 
         // Test 4: Long text items
         Console.WriteLine("Test 4: Long text items");
-        var longItems = new List<SelectItem>
+        var longItems = new List<SelectItem<Action>>
         {
             new()
             {
                 Text =
                     "This is a very long item text that might exceed the console width and should be truncated appropriately",
-                Command = () => Console.WriteLine("Long item 1 selected")
+                Value = () => Console.WriteLine("Long item 1 selected")
             },
             new()
             {
                 Text = "Another long item with lots of text that goes on and on and on",
-                Command = () => Console.WriteLine("Long item 2 selected")
+                Value = () => Console.WriteLine("Long item 2 selected")
             },
-            new() { Text = "Short", Command = () => Console.WriteLine("Short item selected") }
+            new() { Text = "Short", Value = () => Console.WriteLine("Short item selected") }
         };
 
         var longResult = Select.Show(longItems);
@@ -102,7 +98,7 @@ public static class SelectDemo
         if (!longResult.IsEmpty())
         {
             Console.WriteLine($"Selected: {longResult.Text}");
-            longResult.Command.Invoke();
+            longResult.Value.Invoke();
         }
 
         Console.WriteLine();

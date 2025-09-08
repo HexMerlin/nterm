@@ -9,33 +9,31 @@ namespace SemanticTokens.Controls;
 ///
 /// For more control and advanced usage, use <see cref="SelectDropdownView"/> directly.
 /// </summary>
-public class SelectControl : ISelectControl
+public class SelectControl<T> : ISelectControl<T>
 {
-    private const int MaxVisibleItems = 4; // configurable later
-
     /// <summary>
     /// Shows a select control with the specified items and returns the selected item.
     /// </summary>
     /// <param name="items">The list of items to display.</param>
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
-    public SelectItem Show(IEnumerable<SelectItem> items, int numberOfVisibleItems = 4)
+    public SelectItem<T> Show(IEnumerable<SelectItem<T>> items, int numberOfVisibleItems = 4)
     {
         // Use ConsoleState to automatically manage console state restoration
         using ConsoleState consoleState = new();
 
-        List<SelectItem> itemList = ValidateInput(items);
+        List<SelectItem<T>> itemList = ValidateInput(items);
         if (itemList.Count == 0)
         {
-            return SelectItem.Empty;
+            return SelectItem<T>.Empty;
         }
 
         PrepareConsoleForSelection();
         ClearInputBuffer();
 
-        SelectDropdownView view =
+        SelectDropdownView<T> view =
             new(consoleState.OriginalCursorLeft, consoleState.OriginalCursorTop);
 
-        SelectItem selectedItem = view.Show(itemList, numberOfVisibleItems);
+        SelectItem<T> selectedItem = view.Show(itemList, numberOfVisibleItems);
 
         RenderFinalSelection(selectedItem);
         return selectedItem;
@@ -46,7 +44,7 @@ public class SelectControl : ISelectControl
     /// </summary>
     /// <param name="items">The items to validate.</param>
     /// <returns>A list of valid items.</returns>
-    private static List<SelectItem> ValidateInput(IEnumerable<SelectItem> items)
+    private static List<SelectItem<T>> ValidateInput(IEnumerable<SelectItem<T>> items)
     {
         ArgumentNullException.ThrowIfNull(items);
 
@@ -111,7 +109,7 @@ public class SelectControl : ISelectControl
     /// Clears any previously rendered dropdown lines and shows only the selected item.
     /// Ensures cursor ends after the selected text.
     /// </summary>
-    private static void RenderFinalSelection(SelectItem selectedItem)
+    private static void RenderFinalSelection(SelectItem<T> selectedItem)
     {
         string displayText = TruncateText(
             selectedItem.Text,
