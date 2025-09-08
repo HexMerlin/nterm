@@ -12,8 +12,9 @@ public sealed class ConsoleState : IDisposable
     public Color OriginalBackground { get; }
     public int OriginalCursorLeft { get; }
     public int OriginalCursorTop { get; }
-    private bool OriginalCursorVisible { get; } = false;
-    private bool CursorVisibilitySupported { get; } = false;
+
+    // Assume that cursor is visible on all platforms. Only on Windows we can check if it is visible.
+    public bool OriginalCursorVisible { get; } = true;
 
     public ConsoleState()
     {
@@ -25,7 +26,6 @@ public sealed class ConsoleState : IDisposable
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             OriginalCursorVisible = System.Console.CursorVisible;
-            CursorVisibilitySupported = true;
         }
     }
 
@@ -38,7 +38,11 @@ public sealed class ConsoleState : IDisposable
         Console.ForegroundColor = OriginalForeground;
 
         // Restore cursor visibility if supported
-        if (CursorVisibilitySupported)
+        if (
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+            || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+        )
         {
             System.Console.CursorVisible = OriginalCursorVisible;
         }
