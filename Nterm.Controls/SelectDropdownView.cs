@@ -29,7 +29,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
                 requiredRowsBelow
             );
             // Display dropdown anchored at the original cursor position
-            Render(items, currentIndex, numberOfVisibleItems);
+            _ = Render(items, currentIndex, numberOfVisibleItems);
 
             // Handle user input
             ConsoleKeyInfo keyInfo = Console.ReadKey(true);
@@ -98,18 +98,15 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         IReadOnlyList<SelectItem<T>> items,
         int currentIndex,
         ConsoleKeyInfo keyInfo
-    )
+    ) => keyInfo.Key switch
     {
-        return keyInfo.Key switch
-        {
-            ConsoleKey.UpArrow
-                => (SelectItem<T>.Empty, (currentIndex + items.Count - 1) % items.Count),
-            ConsoleKey.DownArrow => (SelectItem<T>.Empty, (currentIndex + 1) % items.Count),
-            ConsoleKey.Enter => (items[currentIndex], currentIndex),
-            ConsoleKey.Escape => (SelectItem<T>.Empty, currentIndex),
-            _ => (SelectItem<T>.Empty, currentIndex),
-        };
-    }
+        ConsoleKey.UpArrow
+            => (SelectItem<T>.Empty, (currentIndex + items.Count - 1) % items.Count),
+        ConsoleKey.DownArrow => (SelectItem<T>.Empty, (currentIndex + 1) % items.Count),
+        ConsoleKey.Enter => (items[currentIndex], currentIndex),
+        ConsoleKey.Escape => (SelectItem<T>.Empty, currentIndex),
+        _ => (SelectItem<T>.Empty, currentIndex),
+    };
 
     private int Render(
         IReadOnlyList<SelectItem<T>> items,
@@ -263,10 +260,5 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         }
     }
 
-    private static string TruncateText(string text, int maxWidth)
-    {
-        if (string.IsNullOrEmpty(text) || text.Length <= maxWidth)
-            return text;
-        return text[..Math.Min(maxWidth, text.Length)];
-    }
+    private static string TruncateText(string text, int maxWidth) => string.IsNullOrEmpty(text) || text.Length <= maxWidth ? text : text[..Math.Min(maxWidth, text.Length)];
 }

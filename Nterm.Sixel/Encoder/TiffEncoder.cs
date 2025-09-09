@@ -6,10 +6,7 @@ namespace NTerm.Sixel.Encoder;
 
 public class TiffEncoder : SixelEncoder
 {
-    public TiffEncoder(Image<Rgba32> img) : base(img, "TIFF")
-    {
-        Metadata = img.Metadata.GetTiffMetadata();
-    }
+    public TiffEncoder(Image<Rgba32> img) : base(img, "TIFF") => Metadata = img.Metadata.GetTiffMetadata();
 
     public TiffMetadata Metadata { get; }
 
@@ -17,7 +14,7 @@ public class TiffEncoder : SixelEncoder
 
     public override int GetFrameDelay(int frameIndex)
     {
-        var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
+        int delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
         return delay < 0 ? 500 : delay;
     }
 }

@@ -502,7 +502,7 @@ public readonly partial struct Color
 
     public static Color Violet => new(violet);
     private const uint violet = 0xFFEE82EEu;
-    
+
     public static Color Wheat => new(wheat);
     private const uint wheat = 0xFFF5DEB3u;
 
@@ -699,16 +699,15 @@ public readonly partial struct Color
             violet => nameof(Violet),
             wheat => nameof(Wheat),
             white => nameof(White),
-            whiteSmoke => nameof(WhiteSmoke),  
+            whiteSmoke => nameof(WhiteSmoke),
             windowFrame => nameof(WindowFrame),
             yellow => nameof(Yellow),
             yellowGreen => nameof(YellowGreen),
-            
+
             //added colors
             clarityBlue => nameof(ClarityBlue),
             _ => ""
         };
         return knownName.Length > 0;
     }
-
 }

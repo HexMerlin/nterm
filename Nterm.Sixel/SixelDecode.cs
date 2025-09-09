@@ -20,7 +20,7 @@ public static class SixelDecode
     {
         using MemoryStream mem = new(sixelString.Length);
         mem.Write(System.Text.Encoding.ASCII.GetBytes(sixelString));
-        mem.Seek(0, SeekOrigin.Begin);
+        _ = mem.Seek(0, SeekOrigin.Begin);
         return Decode(mem);
     }
     /// <param name="stream">Readable Stream containing Sixel data</param>
@@ -38,7 +38,7 @@ public static class SixelDecode
         int repeatCount = 1;
 
         byte[] buffer = new byte[2];
-        stream.Read(buffer);
+        stream.ReadExactly(buffer);
         if (buffer[0] != Constants.ESC_BYTE || buffer[1] != Constants.SIXEL_START_BYTE)
         {
             throw new InvalidDataException($"Sixel must start with [ESC, 'P']");
@@ -71,7 +71,6 @@ public static class SixelDecode
         Image<Rgba32> image = new(canvasWidth, canvasHeight, NTerm.Core.Color.Transparent.ToRgba32());
 #endif
 
-
         currentChar = stream.ReadByte();
         do
         {
@@ -98,7 +97,7 @@ public static class SixelDecode
                     currentChar = ReadNumber(stream, ref repeatCount);
                     continue;
                 case 0x22: // '"' Raster Attributes. see: https://vt100.net/docs/vt3xx-gp/chapter14.html
-                    List<int> param = new List<int>();
+                    List<int> param = [];
                     do
                     {
                         int paramNum = -1;
@@ -111,7 +110,7 @@ public static class SixelDecode
 
                     canvasWidth = param[2];
                     canvasHeight = param[3];
-                    
+
                     // Resize image if raster attributes specify different size
                     if (image.Width != canvasWidth || image.Height != canvasHeight)
                     {
@@ -140,8 +139,8 @@ public static class SixelDecode
                                 break;
                             case 2: // RGB (values are in 0-100 range in Sixel format)
                                 _colorMap.Add(new NTerm.Core.Color(
-                                    (byte)Math.Round(c1 * 255.0 / 100.0), 
-                                    (byte)Math.Round(c2 * 255.0 / 100.0), 
+                                    (byte)Math.Round(c1 * 255.0 / 100.0),
+                                    (byte)Math.Round(c2 * 255.0 / 100.0),
                                     (byte)Math.Round(c3 * 255.0 / 100.0)).ToRgba32());
                                 break;
                             default:
@@ -163,12 +162,12 @@ public static class SixelDecode
                     // Ensure image is large enough for drawing
                     int requiredWidth = currentX + repeatCount;
                     int requiredHeight = currentY + 6;
-                    
+
                     if (image.Width < requiredWidth || image.Height < requiredHeight)
                     {
                         int newWidth = Math.Max(image.Width, requiredWidth);
                         int newHeight = Math.Max(image.Height, requiredHeight);
-                        
+
                         image.Mutate(x => x.Resize(new ResizeOptions
                         {
                             Size = new SixLabors.ImageSharp.Size(newWidth, newHeight),
@@ -176,7 +175,7 @@ public static class SixelDecode
                             Position = AnchorPositionMode.TopLeft,
                         }));
                     }
-                    
+
                     for (int x = currentX; x < currentX + repeatCount; x++)
                     {
                         int y = currentY;

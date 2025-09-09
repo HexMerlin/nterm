@@ -41,7 +41,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Width);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Height);
-        
+
         return new Size(
             (int)Math.Ceiling((double)DisplaySize.Width / cellSizeInPixels.Width),
             (int)Math.Ceiling((double)DisplaySize.Height / cellSizeInPixels.Height)
@@ -75,14 +75,14 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="transparency">Transparency handling mode</param>
     /// <returns>Console image ready for output</returns>
     /// <exception cref="FileNotFoundException">Image file not found</exception>
-    public static ConsoleImage FromFile(string filePath, 
-                                       string fallbackText = "[image]", 
+    public static ConsoleImage FromFile(string filePath,
+                                       string fallbackText = "[image]",
                                        Transparency transparency = Transparency.Default)
     {
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"Image file not found: {filePath}");
-            
-        using var stream = File.OpenRead(filePath);
+
+        using FileStream stream = File.OpenRead(filePath);
         return FromStream(stream, fallbackText, transparency);
     }
 
@@ -93,8 +93,8 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="fallbackText">Text to display when SIXEL encoding fails</param>
     /// <param name="transparency">Transparency handling mode</param>
     /// <returns>Console image ready for output</returns>
-    public static ConsoleImage FromStream(Stream stream, 
-                                         string fallbackText = "[image]", 
+    public static ConsoleImage FromStream(Stream stream,
+                                         string fallbackText = "[image]",
                                          Transparency transparency = Transparency.Default)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -103,16 +103,16 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
         try
         {
             // Get original image dimensions
-            using var originalImg = Image.Load<Rgba32>(stream);
-            var originalSize = new Size(originalImg.Width, originalImg.Height);
-            
+            using Image<Rgba32> originalImg = Image.Load<Rgba32>(stream);
+            Size originalSize = new(originalImg.Width, originalImg.Height);
+
             // Reset stream position for SIXEL encoding
             stream.Position = 0;
-            
+
             // Encode to SIXEL using original dimensions
             ReadOnlySpan<char> sixelData = SixelEncode.Encode(
-                stream, 
-                transparency, 
+                stream,
+                transparency,
                 frame: -1
             );
 
@@ -121,7 +121,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
         catch
         {
             // Fallback - use reasonable default size for fallback text
-            var fallbackSize = new Size(320, 240);
+            Size fallbackSize = new(320, 240);
             return new ConsoleImage(fallbackText, fallbackSize, hasOptimizedEncoding: false);
         }
     }
@@ -134,12 +134,9 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="transparency">Transparency handling mode</param>
     /// <returns>Console image ready for output</returns>
     /// <exception cref="FileNotFoundException">Embedded resource not found</exception>
-    public static ConsoleImage FromEmbeddedResource(string resourceSuffix, 
-                                                   string fallbackText = "[image]", 
-                                                   Transparency transparency = Transparency.Default)
-    {
-        return FromEmbeddedResource(resourceSuffix, Assembly.GetCallingAssembly(), fallbackText, transparency);
-    }
+    public static ConsoleImage FromEmbeddedResource(string resourceSuffix,
+                                                   string fallbackText = "[image]",
+                                                   Transparency transparency = Transparency.Default) => FromEmbeddedResource(resourceSuffix, Assembly.GetCallingAssembly(), fallbackText, transparency);
 
     /// <summary>
     /// Creates ConsoleImage from embedded resource in specific assembly using original image dimensions.
@@ -150,9 +147,9 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="transparency">Transparency handling mode</param>
     /// <returns>Console image ready for output</returns>
     /// <exception cref="FileNotFoundException">Embedded resource not found</exception>
-    public static ConsoleImage FromEmbeddedResource(string resourceSuffix, 
+    public static ConsoleImage FromEmbeddedResource(string resourceSuffix,
                                                    Assembly assembly,
-                                                   string fallbackText = "[image]", 
+                                                   string fallbackText = "[image]",
                                                    Transparency transparency = Transparency.Default)
     {
         ArgumentException.ThrowIfNullOrEmpty(resourceSuffix);
@@ -161,13 +158,13 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
         string[] allResources = assembly.GetManifestResourceNames();
         string? resourceName = allResources
             .FirstOrDefault(n => n.EndsWith(resourceSuffix, StringComparison.OrdinalIgnoreCase));
-            
+
         if (resourceName == null)
             throw new FileNotFoundException($"Embedded resource not found: {resourceSuffix} in assembly {assembly.GetName().Name}");
 
-        using var stream = assembly.GetManifestResourceStream(resourceName) 
+        using Stream stream = assembly.GetManifestResourceStream(resourceName)
             ?? throw new FileNotFoundException($"Embedded resource stream is null: {resourceName}");
-            
+
         return FromStream(stream, fallbackText, transparency);
     }
 
@@ -177,9 +174,9 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="other">Console image to compare with this console image</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified console image is equal to this console image</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Equals(ConsoleImage other) => 
+    public bool Equals(ConsoleImage other) =>
         EncodedData == other.EncodedData &&
-        DisplaySize.Equals(other.DisplaySize) && 
+        DisplaySize.Equals(other.DisplaySize) &&
         HasOptimizedEncoding == other.HasOptimizedEncoding;
 
     /// <summary>
@@ -208,6 +205,6 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <returns><see langword="true"/> <b>iff</b> the value of <paramref name="left"/> is different from the value of <paramref name="right"/></returns>
     public static bool operator !=(ConsoleImage left, ConsoleImage right) => !left.Equals(right);
 
-    public override string ToString() => 
+    public override string ToString() =>
         $"ConsoleImage[{DisplaySize.Width}x{DisplaySize.Height}, {(HasOptimizedEncoding ? "Optimized" : "Fallback")}]";
 }

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using NTerm.Core;
 
 namespace NTerm.Controls;
 
@@ -77,7 +76,7 @@ public class SelectControl<T> : ISelectControl<T>
 
         while (Console.KeyAvailable && clearedKeys < maxKeysToClear)
         {
-            Console.ReadKey(true);
+            _ = Console.ReadKey(true);
             clearedKeys++;
         }
     }

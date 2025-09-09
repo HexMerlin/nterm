@@ -30,10 +30,10 @@ public class PngEncoder : SixelEncoder
 
     public override int GetFrameDelay(int frameIndex)
     {
-        var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
+        int delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
         if (delay < 0)
         {
-            var frame = Image.Frames[frameIndex];
+            ImageFrame<Rgba32> frame = Image.Frames[frameIndex];
             return (int)(frame.Metadata.GetPngMetadata().FrameDelay.ToDouble() * 1000);
         }
         return delay;

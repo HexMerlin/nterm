@@ -1,17 +1,15 @@
 ﻿using NTerm.Core;
-using NTerm.Sixel;
-using System.Text;
 
 namespace NTerm.Examples;
 public class ConsoleDemo
 {
-    public ConsoleDemo() {}
+    public ConsoleDemo() { }
 
     public void Run()
     {
 
-       // Console.ForegroundColor = Color.MediumSpringGreen;
-       // Console.WriteLine();
+        // Console.ForegroundColor = Color.MediumSpringGreen;
+        // Console.WriteLine();
         Console.WriteLine("=== Terminal Capabilities ===");
         Console.WriteLine($"SIXEL Support: {TerminalCapabilities.IsSixelSupported}");
         Console.WriteLine($"Cell Size: {TerminalCapabilities.CellSize.Width}x{TerminalCapabilities.CellSize.Height}px");
@@ -69,7 +67,6 @@ public class ConsoleDemo
             Console.Write(' ');
         }
         Console.Write('\n');
-
 
         // Test 7: New string writing methods
         Console.WriteLine();

@@ -12,10 +12,16 @@ public readonly struct Size : IEquatable<Size>
 
     public Size(int width, int height)
     {
-        this.Width = width;
-        this.Height = height;
+        Width = width;
+        Height = height;
     }
 
     public bool Equals(Size other) => Width == other.Width && Height == other.Height;
 
+    public override bool Equals(object obj) => obj is Size && Equals((Size)obj);
+
+    public override int GetHashCode() => throw new NotImplementedException();
+    public static bool operator ==(Size left, Size right) => left.Equals(right);
+
+    public static bool operator !=(Size left, Size right) => !(left == right);
 }

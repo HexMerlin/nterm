@@ -18,7 +18,7 @@ public static class SixelEncode
     /// <param name="image"></param>
     public static SixelEncoder CreateEncoder(Image<Rgba32> image)
     {
-        var format = image.Metadata.DecodedImageFormat?.Name.ToUpperInvariant();
+        string? format = image.Metadata.DecodedImageFormat?.Name.ToUpperInvariant();
         return format switch
         {
             "GIF" => new GifEncoder(image),
@@ -57,7 +57,7 @@ public static class SixelEncode
                                             Transparency transp = Transparency.Default,
                                             int frame = -1)
     {
-        using var img = Image.Load<Rgba32>(stream);
+        using Image<Rgba32> img = Image.Load<Rgba32>(stream);
         return Encode(img, transp, frame);
     }
     /// <summary>
@@ -84,11 +84,11 @@ public static class SixelEncode
         switch (format)
         {
             case "GIF":
-                var gifMeta = meta.GetGifMetadata();
+                SixLabors.ImageSharp.Formats.Gif.GifMetadata gifMeta = meta.GetGifMetadata();
                 bg = gifMeta.GlobalColorTable?.Span[gifMeta.BackgroundColorIndex].ToPixel<Rgba32>();
                 break;
             case "PNG":
-                var pngMeta = meta.GetPngMetadata();
+                SixLabors.ImageSharp.Formats.Png.PngMetadata pngMeta = meta.GetPngMetadata();
                 if (pngMeta.ColorType == SixLabors.ImageSharp.Formats.Png.PngColorType.Palette)
                     tc = pngMeta.TransparentColor?.ToPixel<Rgba32>();
                 break;
@@ -122,10 +122,7 @@ public static class SixelEncode
             case "TIFF": // Can contain multiple pages
             case "WEBP":
                 if (frameCount > 1 && frame > -1)
-                    if (frame < frameCount)
-                        img = img.Frames.ExportFrame(frame);
-                    else
-                        img = img.Frames.ExportFrame(frame % frameCount);
+                    img = frame < frameCount ? img.Frames.ExportFrame(frame) : img.Frames.ExportFrame(frame % frameCount);
                 break;
         }
 
@@ -137,7 +134,7 @@ public static class SixelEncode
             x.Quantize(KnownQuantizers.Wu);
         });
 
-        var imageFrame = img.Frames.RootFrame;
+        ImageFrame<Rgba32> imageFrame = img.Frames.RootFrame;
 
         // Building a color palette
         ReadOnlySpan<Color> colorPalette = GetColorPalette(imageFrame, transp, tc, bg);
@@ -169,10 +166,10 @@ public static class SixelEncode
         // https://github.com/mattn/go-sixel/blob/master/sixel.go の丸パクリです！！
         //                                                        It's a complete rip-off!!
         //
-        var sb = new StringBuilder();
+        StringBuilder sb = new();
         // DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
 
-        sb.Append(Constants.ESC + Constants.SixelStart)
+        _ = sb.Append(Constants.ESC + Constants.SixelStart)
           .Append($";{canvasWidth};{canvasHeight}".AsSpan());
 
         int colorPaletteLength = colorPalette.Length;
@@ -180,9 +177,9 @@ public static class SixelEncode
         {
             // DECGCI (#): Graphics Color Introducer
             ReadOnlySpan<char> colorValue = colorPalette[i].ToSixelPalette();
-            sb.Append($"{Constants.ColorIntroducer}{i};2;{colorValue}".AsSpan());
+            _ = sb.Append($"{Constants.ColorIntroducer}{i};2;{colorValue}".AsSpan());
         }
-    
+
         byte[] buffer = new byte[canvasWidth * colorPaletteLength];
         // Flag to indicate whether there is a color palette to display
         bool[] cset = new bool[colorPaletteLength];
@@ -192,7 +189,7 @@ public static class SixelEncode
             if (z > 0)
             {
                 // DECGNL (-): Graphics Next Line
-                sb.Append(Constants.SixelNextLine);
+                _ = sb.Append(Constants.SixelNextLine);
             }
 
             for (int p = 0; p < 6 && y < canvasHeight; p++, y++)
@@ -225,16 +222,16 @@ public static class SixelEncode
                 if (ch0 == Constants.SpecialChCr && !first)
                 {
                     // DECGCR ($): Graphics Carriage Return
-                    sb.Append('$');
+                    _ = sb.Append('$');
                 }
                 first = false;
 
-                sb.Append($"#{n}".AsSpan());
-                var cnt = 0;
+                _ = sb.Append($"#{n}".AsSpan());
+                int cnt = 0;
                 byte ch;
                 int bufIndex;
                 char sixelChar;
-                for (var x = 0; x < canvasWidth; x++)
+                for (int x = 0; x < canvasWidth; x++)
                 {
                     // make sixel character from 6 pixels
                     bufIndex = (canvasWidth * n) + x;
@@ -245,21 +242,21 @@ public static class SixelEncode
                         sixelChar = (char)(63 + ch0);
                         for (; cnt > 255; cnt -= 255)
                         {
-                            sb.Append(Constants.RepeatIntroducer).Append("255").Append(sixelChar);
+                            _ = sb.Append(Constants.RepeatIntroducer).Append("255").Append(sixelChar);
                         }
                         switch (cnt)
                         {
                             case 1:
-                                sb.Append(sixelChar);
+                                _ = sb.Append(sixelChar);
                                 break;
                             case 2:
-                                sb.Append([sixelChar, sixelChar]);
+                                _ = sb.Append([sixelChar, sixelChar]);
                                 break;
                             case 3:
-                                sb.Append([sixelChar, sixelChar, sixelChar]);
+                                _ = sb.Append([sixelChar, sixelChar, sixelChar]);
                                 break;
                             case > 0:
-                                sb.Append($"!{cnt}".AsSpan()).Append(sixelChar);
+                                _ = sb.Append($"!{cnt}".AsSpan()).Append(sixelChar);
                                 break;
                         }
                         cnt = 0;
@@ -272,28 +269,28 @@ public static class SixelEncode
                     sixelChar = (char)(63 + ch0);
                     for (; cnt > 255; cnt -= 255)
                     {
-                        sb.Append(Constants.RepeatIntroducer).Append("255").Append(sixelChar);
+                        _ = sb.Append(Constants.RepeatIntroducer).Append("255").Append(sixelChar);
                     }
                     switch (cnt)
                     {
                         case 1:
-                            sb.Append(sixelChar);
+                            _ = sb.Append(sixelChar);
                             break;
                         case 2:
-                            sb.Append([sixelChar, sixelChar]);
+                            _ = sb.Append([sixelChar, sixelChar]);
                             break;
                         case 3:
-                            sb.Append([sixelChar, sixelChar, sixelChar]);
+                            _ = sb.Append([sixelChar, sixelChar, sixelChar]);
                             break;
                         case > 0:
-                            sb.Append($"!{cnt}".AsSpan()).Append(sixelChar);
+                            _ = sb.Append($"!{cnt}".AsSpan()).Append(sixelChar);
                             break;
                     }
                 }
                 ch0 = Constants.SpecialChCr;
             }
         }
-        sb.Append(Constants.ESC + Constants.SixelEnd);
+        _ = sb.Append(Constants.ESC + Constants.SixelEnd);
         return sb.ToString();
     }
 
@@ -302,10 +299,7 @@ public static class SixelEncode
     /// </summary>
     /// <param name="stream">Image Stream</param>
     /// <returns>Format name string, e.g. "PNG"</returns>
-    public static string GetFormat(Stream stream)
-    {
-        return GetFormat(Image.Load<Rgba32>(new(), stream));
-    }
+    public static string GetFormat(Stream stream) => GetFormat(Image.Load<Rgba32>(new(), stream));
     /// <param name="img">Image data</param>
     /// <inheritdoc cref="GetFormat"></inheritdoc>
     public static string GetFormat(Image<Rgba32> img) => img.Metadata.DecodedImageFormat?.Name ?? "Unknown";
@@ -320,17 +314,14 @@ public static class SixelEncode
     /// <inheritdoc cref="GetRepeatCount"></inheritdoc>
     public static int GetRepeatCount(Image<Rgba32> img)
     {
-        var meta = img.Metadata;
-        switch (meta.DecodedImageFormat?.Name.ToUpperInvariant())
+        SixLabors.ImageSharp.Metadata.ImageMetadata meta = img.Metadata;
+        return (meta.DecodedImageFormat?.Name.ToUpperInvariant()) switch
         {
-            case "GIF":
-                return (int?)meta.GetGifMetadata().RepeatCount ?? -1;
-            case "PNG":
-                return (int?)meta.GetPngMetadata().RepeatCount ?? -1;
-            case "WEBP":
-                return (int?)meta.GetWebpMetadata().RepeatCount ?? -1;
-        }
-        return -1;
+            "GIF" => (int?)meta.GetGifMetadata().RepeatCount ?? -1,
+            "PNG" => (int?)meta.GetPngMetadata().RepeatCount ?? -1,
+            "WEBP" => (int?)meta.GetWebpMetadata().RepeatCount ?? -1,
+            _ => -1,
+        };
     }
 
     /// <summary>
@@ -351,10 +342,10 @@ public static class SixelEncode
                                                Rgba32? tc = null,
                                                Rgba32? bg = null)
     {
-        HashSet<Color> palette = new();
+        HashSet<Color> palette = [];
         frame.ProcessPixelRows(accessor =>
         {
-            HashSet<Rgba32> pixcelHash = new();
+            HashSet<Rgba32> pixcelHash = [];
             for (int y = 0; y < accessor.Height; y++)
             {
                 Span<Rgba32> row = accessor.GetRowSpan(y);
@@ -365,7 +356,7 @@ public static class SixelEncode
                         Color c = row[x].ToSixelColor(transp, tc, bg);
                         if (c.A == 0)
                             continue;
-                        palette.Add(c);
+                        _ = palette.Add(c);
                     }
                 }
             }

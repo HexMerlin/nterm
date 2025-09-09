@@ -28,10 +28,7 @@ public abstract record SemanticDocument : IReadOnlyList<(char, SemanticCharStyle
 
     public (char, SemanticCharStyle) this[int index] => Content[index];
 
-    public SemanticDocument(ImmutableArray<(char Character, SemanticCharStyle Style)> content)
-    {
-        this.Content = content;
-    }
+    public SemanticDocument(ImmutableArray<(char Character, SemanticCharStyle Style)> content) => Content = content;
 
     // Fast path: pattern-based foreach picks this (struct, no allocations).
     public ImmutableArray<(char, SemanticCharStyle)>.Enumerator GetEnumerator()

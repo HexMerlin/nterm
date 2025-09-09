@@ -24,8 +24,8 @@ public class GifEncoder : SixelEncoder
     /// <inheritdoc cref="SixelEncoder.EncodeFrameInternal(ImageFrame{Rgba32})"/>
     protected override string EncodeFrameInternal(ImageFrame<Rgba32> frame)
     {
-        var meta = frame.Metadata.GetGifMetadata();
-        var bgColor = meta.LocalColorTable?.Span[meta.TransparencyIndex].ToPixel<Rgba32>() ?? BackgroundColor;
+        GifFrameMetadata meta = frame.Metadata.GetGifMetadata();
+        Rgba32? bgColor = meta.LocalColorTable?.Span[meta.TransparencyIndex].ToPixel<Rgba32>() ?? BackgroundColor;
         return SixelEncode.EncodeFrame(frame,
                                  GetColorPalette(frame),
                                  CanvasSize,
@@ -36,10 +36,10 @@ public class GifEncoder : SixelEncoder
 
     public override int GetFrameDelay(int frameIndex)
     {
-        var delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
+        int delay = FrameDelays[Math.Min(frameIndex, FrameDelays.Length - 1)];
         if (delay < 0)
         {
-            var frame = Image.Frames[frameIndex];
+            ImageFrame<Rgba32> frame = Image.Frames[frameIndex];
             return frame.Metadata.GetGifMetadata().FrameDelay * 1000 / 100;
         }
         return delay;

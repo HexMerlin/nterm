@@ -126,7 +126,7 @@ public static class DiscreteScroller
         lock (scrollLock)
         {
             // Using WindowHeight as Headroom guarantees at least one page scroll.
-            EnsureHeadroom(Math.Max(1, Console.WindowHeight), 0);
+            _ = EnsureHeadroom(Math.Max(1, Console.WindowHeight), 0);
             Console.WriteLine(Notice);
         }
     }
@@ -135,7 +135,7 @@ public static class DiscreteScroller
     {
         bool unicodeOk = UnicodeFriendly();
         char arrow = unicodeOk ? '▲' : '^';
-        char dash = unicodeOk ? '─' : '-';
+        _ = unicodeOk ? '─' : '-';
         string text = "Earlier output above — scroll up to see more";
         return $"                           {arrow}  {text}  {arrow}  ";
     }

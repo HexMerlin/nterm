@@ -24,25 +24,25 @@ internal static class Posix
 
     // P/Invoke
     [DllImport("libc", SetLastError = true, CallingConvention = CallingConvention.Cdecl)]
-    static extern int isatty(int fd);
+    private static extern int isatty(int fd);
 
     [DllImport("libc", SetLastError = true, CallingConvention = CallingConvention.Cdecl)]
-    static extern int tcgetattr(int fd, out termios termios_p);
+    private static extern int tcgetattr(int fd, out termios termios_p);
 
     [DllImport("libc", SetLastError = true, CallingConvention = CallingConvention.Cdecl)]
-    static extern int tcsetattr(int fd, int optional_actions, ref termios termios_p);
+    private static extern int tcsetattr(int fd, int optional_actions, ref termios termios_p);
 
     [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
-    static extern void cfmakeraw(ref termios termios_p);
+    private static extern void cfmakeraw(ref termios termios_p);
 
-    const int TCSANOW = 0;
+    private const int TCSANOW = 0;
 
     // We only need this one flag to re-enable signals (Ctrl+C) after cfmakeraw.
     // Value is correct on Linux & macOS (ISIG = 0x00000001).
-    const uint ISIG = 0x00000001;
+    private const uint ISIG = 0x00000001;
 
-    static bool _installed;
-    static termios _orig;
+    private static bool _installed;
+    private static termios _orig;
 
     public static void TryEnableRawTerminalOnPosix()
     {
@@ -54,7 +54,7 @@ internal static class Posix
         if (isatty(fd) == 0)
             return;
 
-        if (tcgetattr(fd, out var tio) != 0)
+        if (tcgetattr(fd, out termios tio) != 0)
             return;
         _orig = tio;
 
@@ -79,7 +79,7 @@ internal static class Posix
             try
             {
                 if (_installed)
-                    tcsetattr(fd, TCSANOW, ref _orig);
+                    _ = tcsetattr(fd, TCSANOW, ref _orig);
             }
             catch { }
         };

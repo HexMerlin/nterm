@@ -33,44 +33,43 @@ public static class Theme
     public static SemanticCharStyle GetStyle(string classificationType) => classificationType switch
     {
         // Keywords and control flow
-        ClassificationTypeNames.Keyword or 
+        ClassificationTypeNames.Keyword or
         ClassificationTypeNames.PreprocessorKeyword => Keyword,
         ClassificationTypeNames.ControlKeyword => Keyword with { Color = C.DarkBlue },
 
         // Types and type-related
-        ClassificationTypeNames.ClassName or 
-        ClassificationTypeNames.StructName or 
-        ClassificationTypeNames.InterfaceName or 
-        ClassificationTypeNames.EnumName or 
+        ClassificationTypeNames.ClassName or
+        ClassificationTypeNames.StructName or
+        ClassificationTypeNames.InterfaceName or
+        ClassificationTypeNames.EnumName or
         ClassificationTypeNames.DelegateName => Type,
         ClassificationTypeNames.TypeParameterName => Type with { Color = C.Cyan },
         ClassificationTypeNames.NamespaceName => Type with { Color = C.DarkGray },
 
         // Members and symbols
-        ClassificationTypeNames.FieldName or 
-        ClassificationTypeNames.EnumMemberName or 
-        ClassificationTypeNames.ConstantName or 
-        ClassificationTypeNames.LocalName or 
-        ClassificationTypeNames.ParameterName or 
+        ClassificationTypeNames.FieldName or
+        ClassificationTypeNames.EnumMemberName or
+        ClassificationTypeNames.ConstantName or
+        ClassificationTypeNames.LocalName or
+        ClassificationTypeNames.ParameterName or
         ClassificationTypeNames.Identifier => Default,
         ClassificationTypeNames.MethodName => Member,
         ClassificationTypeNames.ExtensionMethodName => Member with { Color = C.DarkMagenta },
         ClassificationTypeNames.PropertyName => Member with { Color = C.Yellow },
         ClassificationTypeNames.EventName => Member with { Color = C.DarkGoldenrod },
 
-
         // Literals and values
-        ClassificationTypeNames.StringLiteral or 
+        ClassificationTypeNames.StringLiteral or
         ClassificationTypeNames.VerbatimStringLiteral => String,
         ClassificationTypeNames.NumericLiteral => Number,
 
         // Comments and documentation
         ClassificationTypeNames.Comment => Comment,
-        ClassificationTypeNames.XmlDocCommentComment or 
+        ClassificationTypeNames.XmlDocCommentComment or
         ClassificationTypeNames.XmlDocCommentText => Comment with { Color = C.Green },
 
         // Operators and punctuation
-        ClassificationTypeNames.Operator or 
+        ClassificationTypeNames.Operator or
         ClassificationTypeNames.OperatorOverloaded => Operator,
 
         // Special cases

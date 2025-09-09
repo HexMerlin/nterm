@@ -1,6 +1,6 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
-using System.Buffers;
 
 namespace NTerm.Core;
 
@@ -36,7 +36,7 @@ public static class TerminalCapabilities
     /// </summary>
     /// <returns>Window dimensions in character cells</returns>
     public static Size WindowCharacterSize => new(
-        Console.WindowWidth, 
+        Console.WindowWidth,
         Console.WindowHeight
     );
 
@@ -63,7 +63,7 @@ public static class TerminalCapabilities
         {
             // Query device attributes: ESC[c
             ReadOnlySpan<char> response = QueryTerminal(Constants.DeviceAttributesQuery);
-            
+
             // Traditional SIXEL support indicated by parameter "4" in response
             bool hasTraditionalSupport = response.Contains(";4;", StringComparison.Ordinal) ||
                                         response.EndsWith(";4", StringComparison.Ordinal);
@@ -93,14 +93,14 @@ public static class TerminalCapabilities
         {
             // Query cell size: ESC[16t
             ReadOnlySpan<char> response = QueryTerminal(Constants.CellPixelSizeQuery);
-            
+
             // Expected format: [6;height;width;t
             Span<Range> ranges = stackalloc Range[4];
             if (response.Split(ranges, ';') >= 3)
             {
                 int height = int.Parse(response[ranges[1]], CultureInfo.InvariantCulture);
                 int width = int.Parse(response[ranges[2]], CultureInfo.InvariantCulture);
-                Size detectedSize = new Size(width, height);
+                Size detectedSize = new(width, height);
                 return detectedSize;
             }
         }
@@ -122,7 +122,7 @@ public static class TerminalCapabilities
         {
             // Query window pixel size: ESC[14t
             ReadOnlySpan<char> response = QueryTerminal(Constants.WindowPixelSizeQuery);
-            
+
             // Expected format: [4;height;width;t
             Span<Range> ranges = stackalloc Range[4];
             if (response.Split(ranges, ';') >= 3)
@@ -153,7 +153,7 @@ public static class TerminalCapabilities
         {
             // Query synchronized output support: ESC[?2026$p
             ReadOnlySpan<char> response = QueryTerminal(Constants.SyncSupportQuery, 'y');
-            
+
             // Synchronized output support indicated by "1" in response
             // Expected format: [?2026;1$y where "1" indicates support
             return !response.IsEmpty && !response.Contains("2026;0$", StringComparison.Ordinal);
@@ -187,7 +187,7 @@ public static class TerminalCapabilities
 
             // Collect until we see the terminator or timeout
             Stopwatch sw = Stopwatch.StartNew();
-            SpinWait spinner = new SpinWait();
+            SpinWait spinner = new();
 
             while (sw.ElapsedMilliseconds < 50)
             {
@@ -228,5 +228,4 @@ public static class TerminalCapabilities
         ArrayPool<char>.Shared.Return(buffer);
         return result.AsSpan();
     }
-
 }

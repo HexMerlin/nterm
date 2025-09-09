@@ -1,11 +1,10 @@
-using System.Text;
 using NTerm.Core;
 
 namespace NTerm.Controls.Example;
 
-class Program
+internal class Program
 {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
         Console.ForegroundColor = Color.White;
 
@@ -21,11 +20,11 @@ class Program
         Console.WriteLine();
 
         Console.Write("Type something here: ");
-        var userInput = Console.ReadLine();
+        string userInput = Console.ReadLine();
         Console.Write("Now select an option: ");
 
-        var items = new List<SelectItem<Action>>
-        {
+        List<SelectItem<Action>> items =
+        [
             new()
             {
                 Text = "Option A",
@@ -51,9 +50,9 @@ class Program
             new() { Text = "Option K" },
             new() { Text = "Option L" },
             new() { Text = "Option M" },
-        };
+        ];
 
-        var selectedItem1 = Select.Show(items);
+        SelectItem<Action> selectedItem1 = Select.Show(items);
         if (selectedItem1.IsEmpty())
         {
             Console.WriteLine("Selection cancelled");
@@ -61,7 +60,7 @@ class Program
         }
 
         Console.Write(" and now select another option: ");
-        var selectedItem2 = Select.Show(items, 1);
+        SelectItem<Action> selectedItem2 = Select.Show(items, 1);
 
         if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
         {
@@ -76,9 +75,9 @@ class Program
         }
 
         Console.Write("Type something else here: ");
-        var userInput2 = Console.ReadLine();
+        string userInput2 = Console.ReadLine();
 
         Console.WriteLine("\nPress any key to exit...");
-        Console.ReadKey();
+        _ = Console.ReadKey();
     }
 }

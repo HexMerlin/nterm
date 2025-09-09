@@ -1,5 +1,5 @@
-﻿using NTerm.Examples;
-using NTerm.Core;
+﻿using NTerm.Core;
+using NTerm.Examples;
 
 namespace NTerm.DevConsole;
 
@@ -11,20 +11,20 @@ internal static class Program
 {
     private static async Task Main()
     {
-       
+
         Console.Title = "Showing some Console Demos";
         Console.Clear(new Color(0, 0, 40));
         //comment out to run specific demo
 
-        ConsoleDemo demo1 = new ConsoleDemo();
+        ConsoleDemo demo1 = new();
         demo1.Run();
 
-        CSharpSyntaxHighlightingDemo demo2 = new CSharpSyntaxHighlightingDemo();
+        CSharpSyntaxHighlightingDemo demo2 = new();
         await demo2.Run();
 
-        ConsoleImageDemo demo3 = new ConsoleImageDemo();
+        ConsoleImageDemo demo3 = new();
         await demo3.RunAsync(); //run demo 3
-              
+
         for (int i = 0; i <= 30; i++) //write some lines
             System.Console.WriteLine(i.ToString());
 
@@ -32,8 +32,4 @@ internal static class Program
 
         Console.Write("\n\n\n");
     }
-
-
-
-
 }

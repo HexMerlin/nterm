@@ -1,6 +1,5 @@
 ﻿using NTerm.Core;
 using NTerm.Sixel;
-using System.Collections.Immutable;
 
 namespace NTerm.Examples;
 
@@ -22,7 +21,7 @@ namespace NTerm.Examples;
 public sealed class ChatEntryWriter
 {
     private const int TextMargin = 1;       // Character spacing between image and text
-    
+
     /// <summary>
     /// Console-ready avatar image with SIXEL or fallback encoding.
     /// </summary>
@@ -39,8 +38,6 @@ public sealed class ChatEntryWriter
     private int _currentTextLine;
     private int _currentTextColumn;
     private bool _isWriting;
-
-
 
     /// <summary>
     /// Initializes streaming chat entry writer with avatar image.
@@ -73,21 +70,20 @@ public sealed class ChatEntryWriter
 
         _startLeft = Console.CursorLeft;
         _startTop = Console.CursorTop;
-        
+
         Console.WriteImage(AvatarImage.ConsoleData);
-        
-        var cellSize = new NTerm.Core.Size(10, 20); // Standard monospace cell size
-        var imageSize = AvatarImage.GetSizeInCharacters(cellSize);
+
+        Size cellSize = new(10, 20); // Standard monospace cell size
+        Size imageSize = AvatarImage.GetSizeInCharacters(cellSize);
         _textLeft = _startLeft + imageSize.Width + TextMargin;
         _textTop = _startTop + 1;
         _currentTextLine = 0;
         _currentTextColumn = 0;
         _isWriting = true;
-        
+
         // Position cursor ready for text output
         Console.SetCursorPosition(_textLeft, _textTop);
     }
-
 
     /// <summary>
     /// Ends writing of the ChatEntryWriter. The cursor is reset to the absolute beginning of the next line that is ensured to not overwrite any 
@@ -99,12 +95,12 @@ public sealed class ChatEntryWriter
     {
         if (!_isWriting)
             throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
-        
-        var cellSize = new NTerm.Core.Size(10, 20); // Standard monospace cell size
-        var imageSize = AvatarImage.GetSizeInCharacters(cellSize);
+
+        Size cellSize = new(10, 20); // Standard monospace cell size
+        Size imageSize = AvatarImage.GetSizeInCharacters(cellSize);
         int finalTop = _startTop + imageSize.Height;
         Console.SetCursorPosition(0, finalTop);
-        
+
         _isWriting = false;
 
         //restore original foreground color before exiting
@@ -123,13 +119,13 @@ public sealed class ChatEntryWriter
     {
         if (!_isWriting)
             throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
-        
+
         if (string.IsNullOrEmpty(text))
             return;
-        
+
         // Write text at current position
         Console.Write(text, foregroundColor);
-        
+
         // Update horizontal position tracking
         _currentTextColumn += text.Length;
     }
@@ -141,11 +137,11 @@ public sealed class ChatEntryWriter
     {
         if (!_isWriting)
             throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
-        
+
         // Move to next line
         _currentTextLine++;
         _currentTextColumn = 0;
-        
+
         // Position cursor at start of next text line
         Console.SetCursorPosition(_textLeft, _textTop + _currentTextLine);
     }
@@ -157,22 +153,21 @@ public sealed class ChatEntryWriter
     {
         if (!_isWriting)
             throw new InvalidOperationException("ChatEntryWriter is not in writing mode. Call BeginWrite() first.");
-        
+
         // Clear all text lines that were written
         // We need to clear from line 0 to _currentTextLine (inclusive)
         int textAreaWidth = Console.WindowWidth - _textLeft;
         string clearLine = new(' ', Math.Max(0, textAreaWidth));
-        
+
         for (int line = 0; line <= _currentTextLine; line++)
         {
             Console.SetCursorPosition(_textLeft, _textTop + line);
             Console.Write(clearLine, DefaultForegroundColor, DefaultBackgroundColor);
         }
-        
+
         // Reset to initial text position
         _currentTextLine = 0;
         _currentTextColumn = 0;
         Console.SetCursorPosition(_textLeft, _textTop);
     }
-
 }

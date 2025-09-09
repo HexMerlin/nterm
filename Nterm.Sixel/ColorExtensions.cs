@@ -1,5 +1,5 @@
-using SixLabors.ImageSharp.PixelFormats;
 using NTerm.Core;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace NTerm.Sixel;
 
@@ -21,8 +21,6 @@ internal static class ColorExtensions
     /// <param name="color">Color value</param>
     /// <returns>Equivalent ImageSharp Rgba32 value</returns>
     public static Rgba32 ToRgba32(this Color color) => new(color.R, color.G, color.B, color.A);
-
-
 
     /// <summary>
     /// Applies Sixel-specific transparency handling to a color.
@@ -84,7 +82,7 @@ internal static class ColorExtensions
         Color color = rgba.ToColor();
         Color? transparentColorConverted = transparentColor?.ToColor();
         Color? backgroundColorConverted = backgroundColor?.ToColor();
-        
+
         // Apply Sixel-specific transparency logic
         return color.ToSixelColor(transparency, transparentColorConverted, backgroundColorConverted);
     }

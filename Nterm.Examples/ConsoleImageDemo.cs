@@ -38,8 +38,6 @@ public sealed class ConsoleImageDemo
         AiAvatarImage = ConsoleImage.FromEmbeddedResource(ImageAI, examplesAssembly, "[🧠]", Transparency.Default);
     }
 
-
-
     /// <summary>
     /// Demonstrates console image streaming text output with progressive rendering.
     /// </summary>
@@ -49,62 +47,62 @@ public sealed class ConsoleImageDemo
     /// </remarks>
     public async Task RunAsync()
     {
-        DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
+        _ = DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         Console.WriteLine();
         Console.WriteLine("=== Streaming Chat Demo ===");
         Console.WriteLine();
 
         // User message with streaming text
-        ChatEntryWriter userEntry = new ChatEntryWriter(UserAvatarImage);
+        ChatEntryWriter userEntry = new(UserAvatarImage);
         userEntry.BeginWrite();
-        
+
         await WriteStreamingText(userEntry, "[User] ", Color.Cyan);
         await WriteStreamingText(userEntry, "Hey! Can you show me how ", Color.LightCyan);
         userEntry.WriteLineBreak();
         await WriteStreamingText(userEntry, "streaming text output works? ", Color.LightCyan);
         userEntry.WriteLineBreak();
         await WriteStreamingText(userEntry, "This looks pretty cool!", Color.LightCyan);
-        
+
         userEntry.EndWrite();
         Console.WriteLine();
-        DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
+        _ = DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         // Bot response with different streaming patterns
-        ChatEntryWriter botEntry = new ChatEntryWriter(BotAvatarImage);
+        ChatEntryWriter botEntry = new(BotAvatarImage);
         botEntry.BeginWrite();
-        
+
         await WriteStreamingText(botEntry, "[Bot] ", Color.OrangeRed);
         await WriteStreamingText(botEntry, "Sure thing! Let me demonstrate...", Color.Goldenrod);
         botEntry.WriteLineBreak();
-        
+
         // Simulate typing delay
         await Task.Delay(300);
-        
+
         botEntry.WriteLineBreak();
         await WriteStreamingText(botEntry, "First, I'll write some text progressively.", Color.Goldenrod);
         botEntry.WriteLineBreak();
-        
+
         // Demonstrate clear and rewrite
         await WriteStreamingText(botEntry, "Wait, let me rephrase that...", Color.DarkOrange);
         await Task.Delay(500);
         botEntry.ClearText();
-        
+
         await WriteStreamingText(botEntry, "[Bot] ", Color.OrangeRed);
         await WriteStreamingText(botEntry, "Perfect! Text appears word by word.", Color.Goldenrod);
         botEntry.WriteLineBreak();
         await WriteStreamingText(botEntry, "Line breaks work seamlessly.", Color.Goldenrod);
         botEntry.WriteLineBreak();
         await WriteStreamingText(botEntry, "And clearing text works too! ✨", Color.LightGreen);
-        
+
         botEntry.EndWrite();
         Console.WriteLine();
-        DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
+        _ = DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         // AI response showcasing different colors and timing
-        ChatEntryWriter aiEntry = new ChatEntryWriter(AiAvatarImage);
+        ChatEntryWriter aiEntry = new(AiAvatarImage);
         aiEntry.BeginWrite();
-        
+
         await WriteStreamingText(aiEntry, "[AI] ", Color.GreenYellow);
         await WriteStreamingText(aiEntry, "Impressive! ", Color.LightGreen, 50);
         await WriteStreamingText(aiEntry, "This streaming approach ", Color.LightGreen, 30);
@@ -112,7 +110,7 @@ public sealed class ConsoleImageDemo
         await WriteStreamingText(aiEntry, "enables real-time chat experiences ", Color.LightGreen, 40);
         aiEntry.WriteLineBreak();
         await WriteStreamingText(aiEntry, "with perfect image-text alignment! 🚀", Color.Lime, 60);
-        
+
         aiEntry.EndWrite();
         Console.Write("\n\n\n");
 
@@ -139,15 +137,15 @@ public sealed class ConsoleImageDemo
 
         // Split into words and write progressively
         string[] words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        
+
         for (int i = 0; i < words.Length; i++)
         {
             writer.Write(words[i], color);
-            
+
             // Add space between words (except for last word)
             if (i < words.Length - 1)
                 writer.Write(" ", color);
-            
+
             // Delay between words for streaming effect
             if (delayMs > 0)
                 await Task.Delay(delayMs);

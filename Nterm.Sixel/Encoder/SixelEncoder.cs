@@ -38,10 +38,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// </summary>
     protected int[] FrameDelays { get; set; } = [-1];
 
-
     private static Size ToSize(SixLabors.ImageSharp.Size size) => new(size.Width, size.Height);
-
-
 
     /// <summary>
     /// Flag if the quantization process has been performed for avoid duplicate processing
@@ -60,7 +57,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
         Image.Mutate(static context =>
         {
-            context.Quantize(KnownQuantizers.Wu);
+            _ = context.Quantize(KnownQuantizers.Wu);
         });
         Quantized = true;
         return this;
@@ -73,7 +70,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     protected virtual ReadOnlySpan<NTerm.Core.Color> GetColorPalette(ImageFrame<Rgba32> frame)
     {
         if (!Quantized)
-            Quantize();
+            _ = Quantize();
         return SixelEncode.GetColorPalette(frame,
                                      TransparencyMode,
                                      TransparentColor,
@@ -90,7 +87,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         // Quantize the image if not already done
         // and get the color palette for the frame
         if (!Quantized)
-            Quantize();
+            _ = Quantize();
         return SixelEncode.EncodeFrame(frame,
                                  GetColorPalette(frame),
                                  CanvasSize,
@@ -104,30 +101,21 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// </summary>
     /// <param name="frame"></param>
     /// <returns>Sixel string</returns>
-    public string EncodeFrame(ImageFrame<Rgba32> frame)
-    {
-        return EncodeFrameInternal(frame);
-    }
+    public string EncodeFrame(ImageFrame<Rgba32> frame) => EncodeFrameInternal(frame);
 
     /// <summary>
     /// Encode the <see cref="ImageFrame"/> at the <paramref name="frameIndex"/> into a Sixel string.
     /// </summary>
     /// <param name="frameIndex"></param>
     /// <inheritdoc cref="EncodeFrame(ImageFrame{Rgba32})"/>
-    public string EncodeFrame(int frameIndex)
-    {
-        return EncodeFrameInternal(Image.Frames[frameIndex % FrameCount]);
-    }
+    public string EncodeFrame(int frameIndex) => EncodeFrameInternal(Image.Frames[frameIndex % FrameCount]);
 
     /// <summary>
     /// Encode a <see cref="ImageFrame"/> into a Sixel string.
     /// The image frame is choosed automaticaly. (typically the root frame)j
     /// </summary>
     /// <inheritdoc cref="EncodeFrame(ImageFrame{Rgba32})"/>
-    public virtual string Encode()
-    {
-        return EncodeFrame(Image.Frames.RootFrame);
-    }
+    public virtual string Encode() => EncodeFrame(Image.Frames.RootFrame);
 
     /// <summary>
     /// Get Sixel strings for each frames
@@ -144,10 +132,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <summary>
     /// Set frame delays in milliseconds
     /// </summary>
-    public void SetFrameDelays(params int[] delays)
-    {
-        FrameDelays = delays;
-    }
+    public void SetFrameDelays(params int[] delays) => FrameDelays = delays;
 
     /// <summary>
     /// Get frame delay in milliseconds
@@ -214,7 +199,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         string[] sixelFrames = new string[frames.Count];
 
         // Asynchronously store images as Sixel strings
-        using BlockingCollection<bool> mutex = new BlockingCollection<bool>();
+        using BlockingCollection<bool> mutex = [];
         Task sixelFramesTask = Task.Run(() =>
         {
             foreach ((int i, int frameIndex) in frameIndexEnumerator())
@@ -228,10 +213,10 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         DateTime start;
         // The first time of loop:
         // as soon as encoded in Sixel string
-        foreach ((int i, int _) in frameIndexEnumerator())
+        foreach ((int i, _) in frameIndexEnumerator())
         {
             start = DateTime.Now;
-            mutex.Take(cancellationToken);
+            _ = mutex.Take(cancellationToken);
             yield return sixelFrames[i];
             if (delayMiliseconds[i] > 0)
             {
@@ -245,7 +230,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         int count = 0;
         while (repeatCount < 1 || repeatCount > ++count)
         {
-            foreach ((int i, int _) in frameIndexEnumerator())
+            foreach ((int i, _) in frameIndexEnumerator())
             {
                 yield return sixelFrames[i];
                 if (delayMiliseconds[i] > 0)
@@ -333,7 +318,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     public async Task Animate(int overwriteRepeat = -1, CancellationToken cancellationToken = default)
     {
         // Use standard monospace cell size assumptions
-        var standardCellSize = new NTerm.Core.Size(10, 20);
+        Size standardCellSize = new(10, 20);
         await Animate(standardCellSize, syncSupported: false, overwriteRepeat, 0, -1, cancellationToken);
     }
 
@@ -346,12 +331,9 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                 Image.Dispose();
             }
 
-
             disposedValue = true;
         }
     }
-
-
 
     public void Dispose()
     {

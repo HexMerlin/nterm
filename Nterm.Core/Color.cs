@@ -183,8 +183,6 @@ public readonly partial struct Color : IEquatable<Color>
                    (byte)Math.Round(b * 255.0 / 100.0));
     }
 
-
-
     /// <summary>
     /// Blends this color with a background color to create a fully opaque result.
     /// </summary>
@@ -209,9 +207,8 @@ public readonly partial struct Color : IEquatable<Color>
     }
 
     public override string ToString() =>
-        TryGetKnownColorName(this, out string name) 
+        TryGetKnownColorName(this, out string name)
             ? name :
             $"R:{R}, G:{G}, B:{B}{(A == 255 ? "" : $", A:{A}")}";
-
 
 }

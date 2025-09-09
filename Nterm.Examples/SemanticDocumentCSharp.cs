@@ -20,7 +20,7 @@ namespace NTerm.Examples;
 /// </remarks>
 public record SemanticDocumentCSharp : SemanticDocument
 {
-    public SemanticDocumentCSharp(ImmutableArray<(char Character, SemanticCharStyle Style)> content) : base(content) {}
+    public SemanticDocumentCSharp(ImmutableArray<(char Character, SemanticCharStyle Style)> content) : base(content) { }
 
     /// <summary>
     /// Creates a SemanticDocumentCSharp from a C# compilation.
@@ -82,14 +82,14 @@ public record SemanticDocumentCSharp : SemanticDocument
     {
         ReadOnlySpan<char> textSpan = text.ToString().AsSpan();
         int length = text.Length;
-        
+
         // Track winning classification per character position
         Dictionary<int, ClassifiedSpan> classificationByPosition = [];
-        
+
         foreach (ClassifiedSpan span in spans)
         {
             if (span.TextSpan.Length <= 0 || span.TextSpan.End > length) continue;
-            
+
             for (int i = span.TextSpan.Start; i < span.TextSpan.End; i++)
             {
                 classificationByPosition[i] = classificationByPosition.TryGetValue(i, out ClassifiedSpan existing)
@@ -97,22 +97,22 @@ public record SemanticDocumentCSharp : SemanticDocument
                     : span;
             }
         }
-        
+
         // Create styled characters with resolved visual properties
         (char Character, SemanticCharStyle Style)[] styledCharacters = new (char, SemanticCharStyle)[length];
         SemanticCharStyle defaultStyle = Theme.GetStyle("");
-        
+
         for (int i = 0; i < length; i++)
         {
             char character = textSpan[i];
-            
+
             SemanticCharStyle style = classificationByPosition.TryGetValue(i, out ClassifiedSpan classification)
                 ? Theme.GetStyle(classification.ClassificationType)
                 : defaultStyle;
-                
+
             styledCharacters[i] = (character, style);
         }
-        
+
         return styledCharacters;
     }
 
@@ -129,25 +129,21 @@ public record SemanticDocumentCSharp : SemanticDocument
         // Rule 1: Shorter span wins (more specific classification)
         if (spanA.TextSpan.Length != spanB.TextSpan.Length)
             return spanA.TextSpan.Length < spanB.TextSpan.Length ? spanA : spanB;
-        
+
         // Rule 2: Identical spans - resolve by classification type
         string winningType = (spanA.ClassificationType, spanB.ClassificationType) switch
         {
             // Add more precedence rules below if needed
-            
+
             // MethodName beats StaticSymbol
             (ClassificationTypeNames.StaticSymbol, ClassificationTypeNames.MethodName) => spanB.ClassificationType,
             (ClassificationTypeNames.MethodName, ClassificationTypeNames.StaticSymbol) => spanA.ClassificationType,
-            
+
             // Stable fallback for unknown pairs
-            _ => string.Compare(spanA.ClassificationType, spanB.ClassificationType, StringComparison.Ordinal) <= 0 
+            _ => string.Compare(spanA.ClassificationType, spanB.ClassificationType, StringComparison.Ordinal) <= 0
                  ? spanA.ClassificationType : spanB.ClassificationType
         };
-        
+
         return winningType == spanA.ClassificationType ? spanA : spanB;
     }
-
-
-
-
 }

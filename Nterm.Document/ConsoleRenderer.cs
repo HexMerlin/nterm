@@ -37,7 +37,6 @@ public static class ConsoleRenderer
     {
         (ConsoleColor, ConsoleColor) initColors = (System.Console.ForegroundColor, System.Console.BackgroundColor);
 
-      
         foreach ((char character, SemanticCharStyle style) in document)
         {
             Console.Write(character, style.Color, style.BackColor);

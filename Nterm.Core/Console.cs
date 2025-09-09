@@ -109,7 +109,7 @@ public static class Console
         StringBuilder sb = new();
         for (int i = 0; i < backspaceCount; i++)
         {
-            sb.Append("\b \b");
+            _ = sb.Append("\b \b");
         }
         Write(sb.ToString());
     }
@@ -274,10 +274,7 @@ public static class Console
         WriteLine();
     }
 
-    public static void WriteLine()
-    {
-        Stdout.Write("\n"u8);
-    }
+    public static void WriteLine() => Stdout.Write("\n"u8);
 
     /// <summary>
     /// Writes pre-encoded image data to console.
@@ -288,10 +285,7 @@ public static class Console
     /// Leverages existing optimized UTF-8 encoding infrastructure for maximum performance.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteImage(ReadOnlySpan<char> imageData)
-    {
-        Write(imageData);
-    }
+    public static void WriteImage(ReadOnlySpan<char> imageData) => Write(imageData);
 
     /// <summary>
     /// Read next Unicode scalar from stdin (decoded from UTF‑8). Returns -1 on EOF.
@@ -347,16 +341,16 @@ public static class Console
         // Backspace family: BS (0x08) and DEL (0x7F)
         // DECBKM set => Backspace sends BS; Ctrl+Backspace toggles to DEL (WT implements this).
         // We normalize both to ConsoleKey.Backspace and set Control=true for DEL so callers can tell.
-        if (ch == 0x08 || ch == 0x7F)
+        if (ch is 0x08 or 0x7F)
         {
-            bool isCtrl = (ch == 0x7F);
+            bool isCtrl = ch == 0x7F;
             if (!intercept)
                 Backspace(1);
             return new ConsoleKeyInfo('\b', System.ConsoleKey.Backspace, false, false, isCtrl);
         }
 
         // Enter: CR or LF
-        if (ch == '\n' || ch == '\r')
+        if (ch is '\n' or '\r')
         {
             if (!intercept)
                 Write("\n");
@@ -378,11 +372,11 @@ public static class Console
     /// <param name="clearOnExit">If true, erases the line on Enter; otherwise leaves it on screen.</param>
     public static string ReadLine(bool clearOnExit = false)
     {
-        StringBuilder sb = new StringBuilder(128);
+        StringBuilder sb = new(128);
 
         while (true)
         {
-            var key = ReadKey(intercept: true);
+            ConsoleKeyInfo key = ReadKey(intercept: true);
 
             if (key.Key == System.ConsoleKey.Enter)
             {
@@ -403,7 +397,7 @@ public static class Console
                     int toErase = ComputeWordEraseCount(sb);
                     if (toErase > 0)
                     {
-                        sb.Remove(sb.Length - toErase, toErase);
+                        _ = sb.Remove(sb.Length - toErase, toErase);
                         Backspace(toErase);
                     }
                 }
@@ -419,7 +413,7 @@ public static class Console
                             && char.IsHighSurrogate(sb[^2])
                         )
                             removeLen = 2;
-                        sb.Remove(sb.Length - removeLen, removeLen);
+                        _ = sb.Remove(sb.Length - removeLen, removeLen);
                         Backspace(removeLen);
                     }
                 }
@@ -429,7 +423,7 @@ public static class Console
             // Ignore other control keys in this minimal editor
             if (!char.IsControl(key.KeyChar))
             {
-                sb.Append(key.KeyChar);
+                _ = sb.Append(key.KeyChar);
                 Write(key.KeyChar);
             }
         }
@@ -502,23 +496,18 @@ public static class Console
         return end - i;
     }
 
-    private static System.ConsoleKey KeyFromChar(char ch)
-    {
-        if (ch >= 'A' && ch <= 'Z')
-            return (System.ConsoleKey)ch;
-        if (ch >= 'a' && ch <= 'z')
-            return (System.ConsoleKey)char.ToUpperInvariant(ch);
-        if (ch >= '0' && ch <= '9')
-            return (System.ConsoleKey)('D' + (ch - '0'));
-        return System.ConsoleKey.NoName;
-    }
+    private static System.ConsoleKey KeyFromChar(char ch) => ch is >= 'A' and <= 'Z'
+            ? (System.ConsoleKey)ch
+            : ch is >= 'a' and <= 'z'
+            ? (System.ConsoleKey)char.ToUpperInvariant(ch)
+            : ch is >= '0' and <= '9' ? (System.ConsoleKey)('D' + (ch - '0')) : ConsoleKey.NoName;
 
     private static ConsoleKeyInfo DecodeEscapeSequence(bool intercept)
     {
         // Read a small burst of pending bytes to coalesce an ESC sequence.
         Span<byte> buf = stackalloc byte[8];
         int n = 0;
-        var start = Environment.TickCount64;
+        long start = Environment.TickCount64;
 
         while (n < buf.Length)
         {
@@ -601,8 +590,8 @@ public static class Console
                     case (byte)'~':
                         int num = 0;
                         for (int i = 1; i < seq.Length - 1; i++)
-                            if (seq[i] >= '0' && seq[i] <= '9')
-                                num = num * 10 + (seq[i] - '0');
+                            if (seq[i] is >= (byte)'0' and <= (byte)'9')
+                                num = (num * 10) + (seq[i] - '0');
                         return num switch
                         {
                             2
@@ -731,7 +720,7 @@ public static class Console
                 continue;
             }
 
-            if (ch < 0xD800 || ch > 0xDFFF)
+            if (ch is < (char)0xD800 or > (char)0xDFFF)
             {
                 if (ch <= 0x7FF)
                 {
@@ -789,7 +778,7 @@ public static class Console
             return 2;
         }
         int hundreds = value / 100;
-        int rem = value - hundreds * 100;
+        int rem = value - (hundreds * 100);
         dest[0] = (byte)('0' + hundreds);
         dest[1] = (byte)('0' + (rem / 10));
         dest[2] = (byte)('0' + (rem % 10));
@@ -804,7 +793,7 @@ public static class Console
             dest[0] = (byte)ch;
             return 1;
         }
-        if (ch < 0xD800 || ch > 0xDFFF)
+        if (ch is < (char)0xD800 or > (char)0xDFFF)
         {
             if (ch <= 0x7FF)
             {

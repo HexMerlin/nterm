@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Runtime.InteropServices;
 
 namespace NTerm.Core;
 internal static class Windows
@@ -30,14 +27,12 @@ internal static class Windows
         {
             inMode |= ENABLE_EXTENDED_FLAGS; // allow clearing QUICK_EDIT
             inMode &= ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_QUICK_EDIT_MODE); // raw-ish
-            inMode |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
+            inMode |= ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
             _ = SetConsoleMode(hin, inMode);
         }
-
 
         [DllImport("kernel32.dll", SetLastError = true)] static extern bool GetConsoleMode(nint hConsoleHandle, out uint lpMode);
         [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetConsoleMode(nint hConsoleHandle, uint dwMode);
 
     }
-
 }

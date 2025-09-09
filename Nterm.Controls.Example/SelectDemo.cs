@@ -15,15 +15,15 @@ public static class SelectDemo
         Console.WriteLine(
             "Test 1: Basic selection (use arrow keys, Enter to select, Escape to cancel)"
         );
-        var items = new List<SelectItem<Action>>
-        {
+        List<SelectItem<Action>> items =
+        [
             new() { Text = "Item 1", Value = () => Console.WriteLine("Item 1 selected"), },
             new() { Text = "Item 2", Value = () => Console.WriteLine("Item 2 selected") },
             new() { Text = "Item 3", Value = () => Console.WriteLine("Item 3 selected") }
-        };
+        ];
 
         Console.Write("Select an item: ");
-        var selectedItem = Select.Show(items);
+        SelectItem<Action> selectedItem = Select.Show(items);
 
         if (!selectedItem.IsEmpty())
         {
@@ -37,13 +37,13 @@ public static class SelectDemo
 
         Console.WriteLine();
         Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
+        _ = Console.ReadKey();
         Console.Clear();
 
         // Test 2: Empty list
         Console.WriteLine("Test 2: Empty list");
-        var emptyItems = new List<SelectItem<Action>>();
-        var emptyResult = Select.Show(emptyItems);
+        List<SelectItem<Action>> emptyItems = [];
+        SelectItem<Action> emptyResult = Select.Show(emptyItems);
 
         if (emptyResult.IsEmpty())
         {
@@ -52,17 +52,17 @@ public static class SelectDemo
 
         Console.WriteLine();
         Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
+        _ = Console.ReadKey();
         Console.Clear();
 
         // Test 3: Single item
         Console.WriteLine("Test 3: Single item");
-        var singleItem = new List<SelectItem<Action>>
-        {
+        List<SelectItem<Action>> singleItem =
+        [
             new() { Text = "Only Option", Value = () => Console.WriteLine("Only option selected") }
-        };
+        ];
 
-        var singleResult = Select.Show(singleItem);
+        SelectItem<Action> singleResult = Select.Show(singleItem);
 
         if (!singleResult.IsEmpty())
         {
@@ -72,13 +72,13 @@ public static class SelectDemo
 
         Console.WriteLine();
         Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
+        _ = Console.ReadKey();
         Console.Clear();
 
         // Test 4: Long text items
         Console.WriteLine("Test 4: Long text items");
-        var longItems = new List<SelectItem<Action>>
-        {
+        List<SelectItem<Action>> longItems =
+        [
             new()
             {
                 Text =
@@ -91,9 +91,9 @@ public static class SelectDemo
                 Value = () => Console.WriteLine("Long item 2 selected")
             },
             new() { Text = "Short", Value = () => Console.WriteLine("Short item selected") }
-        };
+        ];
 
-        var longResult = Select.Show(longItems);
+        SelectItem<Action> longResult = Select.Show(longItems);
 
         if (!longResult.IsEmpty())
         {

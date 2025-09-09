@@ -1,5 +1,5 @@
-using System.Runtime.InteropServices;
 using NTerm.Core;
+using System.Runtime.InteropServices;
 
 namespace NTerm.Controls;
 

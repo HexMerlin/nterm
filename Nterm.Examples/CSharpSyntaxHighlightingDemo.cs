@@ -1,15 +1,13 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using NTerm.Document;
-using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace NTerm.Examples;
 public class CSharpSyntaxHighlightingDemo
 {
 
-    public CSharpSyntaxHighlightingDemo() {}
+    public CSharpSyntaxHighlightingDemo() { }
 
     /// <summary>
     /// Demonstrates complete SemanticDocumentCSharp pipeline with C# script syntax highlighting.
@@ -34,7 +32,6 @@ Some comment section here
 string msg = $"Value = {x} ";
 Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
 """;
-
 
         // 2) Compile the script
         Script<object> script = CSharpScript.Create(
