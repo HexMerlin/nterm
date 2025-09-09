@@ -23,7 +23,7 @@ public sealed class TerminalState : IDisposable
         OriginalCursorLeft = Terminal.CursorLeft;
         OriginalCursorTop = Terminal.CursorTop;
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OperatingSystem.IsWindows())
         {
             OriginalCursorVisible = System.Console.CursorVisible;
         }
