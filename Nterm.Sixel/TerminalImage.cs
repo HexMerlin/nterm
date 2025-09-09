@@ -7,14 +7,13 @@ using Size = NTerm.Core.Size;
 namespace NTerm.Sixel;
 
 /// <summary>
-/// Immutable console image data container.
-/// Gold standard user-facing type for SIXEL image operations.
+/// Immutable SIXEL image data for display in a terminal.
 /// </summary>
 /// <remarks>
 /// Pure data container with SIXEL-encoded image data ready for console output.
 /// Contains either optimized SIXEL encoding or fallback text representation.
 /// </remarks>
-public readonly struct ConsoleImage : IEquatable<ConsoleImage>
+public readonly struct TerminalImage : IEquatable<TerminalImage>
 {
     /// <summary>
     /// Image dimensions in pixels.
@@ -60,7 +59,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="encodedData">Encoded image data or fallback text</param>
     /// <param name="displaySize">Target display size in pixels</param>
     /// <param name="hasOptimizedEncoding">Indicates whether encodedData contains optimized encoding</param>
-    public ConsoleImage(string encodedData, Size displaySize, bool hasOptimizedEncoding)
+    public TerminalImage(string encodedData, Size displaySize, bool hasOptimizedEncoding)
     {
         EncodedData = encodedData;
         DisplaySize = displaySize;
@@ -75,7 +74,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="transparency">Transparency handling mode</param>
     /// <returns>Console image ready for output</returns>
     /// <exception cref="FileNotFoundException">Image file not found</exception>
-    public static ConsoleImage FromFile(string filePath,
+    public static TerminalImage FromFile(string filePath,
                                        string fallbackText = "[image]",
                                        Transparency transparency = Transparency.Default)
     {
@@ -93,7 +92,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="fallbackText">Text to display when SIXEL encoding fails</param>
     /// <param name="transparency">Transparency handling mode</param>
     /// <returns>Console image ready for output</returns>
-    public static ConsoleImage FromStream(Stream stream,
+    public static TerminalImage FromStream(Stream stream,
                                          string fallbackText = "[image]",
                                          Transparency transparency = Transparency.Default)
     {
@@ -116,13 +115,13 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
                 frame: -1
             );
 
-            return new ConsoleImage(sixelData.ToString(), originalSize, hasOptimizedEncoding: true);
+            return new TerminalImage(sixelData.ToString(), originalSize, hasOptimizedEncoding: true);
         }
         catch
         {
             // Fallback - use reasonable default size for fallback text
             Size fallbackSize = new(320, 240);
-            return new ConsoleImage(fallbackText, fallbackSize, hasOptimizedEncoding: false);
+            return new TerminalImage(fallbackText, fallbackSize, hasOptimizedEncoding: false);
         }
     }
 
@@ -134,7 +133,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="transparency">Transparency handling mode</param>
     /// <returns>Console image ready for output</returns>
     /// <exception cref="FileNotFoundException">Embedded resource not found</exception>
-    public static ConsoleImage FromEmbeddedResource(string resourceSuffix,
+    public static TerminalImage FromEmbeddedResource(string resourceSuffix,
                                                    string fallbackText = "[image]",
                                                    Transparency transparency = Transparency.Default) => FromEmbeddedResource(resourceSuffix, Assembly.GetCallingAssembly(), fallbackText, transparency);
 
@@ -147,7 +146,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="transparency">Transparency handling mode</param>
     /// <returns>Console image ready for output</returns>
     /// <exception cref="FileNotFoundException">Embedded resource not found</exception>
-    public static ConsoleImage FromEmbeddedResource(string resourceSuffix,
+    public static TerminalImage FromEmbeddedResource(string resourceSuffix,
                                                    Assembly assembly,
                                                    string fallbackText = "[image]",
                                                    Transparency transparency = Transparency.Default)
@@ -174,7 +173,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="other">Console image to compare with this console image</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified console image is equal to this console image</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Equals(ConsoleImage other) =>
+    public bool Equals(TerminalImage other) =>
         EncodedData == other.EncodedData &&
         DisplaySize.Equals(other.DisplaySize) &&
         HasOptimizedEncoding == other.HasOptimizedEncoding;
@@ -184,7 +183,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// </summary>
     /// <param name="obj">Object to compare with this console image</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified object is equal</returns>
-    public override bool Equals(object? obj) => obj is ConsoleImage other && Equals(other);
+    public override bool Equals(object? obj) => obj is TerminalImage other && Equals(other);
 
     ///<inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(EncodedData, DisplaySize, HasOptimizedEncoding);
@@ -195,7 +194,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="left">First console image to compare</param>
     /// <param name="right">Second console image to compare</param>
     /// <returns><see langword="true"/> <b>iff</b> the value of <paramref name="left"/> is the same as the value of <paramref name="right"/></returns>
-    public static bool operator ==(ConsoleImage left, ConsoleImage right) => left.Equals(right);
+    public static bool operator ==(TerminalImage left, TerminalImage right) => left.Equals(right);
 
     /// <summary>
     /// Determines whether two specified console images have different values.
@@ -203,7 +202,7 @@ public readonly struct ConsoleImage : IEquatable<ConsoleImage>
     /// <param name="left">First console image to compare</param>
     /// <param name="right">Second console image to compare</param>
     /// <returns><see langword="true"/> <b>iff</b> the value of <paramref name="left"/> is different from the value of <paramref name="right"/></returns>
-    public static bool operator !=(ConsoleImage left, ConsoleImage right) => !left.Equals(right);
+    public static bool operator !=(TerminalImage left, TerminalImage right) => !left.Equals(right);
 
     public override string ToString() =>
         $"ConsoleImage[{DisplaySize.Width}x{DisplaySize.Height}, {(HasOptimizedEncoding ? "Optimized" : "Fallback")}]";

@@ -18,9 +18,9 @@ public sealed class ConsoleImageDemo
     public const string ImageAI = "Images.ai.png";
 
     // Pre-built optimized images (authority pattern)
-    private ConsoleImage UserAvatarImage { get; }
-    private ConsoleImage BotAvatarImage { get; }
-    private ConsoleImage AiAvatarImage { get; }
+    private TerminalImage UserAvatarImage { get; }
+    private TerminalImage BotAvatarImage { get; }
+    private TerminalImage AiAvatarImage { get; }
 
     /// <summary>
     /// Constructs demo with pre-encoded console images.
@@ -31,11 +31,11 @@ public sealed class ConsoleImageDemo
         // Use Examples assembly since that's where the embedded resources are
         Assembly examplesAssembly = typeof(ConsoleImageDemo).Assembly;
 
-        UserAvatarImage = ConsoleImage.FromEmbeddedResource(ImageUser, examplesAssembly, "[👤]", Transparency.Default);
+        UserAvatarImage = TerminalImage.FromEmbeddedResource(ImageUser, examplesAssembly, "[👤]", Transparency.Default);
 
-        BotAvatarImage = ConsoleImage.FromEmbeddedResource(ImageBot, examplesAssembly, "[🤖]", Transparency.Default);
+        BotAvatarImage = TerminalImage.FromEmbeddedResource(ImageBot, examplesAssembly, "[🤖]", Transparency.Default);
 
-        AiAvatarImage = ConsoleImage.FromEmbeddedResource(ImageAI, examplesAssembly, "[🧠]", Transparency.Default);
+        AiAvatarImage = TerminalImage.FromEmbeddedResource(ImageAI, examplesAssembly, "[🧠]", Transparency.Default);
     }
 
     /// <summary>

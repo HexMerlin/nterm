@@ -5,9 +5,9 @@ namespace NTerm.Examples;
 
 /// <summary>
 /// Streaming chat message writer with avatar image and progressive text output.
-/// Optimized for console rendering with precise character-cell alignment.
+/// Optimized for terminal rendering with precise character-cell alignment.
 /// </summary>
-/// <param name="AvatarImage">Console-ready avatar image with SIXEL or fallback encoding</param>
+/// <param name="AvatarImage">Terminal-ready avatar image with SIXEL or fallback encoding</param>
 /// <remarks>
 /// <para>
 /// Provides side-by-side layout: avatar image left-aligned, streaming text content right-aligned with precise vertical positioning.
@@ -25,7 +25,7 @@ public sealed class ChatEntryWriter
     /// <summary>
     /// Console-ready avatar image with SIXEL or fallback encoding.
     /// </summary>
-    public ConsoleImage AvatarImage { get; }
+    public TerminalImage AvatarImage { get; }
 
     private readonly Color DefaultForegroundColor;
     private readonly Color DefaultBackgroundColor;
@@ -43,7 +43,7 @@ public sealed class ChatEntryWriter
     /// Initializes streaming chat entry writer with avatar image.
     /// </summary>
     /// <param name="avatarImage">Console-ready avatar image with SIXEL or fallback encoding</param>
-    public ChatEntryWriter(ConsoleImage avatarImage)
+    public ChatEntryWriter(TerminalImage avatarImage)
     {
         AvatarImage = avatarImage;
         DefaultForegroundColor = Terminal.ForegroundColor;
