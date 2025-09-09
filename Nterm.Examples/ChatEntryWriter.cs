@@ -46,8 +46,8 @@ public sealed class ChatEntryWriter
     public ChatEntryWriter(ConsoleImage avatarImage)
     {
         AvatarImage = avatarImage;
-        DefaultForegroundColor = Console.ForegroundColor;
-        DefaultBackgroundColor = Console.BackgroundColor;
+        DefaultForegroundColor = Terminal.ForegroundColor;
+        DefaultBackgroundColor = Terminal.BackgroundColor;
     }
 
     /// <summary>
@@ -68,10 +68,10 @@ public sealed class ChatEntryWriter
         if (_isWriting)
             throw new InvalidOperationException("ChatEntryWriter is already in writing mode. Call EndWrite() first.");
 
-        _startLeft = Console.CursorLeft;
-        _startTop = Console.CursorTop;
+        _startLeft = Terminal.CursorLeft;
+        _startTop = Terminal.CursorTop;
 
-        Console.WriteImage(AvatarImage.ConsoleData);
+        Terminal.WriteImage(AvatarImage.ConsoleData);
 
         Size cellSize = new(10, 20); // Standard monospace cell size
         Size imageSize = AvatarImage.GetSizeInCharacters(cellSize);
@@ -82,7 +82,7 @@ public sealed class ChatEntryWriter
         _isWriting = true;
 
         // Position cursor ready for text output
-        Console.SetCursorPosition(_textLeft, _textTop);
+        Terminal.SetCursorPosition(_textLeft, _textTop);
     }
 
     /// <summary>
@@ -99,12 +99,12 @@ public sealed class ChatEntryWriter
         Size cellSize = new(10, 20); // Standard monospace cell size
         Size imageSize = AvatarImage.GetSizeInCharacters(cellSize);
         int finalTop = _startTop + imageSize.Height;
-        Console.SetCursorPosition(0, finalTop);
+        Terminal.SetCursorPosition(0, finalTop);
 
         _isWriting = false;
 
         //restore original foreground color before exiting
-        Console.ForegroundColor = DefaultForegroundColor;
+        Terminal.ForegroundColor = DefaultForegroundColor;
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public sealed class ChatEntryWriter
             return;
 
         // Write text at current position
-        Console.Write(text, foregroundColor);
+        Terminal.Write(text, foregroundColor);
 
         // Update horizontal position tracking
         _currentTextColumn += text.Length;
@@ -143,7 +143,7 @@ public sealed class ChatEntryWriter
         _currentTextColumn = 0;
 
         // Position cursor at start of next text line
-        Console.SetCursorPosition(_textLeft, _textTop + _currentTextLine);
+        Terminal.SetCursorPosition(_textLeft, _textTop + _currentTextLine);
     }
 
     /// <summary>
@@ -156,18 +156,18 @@ public sealed class ChatEntryWriter
 
         // Clear all text lines that were written
         // We need to clear from line 0 to _currentTextLine (inclusive)
-        int textAreaWidth = Console.WindowWidth - _textLeft;
+        int textAreaWidth = Terminal.WindowWidth - _textLeft;
         string clearLine = new(' ', Math.Max(0, textAreaWidth));
 
         for (int line = 0; line <= _currentTextLine; line++)
         {
-            Console.SetCursorPosition(_textLeft, _textTop + line);
-            Console.Write(clearLine, DefaultForegroundColor, DefaultBackgroundColor);
+            Terminal.SetCursorPosition(_textLeft, _textTop + line);
+            Terminal.Write(clearLine, DefaultForegroundColor, DefaultBackgroundColor);
         }
 
         // Reset to initial text position
         _currentTextLine = 0;
         _currentTextColumn = 0;
-        Console.SetCursorPosition(_textLeft, _textTop);
+        Terminal.SetCursorPosition(_textLeft, _textTop);
     }
 }

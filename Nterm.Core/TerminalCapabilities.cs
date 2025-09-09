@@ -36,8 +36,8 @@ public static class TerminalCapabilities
     /// </summary>
     /// <returns>Window dimensions in character cells</returns>
     public static Size WindowCharacterSize => new(
-        Console.WindowWidth,
-        Console.WindowHeight
+        Terminal.WindowWidth,
+        Terminal.WindowHeight
     );
 
     /// <summary>
@@ -182,8 +182,8 @@ public static class TerminalCapabilities
         try
         {
             // Send ESC + query (e.g., "\x1b[14t")
-            Console.Write(Constants.ESC);
-            Console.Write(query);
+            Terminal.Write(Constants.ESC);
+            Terminal.Write(query);
 
             // Collect until we see the terminator or timeout
             Stopwatch sw = Stopwatch.StartNew();
@@ -199,7 +199,7 @@ public static class TerminalCapabilities
                 }
 
                 // Read one char without echo
-                char ch = Console.ReadKey(intercept: true).KeyChar;
+                char ch = Terminal.ReadKey(intercept: true).KeyChar;
 
                 if (ch == term)
                     break;

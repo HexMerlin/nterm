@@ -10,4 +10,4 @@ namespace NTerm.Document;
 /// <remarks>
 /// <para>Used in <see cref="SemanticDocumentCSharp"/> to pair each character with its style.</para>
 /// </remarks>
-public readonly record struct SemanticCharStyle(Color Color, Color BackColor);
+public readonly record struct CharStyle(Color Color, Color BackColor);

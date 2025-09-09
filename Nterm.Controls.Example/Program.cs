@@ -6,39 +6,39 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        Console.ForegroundColor = Color.White;
+        Terminal.ForegroundColor = Color.White;
 
-        Console.Title = "Nterm Controls Example";
+        Terminal.Title = "Nterm Controls Example";
 
-        Console.WriteLine("Nterm Controls Example");
-        Console.WriteLine("==============================");
-        Console.WriteLine();
+        Terminal.WriteLine("Nterm Controls Example");
+        Terminal.WriteLine("==============================");
+        Terminal.WriteLine();
 
         // Test the Select control with cursor position functionality
-        Console.WriteLine("Testing Select Control - Cursor Position");
-        Console.WriteLine("=======================================");
-        Console.WriteLine();
+        Terminal.WriteLine("Testing Select Control - Cursor Position");
+        Terminal.WriteLine("=======================================");
+        Terminal.WriteLine();
 
-        Console.Write("Type something here: ");
-        string userInput = Console.ReadLine();
-        Console.Write("Now select an option: ");
+        Terminal.Write("Type something here: ");
+        string userInput = Terminal.ReadLine();
+        Terminal.Write("Now select an option: ");
 
         List<SelectItem<Action>> items =
         [
             new()
             {
                 Text = "Option A",
-                Value = () => Console.WriteLine("Doing stuff with Option A")
+                Value = () => Terminal.WriteLine("Doing stuff with Option A")
             },
             new()
             {
                 Text = "Option B",
-                Value = () => Console.WriteLine("Doing stuff with Option B")
+                Value = () => Terminal.WriteLine("Doing stuff with Option B")
             },
             new()
             {
                 Text = "Option C",
-                Value = () => Console.WriteLine("Doing stuff with Option C")
+                Value = () => Terminal.WriteLine("Doing stuff with Option C")
             },
             new() { Text = "Option D" },
             new() { Text = "Option E" },
@@ -55,29 +55,29 @@ internal class Program
         SelectItem<Action> selectedItem1 = Select.Show(items);
         if (selectedItem1.IsEmpty())
         {
-            Console.WriteLine("Selection cancelled");
+            Terminal.WriteLine("Selection cancelled");
             return;
         }
 
-        Console.Write(" and now select another option: ");
+        Terminal.Write(" and now select another option: ");
         SelectItem<Action> selectedItem2 = Select.Show(items, 1);
 
         if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
         {
-            Console.WriteLine($"\nSelected: {selectedItem1.Text} and {selectedItem2.Text}");
+            Terminal.WriteLine($"\nSelected: {selectedItem1.Text} and {selectedItem2.Text}");
             selectedItem1.Value.Invoke();
             selectedItem2.Value.Invoke();
         }
         else
         {
-            Console.WriteLine("Selection cancelled");
+            Terminal.WriteLine("Selection cancelled");
             return;
         }
 
-        Console.Write("Type something else here: ");
-        string userInput2 = Console.ReadLine();
+        Terminal.Write("Type something else here: ");
+        string userInput2 = Terminal.ReadLine();
 
-        Console.WriteLine("\nPress any key to exit...");
-        _ = Console.ReadKey();
+        Terminal.WriteLine("\nPress any key to exit...");
+        _ = Terminal.ReadKey();
     }
 }

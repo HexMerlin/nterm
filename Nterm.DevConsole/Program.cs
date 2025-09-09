@@ -4,7 +4,7 @@ using NTerm.Examples;
 namespace NTerm.DevConsole;
 
 /// <summary>
-/// Test program demonstrating <see cref="SemanticDocumentCSharp"/> creation and console rendering.
+/// Test program demonstrating <see cref="CSharpDocument"/> creation and console rendering.
 /// Shows the complete pipeline: C# script → Compilation → SemanticDocumentCSharp → Console output.
 /// </summary>
 internal static class Program
@@ -12,8 +12,8 @@ internal static class Program
     private static async Task Main()
     {
 
-        Console.Title = "Showing some Console Demos";
-        Console.Clear(new Color(0, 0, 40));
+        Terminal.Title = "Showing some Console Demos";
+        Terminal.Clear(new Color(0, 0, 40));
         //comment out to run specific demo
 
         ConsoleDemo demo1 = new();
@@ -30,6 +30,6 @@ internal static class Program
 
         await demo3.RunAsync();//run demo 3 again
 
-        Console.Write("\n\n\n");
+        Terminal.Write("\n\n\n");
     }
 }

@@ -6,7 +6,7 @@ namespace NTerm.Controls;
 /// <summary>
 /// Represents the state of the console that can be restored later.
 /// </summary>
-public sealed class ConsoleState : IDisposable
+public sealed class TerminalState : IDisposable
 {
     public Color OriginalForeground { get; }
     public Color OriginalBackground { get; }
@@ -16,12 +16,12 @@ public sealed class ConsoleState : IDisposable
     // Assume that cursor is visible on all platforms. Only on Windows we can check if it is visible.
     public bool OriginalCursorVisible { get; } = true;
 
-    public ConsoleState()
+    public TerminalState()
     {
-        OriginalForeground = Console.ForegroundColor;
-        OriginalBackground = Console.BackgroundColor;
-        OriginalCursorLeft = Console.CursorLeft;
-        OriginalCursorTop = Console.CursorTop;
+        OriginalForeground = Terminal.ForegroundColor;
+        OriginalBackground = Terminal.BackgroundColor;
+        OriginalCursorLeft = Terminal.CursorLeft;
+        OriginalCursorTop = Terminal.CursorTop;
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -35,7 +35,7 @@ public sealed class ConsoleState : IDisposable
     public void Dispose()
     {
         // Restore default foreground color
-        Console.ForegroundColor = OriginalForeground;
+        Terminal.ForegroundColor = OriginalForeground;
 
         // Restore cursor visibility if supported
         if (

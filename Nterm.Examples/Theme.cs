@@ -6,19 +6,19 @@ using C = NTerm.Core.Color;
 namespace NTerm.Examples;
 
 /// <summary>
-/// Default theme for semantic classifications.
+/// Default theme for <see cref="StyledDocument"/> classifications.
 /// </summary>
 public static class Theme
 {
     // Private helpers used by GetStyle below
-    private static SemanticCharStyle Default => new(C.Gray, C.Black);
-    private static SemanticCharStyle Keyword => Default with { Color = C.Blue };
-    private static SemanticCharStyle Type => Default with { Color = C.DarkCyan };
-    private static SemanticCharStyle Member => Default with { Color = C.Magenta };
-    private static SemanticCharStyle String => Default with { Color = C.Orange };
-    private static SemanticCharStyle Number => Default with { Color = C.Cyan };
-    private static SemanticCharStyle Comment => Default with { Color = C.DarkGreen };
-    private static SemanticCharStyle Operator => Default with { Color = C.DarkGray };
+    private static CharStyle Default => new(C.Gray, C.Black);
+    private static CharStyle Keyword => Default with { Color = C.Blue };
+    private static CharStyle Type => Default with { Color = C.DarkCyan };
+    private static CharStyle Member => Default with { Color = C.Magenta };
+    private static CharStyle String => Default with { Color = C.Orange };
+    private static CharStyle Number => Default with { Color = C.Cyan };
+    private static CharStyle Comment => Default with { Color = C.DarkGreen };
+    private static CharStyle Operator => Default with { Color = C.DarkGray };
 
     /// <summary>
     /// Maps Roslyn ClassificationTypeNames to complete style descriptors.
@@ -30,7 +30,7 @@ public static class Theme
     /// <para>Returns styled variations of template instances using <c>with</c> expressions.</para>
     /// <para>Unknown classification types return <see cref="Default"/> style.</para>
     /// </remarks>
-    public static SemanticCharStyle GetStyle(string classificationType) => classificationType switch
+    public static CharStyle GetStyle(string classificationType) => classificationType switch
     {
         // Keywords and control flow
         ClassificationTypeNames.Keyword or

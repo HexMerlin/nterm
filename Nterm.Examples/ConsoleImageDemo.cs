@@ -49,9 +49,9 @@ public sealed class ConsoleImageDemo
     {
         _ = DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
-        Console.WriteLine();
-        Console.WriteLine("=== Streaming Chat Demo ===");
-        Console.WriteLine();
+        Terminal.WriteLine();
+        Terminal.WriteLine("=== Streaming Chat Demo ===");
+        Terminal.WriteLine();
 
         // User message with streaming text
         ChatEntryWriter userEntry = new(UserAvatarImage);
@@ -65,7 +65,7 @@ public sealed class ConsoleImageDemo
         await WriteStreamingText(userEntry, "This looks pretty cool!", Color.LightCyan);
 
         userEntry.EndWrite();
-        Console.WriteLine();
+        Terminal.WriteLine();
         _ = DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         // Bot response with different streaming patterns
@@ -96,7 +96,7 @@ public sealed class ConsoleImageDemo
         await WriteStreamingText(botEntry, "And clearing text works too! ✨", Color.LightGreen);
 
         botEntry.EndWrite();
-        Console.WriteLine();
+        Terminal.WriteLine();
         _ = DiscreteScroller.EnsureHeadroom(); //create a new page - old data is scroll-accessible above
 
         // AI response showcasing different colors and timing
@@ -112,10 +112,10 @@ public sealed class ConsoleImageDemo
         await WriteStreamingText(aiEntry, "with perfect image-text alignment! 🚀", Color.Lime, 60);
 
         aiEntry.EndWrite();
-        Console.Write("\n\n\n");
+        Terminal.Write("\n\n\n");
 
-        Console.ForegroundColor = Color.White;
-        Console.WriteLine("=== Demo Complete ===");
+        Terminal.ForegroundColor = Color.White;
+        Terminal.WriteLine("=== Demo Complete ===");
     }
 
     /// <summary>

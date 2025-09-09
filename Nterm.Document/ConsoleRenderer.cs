@@ -1,7 +1,8 @@
-﻿namespace NTerm.Document;
+﻿using NTerm.Core;
+namespace NTerm.Document;
 
 /// <summary>
-/// Ultra-simple console renderer for <see cref="ISemanticDocument"/>.
+/// Ultra-simple console renderer for <see cref="StyledDocument"/>.
 /// Demonstrates how easy it is to create renderers for the ISemanticDocument format.
 /// Applies pre-computed visual properties - no semantic decisions required.
 /// All classification resolution handled by producer-side semantic document implementations.
@@ -33,13 +34,13 @@ public static class ConsoleRenderer
     /// <para>3. Restore original colors</para>
     /// <para>Console class optimizes color changes internally - no manual optimization needed.</para>
     /// </remarks>
-    public static void Render(SemanticDocument document)
+    public static void Render(StyledDocument document)
     {
         (ConsoleColor, ConsoleColor) initColors = (System.Console.ForegroundColor, System.Console.BackgroundColor);
 
-        foreach ((char character, SemanticCharStyle style) in document)
+        foreach ((char character, CharStyle style) in document)
         {
-            Console.Write(character, style.Color, style.BackColor);
+            Terminal.Write(character, style.Color, style.BackColor);
         }
 
         (System.Console.ForegroundColor, System.Console.BackgroundColor) = initColors;

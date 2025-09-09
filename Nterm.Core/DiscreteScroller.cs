@@ -30,7 +30,7 @@ public static class DiscreteScroller
     /// {
     ///     // A discrete scroll happened; the notice is already printed at the top.
     /// }
-    /// Console.WriteLine(bigChunkOfText);
+    /// Terminal.WriteLine(bigChunkOfText);
     /// </code>
     /// </example>
     public static bool EnsureHeadroom()
@@ -39,7 +39,7 @@ public static class DiscreteScroller
         {
             const int DefaultHeadroom = 10; // sensible default for streaming output
             bool didScroll = EnsureHeadroom(DefaultHeadroom, 0);
-            if (didScroll) Console.WriteLine(Notice);
+            if (didScroll) Terminal.WriteLine(Notice);
             return didScroll;
         }
     }
@@ -71,7 +71,7 @@ public static class DiscreteScroller
     /// // Require at least 12 free lines; after a scroll, land 4 rows from the top:
     /// if (DiscreteScroller.EnsureHeadroom(HeadroomRows: 12, TargetTopFromWindowTop: 4))
     /// {
-    ///     Console.WriteLine("— scroll up to see more —");
+    ///     Terminal.WriteLine("— scroll up to see more —");
     /// }
     /// Console.WriteLine(nextChunk);
     /// </code>
@@ -80,12 +80,12 @@ public static class DiscreteScroller
     {
         lock (writeLock)
         {
-            int windowHeight = Math.Max(1, Console.WindowHeight);
-            int windowTop = Console.WindowTop;
-            int bufferHeight = Math.Max(windowHeight, Console.BufferHeight);
+            int windowHeight = Math.Max(1, Terminal.WindowHeight);
+            int windowTop = Terminal.WindowTop;
+            int bufferHeight = Math.Max(windowHeight, Terminal.BufferHeight);
             int bottomVisible = windowTop + windowHeight - 1;
 
-            int cursorTop = Math.Min(Console.CursorTop, bufferHeight - 1);
+            int cursorTop = Math.Min(Terminal.CursorTop, bufferHeight - 1);
             int rowsFromBottom = bottomVisible - cursorTop;
 
             if (rowsFromBottom >= HeadroomRows)
@@ -94,12 +94,12 @@ public static class DiscreteScroller
             int targetInWin = Math.Clamp(TargetTopFromWindowTop, 0, windowHeight - 1);
             int linesToWrite = Math.Max(1, windowHeight - targetInWin); // create a blank zone
 
-            Console.WriteInternal(new string('\n', linesToWrite));
+            Terminal.WriteInternal(new string('\n', linesToWrite));
 
-            int newWindowTop = Console.WindowTop;
-            int targetTop = Math.Min(newWindowTop + targetInWin, Math.Max(0, Console.BufferHeight - 1));
+            int newWindowTop = Terminal.WindowTop;
+            int targetTop = Math.Min(newWindowTop + targetInWin, Math.Max(0, Terminal.BufferHeight - 1));
 
-            try { Console.SetCursorPosition(0, targetTop); } catch { /* redirected output etc. */ }
+            try { Terminal.SetCursorPosition(0, targetTop); } catch { /* redirected output etc. */ }
             return true;
         }
     }
@@ -117,7 +117,7 @@ public static class DiscreteScroller
     /// <code>
     /// // Start a fresh page before a major section:
     /// DiscreteScroller.NewPage();
-    /// Console.WriteLine("== Build Summary ==");
+    /// Terminal.WriteLine("== Build Summary ==");
     /// // ...write the section...
     /// </code>
     /// </example>
@@ -126,8 +126,8 @@ public static class DiscreteScroller
         lock (scrollLock)
         {
             // Using WindowHeight as Headroom guarantees at least one page scroll.
-            _ = EnsureHeadroom(Math.Max(1, Console.WindowHeight), 0);
-            Console.WriteLine(Notice);
+            _ = EnsureHeadroom(Math.Max(1, Terminal.WindowHeight), 0);
+            Terminal.WriteLine(Notice);
         }
     }
 
@@ -140,6 +140,6 @@ public static class DiscreteScroller
         return $"                           {arrow}  {text}  {arrow}  ";
     }
 
-    private static int SafeWidth() { try { return Math.Max(20, Console.WindowWidth); } catch { return 80; } }
+    private static int SafeWidth() { try { return Math.Max(20, Terminal.WindowWidth); } catch { return 80; } }
     private static bool UnicodeFriendly() { try { return !System.Console.IsOutputRedirected; } catch { return false; } }
 }

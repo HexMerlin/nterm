@@ -9,7 +9,7 @@ namespace NTerm.Core;
 /// Keeps SIXEL output exactly as before; replaces reading with a tiny VT-aware editor
 /// so Backspace deletes a char and Ctrl+Backspace deletes a word on Windows Terminal.
 /// </summary>
-public static class Console
+public static class Terminal
 {
     private static readonly Stream Stdout = System.Console.OpenStandardOutput();
 
@@ -28,7 +28,7 @@ public static class Console
     private static Color lastFg = Color.Transparent;
     private static Color lastBg = Color.Transparent;
 
-    static Console()
+    static Terminal()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
         System.Console.InputEncoding = Encoding.UTF8;
@@ -450,7 +450,7 @@ public static class Console
                 try
                 {
                     System.Console.SetBufferSize(
-                        Math.Max(Console.BufferWidth, minWidth),
+                        Math.Max(Terminal.BufferWidth, minWidth),
                         Math.Max(newHeight, minHeight)
                     );
                 }

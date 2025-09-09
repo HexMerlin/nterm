@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using NTerm.Core;
 
 namespace NTerm.Controls;
 
@@ -17,8 +18,8 @@ public class SelectControl<T> : ISelectControl<T>
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
     public SelectItem<T> Show(IEnumerable<SelectItem<T>> items, int numberOfVisibleItems = 4)
     {
-        // Use ConsoleState to automatically manage console state restoration
-        using ConsoleState consoleState = new();
+        // Use TerminalState to automatically manage terminal state restoration
+        using TerminalState terminalState = new();
 
         List<SelectItem<T>> itemList = ValidateInput(items);
         if (itemList.Count == 0)
@@ -26,11 +27,11 @@ public class SelectControl<T> : ISelectControl<T>
             return SelectItem<T>.Empty;
         }
 
-        PrepareConsoleForSelection();
+        PrepareTerminalForSelection();
         ClearInputBuffer();
 
         SelectDropdownView<T> view =
-            new(consoleState.OriginalCursorLeft, consoleState.OriginalCursorTop);
+            new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop);
 
         SelectItem<T> selectedItem = view.Show(itemList, numberOfVisibleItems);
 
@@ -53,7 +54,7 @@ public class SelectControl<T> : ISelectControl<T>
     /// <summary>
     /// Prepares the console for selection by hiding the cursor.
     /// </summary>
-    private static void PrepareConsoleForSelection()
+    private static void PrepareTerminalForSelection()
     {
         try
         {
@@ -74,9 +75,9 @@ public class SelectControl<T> : ISelectControl<T>
         int clearedKeys = 0;
         const int maxKeysToClear = 100;
 
-        while (Console.KeyAvailable && clearedKeys < maxKeysToClear)
+        while (Terminal.KeyAvailable && clearedKeys < maxKeysToClear)
         {
-            _ = Console.ReadKey(true);
+            _ = Terminal.ReadKey(true);
             clearedKeys++;
         }
     }
@@ -112,8 +113,8 @@ public class SelectControl<T> : ISelectControl<T>
     {
         string displayText = TruncateText(
             selectedItem.Text,
-            Math.Max(0, Console.WindowWidth - Console.CursorLeft)
+            Math.Max(0, Terminal.WindowWidth - Terminal.CursorLeft)
         );
-        Console.Write(displayText);
+        Terminal.Write(displayText);
     }
 }

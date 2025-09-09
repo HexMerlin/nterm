@@ -9,8 +9,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     private int LastRenderedLineCount { get; set; }
 
     private int scrollOffset;
-    private int previousWindowHeight = Console.WindowHeight;
-    private int previousCursorTop = Console.CursorTop;
+    private int previousWindowHeight = Terminal.WindowHeight;
+    private int previousCursorTop = Terminal.CursorTop;
 
     public SelectItem<T> Show(IReadOnlyList<SelectItem<T>> items, int numberOfVisibleItems = 4)
     {
@@ -23,7 +23,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             UpdateOnResize();
 
             int requiredRowsBelow = Math.Min(numberOfVisibleItems, Math.Max(1, items.Count));
-            AnchorRow = ConsoleEx.EnsureSpaceBelowAnchor(
+            AnchorRow = TerminalEx.EnsureSpaceBelowAnchor(
                 AnchorColumn,
                 AnchorRow,
                 requiredRowsBelow
@@ -32,7 +32,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             _ = Render(items, currentIndex, numberOfVisibleItems);
 
             // Handle user input
-            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+            ConsoleKeyInfo keyInfo = Terminal.ReadKey(true);
             (SelectItem<T> result, int newIndex) = HandleUserInput(items, currentIndex, keyInfo);
             currentIndex = newIndex;
 
@@ -48,19 +48,19 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             }
         }
 
-        ConsoleEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
-        ConsoleEx.SetCursor(AnchorColumn, AnchorRow);
+        TerminalEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
+        TerminalEx.SetCursor(AnchorColumn, AnchorRow);
 
         return selectedItem;
     }
 
     private void UpdateOnResize()
     {
-        int windowHeight = Console.WindowHeight;
+        int windowHeight = Terminal.WindowHeight;
 
         if (windowHeight < 2)
         {
-            AnchorRow = Console.CursorTop;
+            AnchorRow = Terminal.CursorTop;
             return;
         }
 
@@ -68,7 +68,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         if (windowDiff == 0)
             return;
 
-        int currentCursorTop = Console.CursorTop;
+        int currentCursorTop = Terminal.CursorTop;
         int cursorDiff = currentCursorTop - previousCursorTop;
 
         // Adjust anchor only when the terminal actually scrolled content
@@ -139,14 +139,14 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
         // Stabilize the cursor position to the anchor after rendering to make
         // resize detection reliable (cursorDiff reflects only external changes).
-        ConsoleEx.SetCursor(AnchorColumn, AnchorRow);
-        previousCursorTop = Console.CursorTop;
+        TerminalEx.SetCursor(AnchorColumn, AnchorRow);
+        previousCursorTop = Terminal.CursorTop;
         return totalRendered;
     }
 
     private int CalculateRowsToRender(int numberOfVisibleItems)
     {
-        int windowHeight = Console.WindowHeight;
+        int windowHeight = Terminal.WindowHeight;
         int availableRowsBelow = Math.Max(0, windowHeight - 1 - AnchorRow);
         int rowsToRender = Math.Min(numberOfVisibleItems, availableRowsBelow);
         return Math.Max(0, rowsToRender);
@@ -182,7 +182,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         if (rowsToRender <= 1)
             return 0;
 
-        int windowHeight = Console.WindowHeight;
+        int windowHeight = Terminal.WindowHeight;
         int actuallyRenderedRows = 0;
 
         for (int i = 0; i < rowsToRender; i++)
@@ -204,7 +204,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             }
             else
             {
-                ConsoleEx.ClearLineFrom(AnchorColumn, row);
+                TerminalEx.ClearLineFrom(AnchorColumn, row);
             }
             actuallyRenderedRows++;
         }
@@ -223,8 +223,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             row++
         )
         {
-            if (row >= 0 && row < Console.WindowHeight)
-                ConsoleEx.ClearLineFrom(AnchorColumn, row);
+            if (row >= 0 && row < Terminal.WindowHeight)
+                TerminalEx.ClearLineFrom(AnchorColumn, row);
         }
     }
 
@@ -241,22 +241,22 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             : isSelected
                 ? "• "
                 : "  ";
-        ConsoleEx.SetCursor(startColumn, startRow);
-        ConsoleEx.ClearLineFrom(startColumn, startRow);
+        TerminalEx.SetCursor(startColumn, startRow);
+        TerminalEx.ClearLineFrom(startColumn, startRow);
 
         string rawText = (prefix ?? string.Empty) + (item.Text ?? string.Empty);
-        string displayText = TruncateText(rawText, Math.Max(0, Console.WindowWidth - startColumn));
+        string displayText = TruncateText(rawText, Math.Max(0, Terminal.WindowWidth - startColumn));
 
-        Console.ForegroundColor = isSelected ? Color.Yellow : Color.White;
+        Terminal.ForegroundColor = isSelected ? Color.Yellow : Color.White;
         if (underline)
         {
-            Console.Write("\u001b[4m");
-            Console.Write(displayText);
-            Console.Write("\u001b[24m");
+            Terminal.Write("\u001b[4m");
+            Terminal.Write(displayText);
+            Terminal.Write("\u001b[24m");
         }
         else
         {
-            Console.Write(displayText);
+            Terminal.Write(displayText);
         }
     }
 

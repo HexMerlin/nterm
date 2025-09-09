@@ -20,23 +20,23 @@ namespace NTerm.Document;
 /// }
 /// </code>
 ///</remarks>
-public abstract record SemanticDocument : IReadOnlyList<(char, SemanticCharStyle)>
+public abstract record StyledDocument : IReadOnlyList<(char, CharStyle)>
 {
-    private readonly ImmutableArray<(char Character, SemanticCharStyle Style)> Content;
+    private readonly ImmutableArray<(char Character, CharStyle Style)> Content;
 
     public int Count => Content.Length;
 
-    public (char, SemanticCharStyle) this[int index] => Content[index];
+    public (char, CharStyle) this[int index] => Content[index];
 
-    public SemanticDocument(ImmutableArray<(char Character, SemanticCharStyle Style)> content) => Content = content;
+    public StyledDocument(ImmutableArray<(char Character, CharStyle Style)> content) => Content = content;
 
     // Fast path: pattern-based foreach picks this (struct, no allocations).
-    public ImmutableArray<(char, SemanticCharStyle)>.Enumerator GetEnumerator()
+    public ImmutableArray<(char, CharStyle)>.Enumerator GetEnumerator()
         => Content.GetEnumerator();
 
     // Interface paths (used if caller has IEnumerable<T>):
-    IEnumerator<(char, SemanticCharStyle)> IEnumerable<(char, SemanticCharStyle)>.GetEnumerator()
-        => ((IEnumerable<(char, SemanticCharStyle)>)Content).GetEnumerator();
+    IEnumerator<(char, CharStyle)> IEnumerable<(char, CharStyle)>.GetEnumerator()
+        => ((IEnumerable<(char, CharStyle)>)Content).GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator()
         => ((IEnumerable)Content).GetEnumerator();

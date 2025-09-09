@@ -16,13 +16,13 @@ internal static class Windows
         const uint ENABLE_QUICK_EDIT_MODE = 0x0040; // (must be cleared with EXTENDED_FLAGS)
         const uint ENABLE_EXTENDED_FLAGS = 0x0080;
 
-        nint hout = Console.GetStdHandle(Console.STD_OUTPUT_HANDLE);
+        nint hout = Terminal.GetStdHandle(Terminal.STD_OUTPUT_HANDLE);
         if (hout != nint.Zero && GetConsoleMode(hout, out uint outMode))
         {
             _ = SetConsoleMode(hout, outMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
         }
 
-        nint hin = Console.GetStdHandle(Console.STD_INPUT_HANDLE);
+        nint hin = Terminal.GetStdHandle(Terminal.STD_INPUT_HANDLE);
         if (hin != nint.Zero && GetConsoleMode(hin, out uint inMode))
         {
             inMode |= ENABLE_EXTENDED_FLAGS; // allow clearing QUICK_EDIT

@@ -18,9 +18,9 @@ namespace NTerm.Examples;
 /// <para>Examples: HTML renderer, RTF export, terminal output, syntax highlighting in editors.</para>
 /// <para>All semantic decisions pre-computed - no classification logic needed in renderers.</para>
 /// </remarks>
-public record SemanticDocumentCSharp : SemanticDocument
+public record CSharpDocument : StyledDocument
 {
-    public SemanticDocumentCSharp(ImmutableArray<(char Character, SemanticCharStyle Style)> content) : base(content) { }
+    public CSharpDocument(ImmutableArray<(char Character, CharStyle Style)> content) : base(content) { }
 
     /// <summary>
     /// Creates a SemanticDocumentCSharp from a C# compilation.
@@ -33,11 +33,11 @@ public record SemanticDocumentCSharp : SemanticDocument
     /// <param name="compilation">Compilation to classify.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>SemanticDocumentCSharp containing fully resolved styled characters.</returns>
-    public static async Task<SemanticDocumentCSharp> CreateAsync(Compilation compilation, CancellationToken ct = default)
+    public static async Task<CSharpDocument> CreateAsync(Compilation compilation, CancellationToken ct = default)
     {
         (IEnumerable<ClassifiedSpan> spans, SourceText text) = await ClassifyAsync(compilation, ct).ConfigureAwait(false);
-        ImmutableArray<(char Character, SemanticCharStyle Style)> semanticCharacters = [.. ResolveSemanticCharacters(text, spans)];
-        return new SemanticDocumentCSharp(semanticCharacters);
+        ImmutableArray<(char Character, CharStyle Style)> semanticCharacters = [.. ResolveSemanticCharacters(text, spans)];
+        return new CSharpDocument(semanticCharacters);
     }
 
     /// <summary>
@@ -78,7 +78,7 @@ public record SemanticDocumentCSharp : SemanticDocument
     /// <param name="text">Source text containing characters to process.</param>
     /// <param name="spans">Classified spans from Roslyn analysis.</param>
     /// <returns>Array of tuples containing characters and their resolved styles.</returns>
-    private static (char Character, SemanticCharStyle Style)[] ResolveSemanticCharacters(SourceText text, IEnumerable<ClassifiedSpan> spans)
+    private static (char Character, CharStyle Style)[] ResolveSemanticCharacters(SourceText text, IEnumerable<ClassifiedSpan> spans)
     {
         ReadOnlySpan<char> textSpan = text.ToString().AsSpan();
         int length = text.Length;
@@ -99,14 +99,14 @@ public record SemanticDocumentCSharp : SemanticDocument
         }
 
         // Create styled characters with resolved visual properties
-        (char Character, SemanticCharStyle Style)[] styledCharacters = new (char, SemanticCharStyle)[length];
-        SemanticCharStyle defaultStyle = Theme.GetStyle("");
+        (char Character, CharStyle Style)[] styledCharacters = new (char, CharStyle)[length];
+        CharStyle defaultStyle = Theme.GetStyle("");
 
         for (int i = 0; i < length; i++)
         {
             char character = textSpan[i];
 
-            SemanticCharStyle style = classificationByPosition.TryGetValue(i, out ClassifiedSpan classification)
+            CharStyle style = classificationByPosition.TryGetValue(i, out ClassifiedSpan classification)
                 ? Theme.GetStyle(classification.ClassificationType)
                 : defaultStyle;
 

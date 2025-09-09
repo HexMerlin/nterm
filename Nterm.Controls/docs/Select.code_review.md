@@ -251,7 +251,7 @@ private const string ResetEscapeSequence = "\x1b[0m";
 ## Recommended Refactoring Steps
 
 1. **Create supporting classes**:
-   - `ConsoleState` for state management
+   - `TerminalState` for state management
    - `IConsoleWrapper` for abstraction
 
 2. **Break down the `Show` method**:

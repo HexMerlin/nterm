@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
+using NTerm.Core;
 using NTerm.Document;
 using System.Text;
 
@@ -10,9 +11,9 @@ public class CSharpSyntaxHighlightingDemo
     public CSharpSyntaxHighlightingDemo() { }
 
     /// <summary>
-    /// Demonstrates complete SemanticDocumentCSharp pipeline with C# script syntax highlighting.
+    /// Demonstrates complete CSharpDocument pipeline with C# script syntax highlighting.
     /// Creates a sample C# script, processes it through Roslyn classification,
-    /// resolves semantic styling, and renders to console with colors.
+    /// resolves styling, and renders to console with colors.
     /// </summary>
     /// <returns>Task representing the asynchronous operation.</returns>
     public async Task Run()
@@ -30,7 +31,7 @@ int x = 42;
 Some comment section here
 */
 string msg = $"Value = {x} ";
-Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
+Terminal.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
 """;
 
         // 2) Compile the script
@@ -41,12 +42,12 @@ Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
 
         Microsoft.CodeAnalysis.Compilation compilation = script.GetCompilation();
 
-        // 3) Create SemanticDocument with full classification fidelity
-        SemanticDocument document = await SemanticDocumentCSharp.CreateAsync(compilation);
+        // 3) Create CSharpDocument with full classification fidelity
+        CSharpDocument document = await CSharpDocument.CreateAsync(compilation);
 
         // 4) Render to console using rich semantic information
         ConsoleRenderer.Render(document);
-        Console.WriteLine();
+        Terminal.WriteLine();
 
     }
 }
