@@ -71,7 +71,7 @@ public sealed class ChatEntryWriter
         _startLeft = Terminal.CursorLeft;
         _startTop = Terminal.CursorTop;
 
-        Terminal.WriteImage(AvatarImage.ConsoleData);
+        Terminal.WriteImage(AvatarImage.EncodedData);
 
         Size cellSize = new(10, 20); // Standard monospace cell size
         Size imageSize = AvatarImage.GetSizeInCharacters(cellSize);

@@ -26,10 +26,11 @@ public readonly struct TerminalImage : IEquatable<TerminalImage>
     /// <returns><see langword="true"/> <b>iff</b> optimized SIXEL data encoded successfully.</returns>
     public readonly bool HasOptimizedEncoding { get; }
 
-    /// <summary>
-    /// Encoded image data as string
-    /// </summary>
-    private readonly string EncodedData { get; }
+    ///// <summary>
+    ///// Terminal-ready image data.
+    ///// </summary>
+    ///// <returns>Complete SIXEL data ready for terminal output - optimized encoding or fallback text.</returns>
+    public readonly string EncodedData { get; }
 
     /// <summary>
     /// Calculates image dimensions in character grid cells.
@@ -46,12 +47,6 @@ public readonly struct TerminalImage : IEquatable<TerminalImage>
             (int)Math.Ceiling((double)DisplaySize.Height / cellSizeInPixels.Height)
         );
     }
-
-    /// <summary>
-    /// Console-ready image data.
-    /// </summary>
-    /// <returns>Complete SIXEL data ready for console output - optimized encoding or fallback text.</returns>
-    public ReadOnlySpan<char> ConsoleData => EncodedData.AsSpan();
 
     /// <summary>
     /// Initializes console image with pre-encoded data.
