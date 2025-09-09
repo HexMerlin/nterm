@@ -1,0 +1,31 @@
+<Project>
+
+	<PropertyGroup>
+		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<FileVersion>1.0.0.0</FileVersion>
+		<Version>1.0.0</Version>
+	</PropertyGroup>
+	
+	<PropertyGroup>
+		<AnalysisLevel>latest-Recommended</AnalysisLevel>
+	
+		<!-- Disable warnings for missing XML comments. Review when there is time. -->
+		<NoWarn>$(NoWarn);1591;1573</NoWarn>
+		<!-- Disable security vulnerability warning for 'Microsoft.Build.Tasks.Core' -->
+		<NoWarn>$(NoWarn);NU1903</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ArtifactsDir>$(MSBuildThisFileDirectory)artifacts\</ArtifactsDir>
+
+		<!-- bin can be shared or per project; obj must be per project -->
+		<BaseOutputPath>$(ArtifactsDir)bin\</BaseOutputPath>
+
+		<!-- Per-project (and optional TFM) intermediates -->
+		<BaseIntermediateOutputPath>$(ArtifactsDir)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+	
+		<!-- NuGet restore files (project.assets.json, *.nuget.g.*) go here -->
+		<MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+	</PropertyGroup>
+</Project>

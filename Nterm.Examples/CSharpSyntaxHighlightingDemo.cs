@@ -1,0 +1,55 @@
+﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
+using NTerm.Document;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace NTerm.Examples;
+public class CSharpSyntaxHighlightingDemo
+{
+
+    public CSharpSyntaxHighlightingDemo() {}
+
+    /// <summary>
+    /// Demonstrates complete SemanticDocumentCSharp pipeline with C# script syntax highlighting.
+    /// Creates a sample C# script, processes it through Roslyn classification,
+    /// resolves semantic styling, and renders to console with colors.
+    /// </summary>
+    /// <returns>Task representing the asynchronous operation.</returns>
+    public async Task Run()
+    {
+        System.Console.OutputEncoding = Encoding.UTF8;
+
+        //A simple C# script
+        string scriptText = """
+using System;
+
+static int AddFive(int initial) => initial + 5;
+
+int x = 42;
+/*
+Some comment section here
+*/
+string msg = $"Value = {x} ";
+Console.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
+""";
+
+
+        // 2) Compile the script
+        Script<object> script = CSharpScript.Create(
+            scriptText,
+            options: ScriptOptions.Default.WithImports("System")
+        );
+
+        Microsoft.CodeAnalysis.Compilation compilation = script.GetCompilation();
+
+        // 3) Create SemanticDocument with full classification fidelity
+        SemanticDocument document = await SemanticDocumentCSharp.CreateAsync(compilation);
+
+        // 4) Render to console using rich semantic information
+        ConsoleRenderer.Render(document);
+        Console.WriteLine();
+
+    }
+}
