@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using NTerm.Core;
+using System.Diagnostics;
 
 namespace NTerm.Controls;
 
