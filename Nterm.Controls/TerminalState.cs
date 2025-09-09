@@ -36,13 +36,7 @@ public sealed class TerminalState : IDisposable
     {
         // Restore default foreground color
         Terminal.ForegroundColor = OriginalForeground;
-
-        // Restore cursor visibility if supported
-        if (
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-        )
+        if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
         {
             System.Console.CursorVisible = OriginalCursorVisible;
         }
