@@ -9,15 +9,15 @@ namespace NTerm.Core;
 /// <remarks>
 /// This class is used to get raw TTY input for Linux and macOS.
 /// </remarks>
-public class RawTTY : IDisposable
+public sealed class RawTTY : IDisposable
 {
-    const int O_RDONLY = 0;
-    const int STDIN_FILENO = 0;
+    private const int O_RDONLY = 0;
+    private const int STDIN_FILENO = 0;
 
     [StructLayout(LayoutKind.Sequential)]
 #pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
 #pragma warning disable IDE1006 // Naming Styles
-    struct termios
+    private struct termios
 #pragma warning restore IDE1006 // Naming Styles
 #pragma warning restore CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
     {
@@ -47,13 +47,13 @@ public class RawTTY : IDisposable
     [DllImport("libc", SetLastError = true)]
     static extern void cfmakeraw(ref termios termios_p);
 
-    const int TCSANOW = 0;
+    private const int TCSANOW = 0;
 
     // c_cc indexes (Linux): VMIN = 6, VTIME = 5 (values depend on system headers).
-    const int VTIME = 5;
-    const int VMIN = 6;
+    private const int VTIME = 5;
+    private const int VMIN = 6;
 
-    private int _fd = -1;
+    private readonly int _fd = -1;
     private termios _orig;
     private readonly Stream _stream;
 
@@ -77,7 +77,7 @@ public class RawTTY : IDisposable
         if (tcgetattr(_fd, out _orig) != 0)
             throw new InvalidOperationException("tcgetattr failed");
 
-        var raw = _orig;
+        termios raw = _orig;
         cfmakeraw(ref raw);
 
         raw.c_oflag = _orig.c_oflag; // keep output processing (incl. NL -> CRLF) as before
@@ -92,16 +92,13 @@ public class RawTTY : IDisposable
             throw new InvalidOperationException("tcsetattr failed");
 
         // Use a FileStream on the same fd for convenience
-        var safe = new SafeFileHandle(new IntPtr(_fd), ownsHandle: false);
+        SafeFileHandle safe = new SafeFileHandle(new IntPtr(_fd), ownsHandle: false);
         _stream = new FileStream(safe, FileAccess.Read, bufferSize: 1, isAsync: false);
     }
 
-    public Stream GetStream()
-    {
-        return _stream;
-    }
+    public Stream GetStream() => _stream;
 
-    enum Key
+    private enum Key
     {
         Char,
         ArrowUp,
@@ -118,7 +115,7 @@ public class RawTTY : IDisposable
             // restore original termios (use STDIN if we fell back)
             try
             {
-                tcsetattr(_fd, TCSANOW, ref _orig);
+                _ = tcsetattr(_fd, TCSANOW, ref _orig);
             }
             catch { }
         }
