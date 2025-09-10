@@ -91,11 +91,10 @@ public static class Terminal2
     /// If no background color is specified, the current <see cref="BackgroundColor"/> is used.
     /// </remarks>
     public static void Clear(Color backgroundColor = default)
-    {       
+    {
+        Console.Clear();
         lock (writeLock)
-        {
-            Console.Clear();
-
+        {         
             if (backgroundColor != default)
                 BackgroundColor = backgroundColor;
 
