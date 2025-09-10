@@ -40,8 +40,9 @@ public static class Terminal
             Stdin = rawTTY.GetStream();
         }
 
-        // Backspace semantics (DECBKM) to stabilize BS vs DEL handling.
-        //WriteInternal("\x1b[?67h");
+        // Backspace semantics (DECBKM) to stabilize BS vs DEL handling (backspace sends BS, Ctrl+Backspace sends DEL)
+        if (OperatingSystem.IsWindows()) 
+            WriteInternal("\x1b[?67h");
     }
 
     public static string Title
