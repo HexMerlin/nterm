@@ -33,19 +33,19 @@ public sealed class RawTTY : IDisposable
     }
 
     [DllImport("libc", SetLastError = true)]
-    static extern int open(string pathname, int flags);
+    private static extern int open(string pathname, int flags);
 
     [DllImport("libc", SetLastError = true)]
-    static extern int close(int fd);
+    private static extern int close(int fd);
 
     [DllImport("libc", SetLastError = true)]
-    static extern int tcgetattr(int fd, out termios termios_p);
+    private static extern int tcgetattr(int fd, out termios termios_p);
 
     [DllImport("libc", SetLastError = true)]
-    static extern int tcsetattr(int fd, int optional_actions, ref termios termios_p);
+    private static extern int tcsetattr(int fd, int optional_actions, ref termios termios_p);
 
     [DllImport("libc", SetLastError = true)]
-    static extern void cfmakeraw(ref termios termios_p);
+    private static extern void cfmakeraw(ref termios termios_p);
 
     private const int TCSANOW = 0;
 
