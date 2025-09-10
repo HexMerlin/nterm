@@ -1,5 +1,3 @@
-using NTerm.Core;
-
 namespace NTerm.Controls;
 
 internal static class TerminalEx

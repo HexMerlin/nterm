@@ -9,6 +9,8 @@ public interface ISelectControl<T>
     /// Shows a select control with the specified items and returns the selected item.
     /// </summary>
     /// <param name="items">The list of items to display.</param>
+    /// <param name="numberOfVisibleItems">Maximum number of items to render below the anchor.</param>
+    /// <param name="enableFilter">Whether to enable interactive typing filter (default: true).</param>
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
     SelectItem<T> Show(IEnumerable<SelectItem<T>> items, int numberOfVisibleItems = 4);
 }

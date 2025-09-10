@@ -12,6 +12,7 @@ public static class Select
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
     public static SelectItem<T> Show<T>(
         IEnumerable<SelectItem<T>> items,
-        int numberOfVisibleItems = 4
-    ) => new SelectControl<T>().Show(items, numberOfVisibleItems);
+        int numberOfVisibleItems = 4,
+        bool enableFilter = true
+    ) => new SelectControl<T>(enableFilter).Show(items, numberOfVisibleItems);
 }

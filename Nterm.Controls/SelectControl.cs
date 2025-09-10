@@ -1,4 +1,3 @@
-using NTerm.Core;
 using System.Diagnostics;
 
 namespace NTerm.Controls;
@@ -9,7 +8,7 @@ namespace NTerm.Controls;
 ///
 /// For more control and advanced usage, use <see cref="SelectDropdownView"/> directly.
 /// </summary>
-public class SelectControl<T> : ISelectControl<T>
+public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
 {
     /// <summary>
     /// Shows a select control with the specified items and returns the selected item.
@@ -24,7 +23,7 @@ public class SelectControl<T> : ISelectControl<T>
         List<SelectItem<T>> itemList = ValidateInput(items);
         if (itemList.Count == 0)
         {
-            return SelectItem<T>.Empty;
+            return SelectItem.Empty<T>();
         }
 
         PrepareTerminalForSelection();
@@ -33,7 +32,7 @@ public class SelectControl<T> : ISelectControl<T>
         SelectDropdownView<T> view =
             new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop);
 
-        SelectItem<T> selectedItem = view.Show(itemList, numberOfVisibleItems);
+        SelectItem<T> selectedItem = view.Show(itemList, numberOfVisibleItems, enableFilter);
 
         RenderFinalSelection(selectedItem);
         return selectedItem;

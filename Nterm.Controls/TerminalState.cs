@@ -1,6 +1,3 @@
-using NTerm.Core;
-using System.Runtime.InteropServices;
-
 namespace NTerm.Controls;
 
 /// <summary>

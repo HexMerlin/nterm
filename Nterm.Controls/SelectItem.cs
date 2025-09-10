@@ -5,20 +5,15 @@ namespace NTerm.Controls;
 /// </summary>
 public class SelectItem<T>
 {
-    /// <summary>
-    /// The text that is visible in the list.
-    /// </summary>
-    public string Text { get; init; } = string.Empty;
+    public required string Text { get; init; }
 
-    /// <summary>
-    /// A function (callback) that user code can call when the item is selected and the list is closed.
-    /// </summary>
-    public T Value { get; init; } = default!;
-
-    /// <summary>
-    /// Gets an empty select item with no text and a no-op action.
-    /// </summary>
-    public static SelectItem<T> Empty { get; } = new();
+    public required T Value { get; init; }
 
     public bool IsEmpty() => string.IsNullOrEmpty(Text);
+}
+
+// Non-generic factory for "empty" items
+public static class SelectItem
+{
+    public static SelectItem<T> Empty<T>() => new() { Text = string.Empty, Value = default! };
 }
