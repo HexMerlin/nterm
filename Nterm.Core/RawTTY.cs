@@ -1,5 +1,5 @@
-using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 
 namespace NTerm.Core;
 
@@ -11,11 +11,10 @@ namespace NTerm.Core;
 /// </remarks>
 public class RawTTY : IDisposable
 {
-    private const int O_RDONLY = 0;
-    private const int STDIN_FILENO = 0;
+    const int O_RDONLY = 0;
+    const int STDIN_FILENO = 0;
 
     [StructLayout(LayoutKind.Sequential)]
-    private
 #pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language.
 #pragma warning disable IDE1006 // Naming Styles
     struct termios
@@ -33,28 +32,28 @@ public class RawTTY : IDisposable
             c_ospeed; // present on glibc/x86_64
     }
 
-    [DllImport("libc", SetLastError = true, CharSet = CharSet.Unicode)]
-    private static extern int open(string pathname, int flags);
+    [DllImport("libc", SetLastError = true)]
+    static extern int open(string pathname, int flags);
 
     [DllImport("libc", SetLastError = true)]
-    private static extern int close(int fd);
+    static extern int close(int fd);
 
     [DllImport("libc", SetLastError = true)]
-    private static extern int tcgetattr(int fd, out termios termios_p);
+    static extern int tcgetattr(int fd, out termios termios_p);
 
     [DllImport("libc", SetLastError = true)]
-    private static extern int tcsetattr(int fd, int optional_actions, ref termios termios_p);
+    static extern int tcsetattr(int fd, int optional_actions, ref termios termios_p);
 
     [DllImport("libc", SetLastError = true)]
-    private static extern void cfmakeraw(ref termios termios_p);
+    static extern void cfmakeraw(ref termios termios_p);
 
-    private const int TCSANOW = 0;
+    const int TCSANOW = 0;
 
     // c_cc indexes (Linux): VMIN = 6, VTIME = 5 (values depend on system headers).
-    private const int VTIME = 5;
-    private const int VMIN = 6;
+    const int VTIME = 5;
+    const int VMIN = 6;
 
-    private readonly int _fd = -1;
+    private int _fd = -1;
     private termios _orig;
     private readonly Stream _stream;
 
@@ -78,7 +77,7 @@ public class RawTTY : IDisposable
         if (tcgetattr(_fd, out _orig) != 0)
             throw new InvalidOperationException("tcgetattr failed");
 
-        termios raw = _orig;
+        var raw = _orig;
         cfmakeraw(ref raw);
 
         raw.c_oflag = _orig.c_oflag; // keep output processing (incl. NL -> CRLF) as before
@@ -93,13 +92,16 @@ public class RawTTY : IDisposable
             throw new InvalidOperationException("tcsetattr failed");
 
         // Use a FileStream on the same fd for convenience
-        SafeFileHandle safe = new(new IntPtr(_fd), ownsHandle: false);
+        var safe = new SafeFileHandle(new IntPtr(_fd), ownsHandle: false);
         _stream = new FileStream(safe, FileAccess.Read, bufferSize: 1, isAsync: false);
     }
 
-    public Stream GetStream() => _stream;
+    public Stream GetStream()
+    {
+        return _stream;
+    }
 
-    private enum Key
+    enum Key
     {
         Char,
         ArrowUp,
@@ -116,7 +118,7 @@ public class RawTTY : IDisposable
             // restore original termios (use STDIN if we fell back)
             try
             {
-                _ = tcsetattr(_fd, TCSANOW, ref _orig);
+                tcsetattr(_fd, TCSANOW, ref _orig);
             }
             catch { }
         }
