@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace NTerm.Controls;
 
@@ -222,7 +223,13 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         int numberOfVisibleItems
     )
     {
-        int rowsToRender = CalculateRowsToRender(numberOfVisibleItems);
+        if (numberOfVisibleItems == 1)
+        {
+            DisplayAnchorItem(items[selectedIndex].Text, filterText, AnchorColumn, AnchorRow);
+            return 1;
+        }
+
+        int rowsToRender = CalculateRowsToRender(Math.Min(items.Count, numberOfVisibleItems));
         scrollOffset = CalculateScrollOffset(
             selectedIndex,
             rowsToRender,
@@ -230,24 +237,10 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             items.Count
         );
 
-        // Render anchor line. If filtering is enabled and there is text, show the typed characters.
-        if (filterEnabled && !string.IsNullOrEmpty(filterText))
-        {
-            DisplayAnchorItem(filterText, AnchorColumn, AnchorRow);
-        }
-        else
-        {
-            // Render selected item at anchor line (underlined to distinguish from list below)
-            if (items.Count > 0)
-            {
-                DisplayAnchorItem(items[selectedIndex].Text, AnchorColumn, AnchorRow);
-            }
-            else
-            {
-                Terminal.SetCursorPosition(AnchorColumn, AnchorRow);
-                TerminalEx.ClearLineFrom(AnchorColumn, AnchorRow);
-            }
-        }
+        string anchorText = items.Count > 0 ? items[selectedIndex].Text : filterText;
+        // Render selected item at anchor line (underlined to distinguish from list below)
+
+        DisplayAnchorItem(anchorText, filterText, AnchorColumn, AnchorRow);
 
         int actuallyRenderedRows = RenderViewport(items, selectedIndex, rowsToRender, scrollOffset);
         int totalRendered = 1 + actuallyRenderedRows; // selected + viewport rows
@@ -297,8 +290,11 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         int offset
     )
     {
-        if (rowsToRender <= 1)
+        if (rowsToRender == 0)
+        {
+            DisplayNoItems();
             return 0;
+        }
 
         int windowHeight = Terminal.WindowHeight;
         int actuallyRenderedRows = 0;
@@ -340,7 +336,12 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         }
     }
 
-    private static void DisplayAnchorItem(string text, int startColumn, int startRow)
+    private static void DisplayAnchorItem(
+        string text,
+        string filterText,
+        int startColumn,
+        int startRow
+    )
     {
         Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
@@ -350,10 +351,32 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             Math.Max(0, Terminal.WindowWidth - startColumn)
         );
 
-        Terminal.ForegroundColor = Color.Yellow;
+        string[] textParts = Regex.Split(displayText, $"({Regex.Escape(filterText)})");
+
+        // Underline the filter text
         Terminal.Write("\u001b[4m");
-        Terminal.Write(displayText);
+        foreach (string part in textParts)
+        {
+            if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase))
+            {
+                Terminal.ForegroundColor = Color.White;
+            }
+            else
+            {
+                Terminal.ForegroundColor = Color.Gray;
+            }
+            Terminal.Write(part);
+        }
+        // End underline
         Terminal.Write("\u001b[24m");
+    }
+
+    private void DisplayNoItems()
+    {
+        Terminal.SetCursorPosition(AnchorColumn, AnchorRow + 1);
+        TerminalEx.ClearLineFrom(AnchorColumn, AnchorRow + 1);
+        Terminal.ForegroundColor = Color.Gray;
+        Terminal.Write("No items found");
     }
 
     private static void DisplayListItem(
