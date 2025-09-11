@@ -2,29 +2,15 @@ namespace NTerm.Controls;
 
 internal static class TerminalEx
 {
-    public static void SetCursor(int left, int top)
-    {
-        int clampedLeft = Math.Clamp(left, 0, Math.Max(0, Terminal.WindowWidth - 1));
-        int clampedTop = Math.Clamp(top, 0, Math.Max(0, Terminal.WindowHeight - 1));
-        try
-        {
-            Terminal.SetCursorPosition(clampedLeft, clampedTop);
-        }
-        catch
-        {
-            // Ignore if setting cursor position is not supported
-        }
-    }
-
     public static void ClearLineFrom(int startColumn, int row)
     {
         if (row < 0 || row >= Terminal.WindowHeight)
             return;
-        SetCursor(startColumn, row);
+        Terminal.SetCursorPosition(startColumn, row);
         // Erase to the end of the line (reset line width)
         // \u001b is the escape character, [K is the erase command
         Terminal.Write("\u001b[K");
-        SetCursor(startColumn, row);
+        Terminal.SetCursorPosition(startColumn, row);
     }
 
     public static void ClearArea(int startColumn, int startRow, int lineCount)
@@ -66,13 +52,13 @@ internal static class TerminalEx
 
         // Write the required number of newlines (from start row) to create room.
         // This may cause the terminal to scroll up if we're at the bottom.
-        SetCursor(columnAnchor, rowAnchor);
+        Terminal.SetCursorPosition(columnAnchor, rowAnchor);
         Terminal.Write(new string('\n', Math.Min(windowHeight - 1, requiredRows)));
 
         int adjustedStartRow = Math.Max(0, rowAnchor - needed);
 
         // Restore cursor to the anchor position
-        SetCursor(columnAnchor, adjustedStartRow);
+        Terminal.SetCursorPosition(columnAnchor, adjustedStartRow);
 
         return adjustedStartRow;
     }

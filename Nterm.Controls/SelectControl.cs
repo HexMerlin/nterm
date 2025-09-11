@@ -26,9 +26,6 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
             return SelectItem.Empty<T>();
         }
 
-        PrepareTerminalForSelection();
-        ClearInputBuffer();
-
         SelectDropdownView<T> view =
             new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop);
 
@@ -48,37 +45,6 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
         ArgumentNullException.ThrowIfNull(items);
 
         return [.. items.Where(item => !item.IsEmpty())];
-    }
-
-    /// <summary>
-    /// Prepares the console for selection by hiding the cursor.
-    /// </summary>
-    private static void PrepareTerminalForSelection()
-    {
-        try
-        {
-            System.Console.CursorVisible = false;
-        }
-        catch (PlatformNotSupportedException)
-        {
-            // Cursor visibility not supported on this platform
-            Debug.WriteLine("Cursor visibility manipulation not supported on this platform.");
-        }
-    }
-
-    /// <summary>
-    /// Clears any buffered input to prevent unwanted key presses.
-    /// </summary>
-    private static void ClearInputBuffer()
-    {
-        int clearedKeys = 0;
-        const int maxKeysToClear = 100;
-
-        while (Terminal.KeyAvailable && clearedKeys < maxKeysToClear)
-        {
-            _ = Terminal.ReadKey(true);
-            clearedKeys++;
-        }
     }
 
     /// <summary>

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace NTerm.Controls;
 
 internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
@@ -20,6 +22,11 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         bool enableFilter = true
     )
     {
+        using TerminalState state = new();
+
+        PrepareTerminalForSelection();
+        ClearInputBuffer();
+
         filterEnabled = enableFilter;
         filterText = string.Empty;
 
@@ -65,9 +72,40 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         }
 
         TerminalEx.ClearArea(AnchorColumn, AnchorRow, LastRenderedLineCount);
-        TerminalEx.SetCursor(AnchorColumn, AnchorRow);
+        Terminal.SetCursorPosition(AnchorColumn, AnchorRow);
 
         return selectedItem;
+    }
+
+    /// <summary>
+    /// Prepares the console for selection by hiding the cursor.
+    /// </summary>
+    private static void PrepareTerminalForSelection()
+    {
+        try
+        {
+            System.Console.CursorVisible = false;
+        }
+        catch (PlatformNotSupportedException)
+        {
+            // Cursor visibility not supported on this platform
+            Debug.WriteLine("Cursor visibility manipulation not supported on this platform.");
+        }
+    }
+
+    /// <summary>
+    /// Clears any buffered input to prevent unwanted key presses.
+    /// </summary>
+    private static void ClearInputBuffer()
+    {
+        int clearedKeys = 0;
+        const int maxKeysToClear = 1000;
+
+        while (Terminal.KeyAvailable && clearedKeys < maxKeysToClear)
+        {
+            _ = Terminal.ReadKey(true);
+            clearedKeys++;
+        }
     }
 
     private void UpdateOnResize()
@@ -208,7 +246,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             }
             else
             {
-                TerminalEx.SetCursor(AnchorColumn, AnchorRow);
+                Terminal.SetCursorPosition(AnchorColumn, AnchorRow);
                 TerminalEx.ClearLineFrom(AnchorColumn, AnchorRow);
             }
         }
@@ -221,7 +259,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
         // Stabilize the cursor position to the anchor after rendering to make
         // resize detection reliable (cursorDiff reflects only external changes).
-        TerminalEx.SetCursor(AnchorColumn, AnchorRow);
+        Terminal.SetCursorPosition(AnchorColumn, AnchorRow);
         previousCursorTop = Terminal.CursorTop;
         return totalRendered;
     }
@@ -306,7 +344,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
     private static void DisplayAnchorItem(string text, int startColumn, int startRow)
     {
-        TerminalEx.SetCursor(startColumn, startRow);
+        Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
         string displayText = TruncateText(
@@ -328,7 +366,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     )
     {
         string prefix = isSelected ? "• " : "  ";
-        TerminalEx.SetCursor(startColumn, startRow);
+        Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
         string rawText = (prefix ?? string.Empty) + (item.Text ?? string.Empty);
