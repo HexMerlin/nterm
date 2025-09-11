@@ -40,7 +40,7 @@ public static class ConsoleRenderer
 
         foreach ((char character, CharStyle style) in document)
         {
-            Terminal.Write(character, style.Color, style.BackColor);
+            Terminal2.Write(character, style.Color, style.BackColor);
         }
 
         (System.Console.ForegroundColor, System.Console.BackgroundColor) = initColors;

@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿#if false
+using System.Runtime.InteropServices;
 
 namespace NTerm.Core;
 internal static class Windows
@@ -36,3 +37,4 @@ internal static class Windows
 
     }
 }
+#endif

@@ -33,15 +33,12 @@ public static class Terminal
         System.Console.OutputEncoding = Encoding.UTF8;
         System.Console.InputEncoding = Encoding.UTF8;
 
-        Windows.TryEnableVirtualTerminalOnWindows(); // enable VT output + raw-ish input on Win
         if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
         {
             rawTTY = new RawTTY();
             Stdin = rawTTY.GetStream();
         }
 
-        // Backspace semantics (DECBKM) to stabilize BS vs DEL handling.
-        //WriteInternal("\x1b[?67h");
     }
 
     public static string Title
