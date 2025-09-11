@@ -11,9 +11,9 @@
       "preLaunchTask": "build",
 
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/SemanticTokens.Controls.Example/bin/Debug/net10.0/SemanticTokens.Controls.Example.dll",
+      "program": "${workspaceFolder}/artifacts/bin/Nterm.Controls.Example/Debug/net10.0/Nterm.Controls.Example.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/SemanticTokens.Controls.Example",
+      "cwd": "${workspaceFolder}/artifacts/bin/Nterm.Controls.Example",
       // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
       "console": "integratedTerminal",
       "stopAtEntry": false
@@ -28,9 +28,9 @@
       "preLaunchTask": "build",
 
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/SemanticTokens.DevConsole/bin/Debug/net10.0/SemanticTokens.DevConsole.dll",
+      "program": "${workspaceFolder}/artifacts/bin/Nterm.DevConsole/Debug/net10.0/Nterm.DevConsole.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/SemanticTokens.DevConsole",
+      "cwd": "${workspaceFolder}/artifacts/bin/Nterm.DevConsole",
       // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
       "console": "integratedTerminal",
       "stopAtEntry": false
