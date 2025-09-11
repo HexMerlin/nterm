@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace NTerm.Core;
@@ -26,7 +28,8 @@ public static class Terminal2
         get => OperatingSystem.IsWindows() ? Console.Title : "";
         set
         {
-            if (OperatingSystem.IsWindows()) Console.Title = value;
+            if (OperatingSystem.IsWindows())
+                Console.Title = value;
         }
     }
 
@@ -58,6 +61,24 @@ public static class Terminal2
     public static int CursorLeft => Console.CursorLeft;
     public static int CursorTop => Console.CursorTop;
 
+    public static bool CursorVisible
+    {
+        [SupportedOSPlatform("windows")]
+        get
+        {
+            if (OperatingSystem.IsWindows())
+                return Console.CursorVisible;
+
+            // Cursor visibility not supported on this platform, assume it is visible
+            return true;
+        }
+        [UnsupportedOSPlatform("android")]
+        [UnsupportedOSPlatform("browser")]
+        [UnsupportedOSPlatform("ios")]
+        [UnsupportedOSPlatform("tvos")]
+        set => Console.CursorVisible = value;
+    }
+
     /// <summary>True if there is input available without blocking.</summary>
     public static bool KeyAvailable => Console.KeyAvailable;
 
@@ -80,7 +101,6 @@ public static class Terminal2
         Write(sb.ToString());
     }
 
-
     /// <summary>
     /// Clears the entire console screen and moves the cursor to the home position (1,1).
     /// </summary>
@@ -94,7 +114,7 @@ public static class Terminal2
     {
         Console.Clear();
         lock (writeLock)
-        {         
+        {
             if (backgroundColor != default)
                 BackgroundColor = backgroundColor;
 
@@ -168,7 +188,6 @@ public static class Terminal2
                 lastBg = background;
             }
             WriteInternal(str);
-
         }
     }
 
@@ -216,7 +235,6 @@ public static class Terminal2
     public static string ReadLine() => Console.ReadLine() ?? "";
 
     public static void SetCursorPosition(int left, int top) => Console.SetCursorPosition(left, top);
-
 
     #region Private Methods
 

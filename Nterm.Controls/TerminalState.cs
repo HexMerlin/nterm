@@ -22,7 +22,7 @@ public sealed class TerminalState : IDisposable
 
         if (OperatingSystem.IsWindows())
         {
-            OriginalCursorVisible = System.Console.CursorVisible;
+            OriginalCursorVisible = Terminal.CursorVisible;
         }
     }
 
@@ -35,7 +35,7 @@ public sealed class TerminalState : IDisposable
         Terminal.ForegroundColor = OriginalForeground;
         if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
         {
-            System.Console.CursorVisible = OriginalCursorVisible;
+            Terminal.CursorVisible = OriginalCursorVisible;
         }
     }
 }

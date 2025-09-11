@@ -9,8 +9,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     private int LastRenderedLineCount { get; set; }
 
     private int scrollOffset;
-    private int previousWindowHeight = Console.WindowHeight;
-    private int previousCursorTop = Console.CursorTop;
+    private int previousWindowHeight = Terminal.WindowHeight;
+    private int previousCursorTop = Terminal.CursorTop;
 
     // Filtering state
     private bool filterEnabled;
@@ -78,13 +78,13 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     }
 
     /// <summary>
-    /// Prepares the console for selection by hiding the cursor.
+    /// Prepares the terminal for selection by hiding the cursor.
     /// </summary>
     private static void PrepareTerminalForSelection()
     {
         try
         {
-            System.Console.CursorVisible = false;
+            Terminal.CursorVisible = false;
         }
         catch (PlatformNotSupportedException)
         {
@@ -138,8 +138,6 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         previousWindowHeight = windowHeight;
         previousCursorTop = currentCursorTop;
     }
-
-    private static bool IsCancel(ConsoleKeyInfo keyInfo) => keyInfo.Key == ConsoleKey.Escape;
 
     /// <summary>
     /// Handles user input and returns the result, the new index, possibly updated filtered view, and whether cancel was requested.
