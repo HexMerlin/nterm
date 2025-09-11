@@ -123,5 +123,7 @@ public sealed class RawTTY : IDisposable
         // only close if we opened /dev/tty
         // (we used ownsHandle=false for safety)
         // close(_fd) could close stdin if fallback; avoid that here
+
+        GC.SuppressFinalize(this);
     }
 }
