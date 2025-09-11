@@ -5,17 +5,19 @@ namespace NTerm.Controls;
 
 internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 {
-    public int AnchorColumn { get; private set; } = anchorColumn;
-    public int AnchorRow { get; private set; } = anchorRow;
+    public Color ForegroundColor { get; init; } = Color.White;
+    public Color MenuColor { get; init; } = Color.Yellow;
+    public Color FilterColor { get; init; } = Color.Gray;
+    public Color NoItemsColor { get; init; } = Color.Gray;
+
+    private int AnchorColumn { get; set; } = anchorColumn;
+    private int AnchorRow { get; set; } = anchorRow;
     private int LastRenderedLineCount { get; set; }
-
-    private int scrollOffset;
-    private int previousWindowHeight = Terminal.WindowHeight;
-    private int previousCursorTop = Terminal.CursorTop;
-
-    // Filtering state
-    private bool filterEnabled;
-    private string filterText = string.Empty;
+    private int ScrollOffset { get; set; }
+    private int PreviousWindowHeight { get; set; } = Terminal.WindowHeight;
+    private int PreviousCursorTop { get; set; } = Terminal.CursorTop;
+    private bool FilterEnabled { get; set; }
+    private string FilterText { get; set; } = string.Empty;
 
     public SelectItem<T> Show(
         IReadOnlyList<SelectItem<T>> items,
@@ -28,8 +30,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         PrepareTerminalForSelection();
         ClearInputBuffer();
 
-        filterEnabled = enableFilter;
-        filterText = string.Empty;
+        FilterEnabled = enableFilter;
+        FilterText = string.Empty;
 
         IReadOnlyList<SelectItem<T>> viewItems = items;
         int currentIndex = 0;
@@ -119,12 +121,12 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             return;
         }
 
-        int windowDiff = windowHeight - previousWindowHeight;
+        int windowDiff = windowHeight - PreviousWindowHeight;
         if (windowDiff == 0)
             return;
 
         int currentCursorTop = Terminal.CursorTop;
-        int cursorDiff = currentCursorTop - previousCursorTop;
+        int cursorDiff = currentCursorTop - PreviousCursorTop;
 
         // Adjust anchor only when the terminal actually scrolled content
         // Heuristic: if cursor moved by the same delta as the window height change,
@@ -136,8 +138,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         }
         // else: ambiguous case, avoid shifting anchor to prevent jumps
 
-        previousWindowHeight = windowHeight;
-        previousCursorTop = currentCursorTop;
+        PreviousWindowHeight = windowHeight;
+        PreviousCursorTop = currentCursorTop;
     }
 
     /// <summary>
@@ -156,33 +158,33 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     )
     {
         // Typing and editing the filter
-        if (filterEnabled && keyInfo.Key == ConsoleKey.Backspace)
+        if (FilterEnabled && keyInfo.Key == ConsoleKey.Backspace)
         {
-            if (filterText.Length > 0)
+            if (FilterText.Length > 0)
             {
-                filterText = filterText[..^1];
+                FilterText = FilterText[..^1];
             }
-            IReadOnlyList<SelectItem<T>> updated = ApplyFilter(allItems, filterText);
+            IReadOnlyList<SelectItem<T>> updated = ApplyFilter(allItems, FilterText);
             int nextIndex = updated.Count == 0 ? 0 : Math.Clamp(currentIndex, 0, updated.Count - 1);
             return (SelectItem.Empty<T>(), nextIndex, updated, false);
         }
 
-        if (filterEnabled && keyInfo.Key == ConsoleKey.Escape)
+        if (FilterEnabled && keyInfo.Key == ConsoleKey.Escape)
         {
-            if (!string.IsNullOrEmpty(filterText))
+            if (!string.IsNullOrEmpty(FilterText))
             {
                 // Clear filter first ESC
-                filterText = string.Empty;
+                FilterText = string.Empty;
                 return (SelectItem.Empty<T>(), 0, allItems, false);
             }
             // No filter to clear: treat as cancel
             return (SelectItem.Empty<T>(), currentIndex, currentViewItems, true);
         }
 
-        if (filterEnabled && keyInfo.KeyChar != '\0' && !char.IsControl(keyInfo.KeyChar))
+        if (FilterEnabled && keyInfo.KeyChar != '\0' && !char.IsControl(keyInfo.KeyChar))
         {
-            filterText += keyInfo.KeyChar;
-            IReadOnlyList<SelectItem<T>> updated = ApplyFilter(allItems, filterText);
+            FilterText += keyInfo.KeyChar;
+            IReadOnlyList<SelectItem<T>> updated = ApplyFilter(allItems, FilterText);
             int nextIndex = updated.Count == 0 ? 0 : Math.Clamp(currentIndex, 0, updated.Count - 1);
             return (SelectItem.Empty<T>(), nextIndex, updated, false);
         }
@@ -225,24 +227,24 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     {
         if (numberOfVisibleItems == 1)
         {
-            DisplayAnchorItem(items[selectedIndex].Text, filterText, AnchorColumn, AnchorRow);
+            string singleItemText = items.Count > 0 ? items[selectedIndex].Text : FilterText;
+            DisplayAnchorItem(singleItemText, FilterText, AnchorColumn, AnchorRow);
             return 1;
         }
 
+        string anchorText = items.Count > 0 ? items[selectedIndex].Text : FilterText;
+        // Render selected item at anchor line (underlined to distinguish from list below)
+        DisplayAnchorItem(anchorText, FilterText, AnchorColumn, AnchorRow);
+
         int rowsToRender = CalculateRowsToRender(Math.Min(items.Count, numberOfVisibleItems));
-        scrollOffset = CalculateScrollOffset(
+        ScrollOffset = CalculateScrollOffset(
             selectedIndex,
             rowsToRender,
-            scrollOffset,
+            ScrollOffset,
             items.Count
         );
 
-        string anchorText = items.Count > 0 ? items[selectedIndex].Text : filterText;
-        // Render selected item at anchor line (underlined to distinguish from list below)
-
-        DisplayAnchorItem(anchorText, filterText, AnchorColumn, AnchorRow);
-
-        int actuallyRenderedRows = RenderViewport(items, selectedIndex, rowsToRender, scrollOffset);
+        int actuallyRenderedRows = RenderViewport(items, selectedIndex, rowsToRender, ScrollOffset);
         int totalRendered = 1 + actuallyRenderedRows; // selected + viewport rows
 
         ClearShrinkingTail(totalRendered);
@@ -251,7 +253,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         // Stabilize the cursor position to the anchor after rendering to make
         // resize detection reliable (cursorDiff reflects only external changes).
         Terminal.SetCursorPosition(AnchorColumn, AnchorRow);
-        previousCursorTop = Terminal.CursorTop;
+        PreviousCursorTop = Terminal.CursorTop;
         return totalRendered;
     }
 
@@ -336,12 +338,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         }
     }
 
-    private static void DisplayAnchorItem(
-        string text,
-        string filterText,
-        int startColumn,
-        int startRow
-    )
+    private void DisplayAnchorItem(string text, string filterText, int startColumn, int startRow)
     {
         Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
@@ -364,13 +361,13 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         {
             if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
             {
-                Terminal.ForegroundColor = Color.White;
+                Terminal.ForegroundColor = ForegroundColor;
                 // Only color the first occurrence of the filter text
                 isFilterFound = true;
             }
             else
             {
-                Terminal.ForegroundColor = filterText.Length > 0 ? Color.Gray : Color.Yellow;
+                Terminal.ForegroundColor = FilterText.Length > 0 ? FilterColor : MenuColor;
             }
             Terminal.Write(part);
         }
@@ -382,16 +379,11 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     {
         Terminal.SetCursorPosition(AnchorColumn, AnchorRow + 1);
         TerminalEx.ClearLineFrom(AnchorColumn, AnchorRow + 1);
-        Terminal.ForegroundColor = Color.Gray;
+        Terminal.ForegroundColor = NoItemsColor;
         Terminal.Write("No items found");
     }
 
-    private static void DisplayListItem(
-        SelectItem<T> item,
-        bool isSelected,
-        int startColumn,
-        int startRow
-    )
+    private void DisplayListItem(SelectItem<T> item, bool isSelected, int startColumn, int startRow)
     {
         string prefix = isSelected ? "• " : "  ";
         Terminal.SetCursorPosition(startColumn, startRow);
@@ -400,7 +392,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         string rawText = (prefix ?? string.Empty) + (item.Text ?? string.Empty);
         string displayText = TruncateText(rawText, Math.Max(0, Terminal.WindowWidth - startColumn));
 
-        Terminal.ForegroundColor = isSelected ? Color.Yellow : Color.White;
+        Terminal.ForegroundColor = isSelected ? MenuColor : ForegroundColor;
         Terminal.Write(displayText);
     }
 
