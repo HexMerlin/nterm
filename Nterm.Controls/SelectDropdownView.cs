@@ -351,19 +351,26 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             Math.Max(0, Terminal.WindowWidth - startColumn)
         );
 
-        string[] textParts = Regex.Split(displayText, $"({Regex.Escape(filterText)})");
+        string[] textParts = Regex.Split(
+            displayText,
+            $"({Regex.Escape(filterText)})",
+            RegexOptions.IgnoreCase
+        );
 
+        bool isFilterFound = false;
         // Underline the filter text
         Terminal.Write("\u001b[4m");
         foreach (string part in textParts)
         {
-            if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase))
+            if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
             {
                 Terminal.ForegroundColor = Color.White;
+                // Only color the first occurrence of the filter text
+                isFilterFound = true;
             }
             else
             {
-                Terminal.ForegroundColor = Color.Gray;
+                Terminal.ForegroundColor = filterText.Length > 0 ? Color.Gray : Color.Yellow;
             }
             Terminal.Write(part);
         }
