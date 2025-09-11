@@ -64,14 +64,10 @@ public static class Terminal2
     public static bool CursorVisible
     {
         [SupportedOSPlatform("windows")]
-        get
-        {
-            if (OperatingSystem.IsWindows())
-                return Console.CursorVisible;
+#pragma warning disable CA1416 // Validate platform compatibility
+        get => Console.CursorVisible;
+#pragma warning restore CA1416 // Validate platform compatibility
 
-            // Cursor visibility not supported on this platform, assume it is visible
-            return true;
-        }
         [UnsupportedOSPlatform("android")]
         [UnsupportedOSPlatform("browser")]
         [UnsupportedOSPlatform("ios")]
