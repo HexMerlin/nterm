@@ -14,7 +14,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     private int AnchorRow { get; set; } = anchorRow;
     private int LastRenderedLineCount { get; set; }
     private int ScrollOffset { get; set; }
-    private int PreviousWindowHeight { get; set; } = Terminal.WindowHeight;
+    private int PreviousBufferHeight { get; set; } = Terminal.BufferHeight;
     private int PreviousCursorTop { get; set; } = Terminal.CursorTop;
     private bool FilterEnabled { get; set; }
     private string FilterText { get; set; } = string.Empty;
@@ -113,32 +113,32 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
     private void UpdateOnResize()
     {
-        int windowHeight = Terminal.WindowHeight;
+        int bufferHeight = Terminal.BufferHeight;
 
-        if (windowHeight < 2)
+        if (bufferHeight < 2)
         {
             AnchorRow = Terminal.CursorTop;
             return;
         }
 
-        int windowDiff = windowHeight - PreviousWindowHeight;
-        if (windowDiff == 0)
+        int bufferDiff = bufferHeight - PreviousBufferHeight;
+        if (bufferDiff == 0)
             return;
 
         int currentCursorTop = Terminal.CursorTop;
         int cursorDiff = currentCursorTop - PreviousCursorTop;
 
         // Adjust anchor only when the terminal actually scrolled content
-        // Heuristic: if cursor moved by the same delta as the window height change,
+        // Heuristic: if cursor moved by the same delta as the buffer height change,
         // the viewport scrolled with the resize (e.g., when cursor was pinned to bottom).
         // If cursor did not move, the content stayed fixed relative to the top, so keep anchor.
-        if (Math.Abs(cursorDiff) == Math.Abs(windowDiff))
+        if (Math.Abs(cursorDiff) == Math.Abs(bufferDiff))
         {
-            AnchorRow = Math.Clamp(AnchorRow + cursorDiff, 0, windowHeight - 1);
+            AnchorRow = Math.Clamp(AnchorRow + cursorDiff, 0, bufferHeight - 1);
         }
         // else: ambiguous case, avoid shifting anchor to prevent jumps
 
-        PreviousWindowHeight = windowHeight;
+        PreviousBufferHeight = bufferHeight;
         PreviousCursorTop = currentCursorTop;
     }
 
@@ -259,8 +259,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
     private int CalculateRowsToRender(int numberOfVisibleItems)
     {
-        int windowHeight = Terminal.WindowHeight;
-        int availableRowsBelow = Math.Max(0, windowHeight - 1 - AnchorRow);
+        int bufferHeight = Terminal.BufferHeight;
+        int availableRowsBelow = Math.Max(0, bufferHeight - 1 - AnchorRow);
         int rowsToRender = Math.Min(numberOfVisibleItems, availableRowsBelow);
         return Math.Max(0, rowsToRender);
     }
@@ -298,13 +298,13 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             return 0;
         }
 
-        int windowHeight = Terminal.WindowHeight;
+        int bufferHeight = Terminal.BufferHeight;
         int actuallyRenderedRows = 0;
 
         for (int i = 0; i < rowsToRender; i++)
         {
             int row = AnchorRow + 1 + i;
-            if (row < 0 || row >= windowHeight)
+            if (row < 0 || row >= bufferHeight)
                 continue;
 
             if (offset + i < items.Count)
@@ -333,7 +333,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             row++
         )
         {
-            if (row >= 0 && row < Terminal.WindowHeight)
+            if (row >= 0 && row < Terminal.BufferHeight)
                 TerminalEx.ClearLineFrom(AnchorColumn, row);
         }
     }
@@ -345,7 +345,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
         string displayText = TruncateText(
             text ?? string.Empty,
-            Math.Max(0, Terminal.WindowWidth - startColumn)
+            Math.Max(0, Terminal.BufferWidth - startColumn)
         );
 
         string[] textParts = Regex.Split(
@@ -355,8 +355,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         );
 
         bool isFilterFound = false;
-        // Underline the filter text
-        Terminal.Write("\u001b[4m");
+
+        Terminal.Write(Constants.Underline);
         foreach (string part in textParts)
         {
             if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
@@ -371,8 +371,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             }
             Terminal.Write(part);
         }
-        // End underline
-        Terminal.Write("\u001b[24m");
+
+        Terminal.Write(Constants.UnderlineEnd);
     }
 
     private void DisplayNoItems()
@@ -390,7 +390,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
         string rawText = (prefix ?? string.Empty) + (item.Text ?? string.Empty);
-        string displayText = TruncateText(rawText, Math.Max(0, Terminal.WindowWidth - startColumn));
+        string displayText = TruncateText(rawText, Math.Max(0, Terminal.BufferWidth - startColumn));
 
         Terminal.ForegroundColor = isSelected ? MenuColor : ForegroundColor;
         Terminal.Write(displayText);

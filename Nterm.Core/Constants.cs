@@ -42,6 +42,10 @@ public class Constants
     public const string CellPixelSizeQuery = "[16t"; // response "[6;h;w"
     public const string SyncSupportQuery = "[?2026$p"; // ends 'y'
 
+    // CSI Select Graphic Rendition (SGR)
+    public const string Underline = "\u001b[4m";
+    public const string UnderlineEnd = "\u001b[24m";
+
     // --- OSC (Operating System Command) helpers (payload comes after ']') ---
     public const string OSC = "]"; // prefix after ESC for OSC sequences
 

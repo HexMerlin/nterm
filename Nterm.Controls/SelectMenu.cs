@@ -89,7 +89,7 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
     {
         string displayText = TruncateText(
             selectedItem.Text,
-            Math.Max(0, Terminal.WindowWidth - Terminal.CursorLeft)
+            Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft)
         );
         Terminal.Write(displayText);
     }
