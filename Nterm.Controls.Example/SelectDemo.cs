@@ -1,4 +1,5 @@
 using NTerm.Core;
+
 namespace NTerm.Controls.Example;
 
 /// <summary>
@@ -24,7 +25,7 @@ public static class SelectDemo
         ];
 
         Terminal.Write("Select an item: ");
-        SelectItem<Action> selectedItem = Select.Show(items);
+        SelectItem<Action> selectedItem = SelectMenu.Show(items);
 
         if (!selectedItem.IsEmpty())
         {
@@ -44,7 +45,7 @@ public static class SelectDemo
         // Test 2: Empty list
         Terminal.WriteLine("Test 2: Empty list");
         List<SelectItem<Action>> emptyItems = [];
-        SelectItem<Action> emptyResult = Select.Show(emptyItems);
+        SelectItem<Action> emptyResult = SelectMenu.Show(emptyItems);
 
         if (emptyResult.IsEmpty())
         {
@@ -63,7 +64,7 @@ public static class SelectDemo
             new() { Text = "Only Option", Value = () => Terminal.WriteLine("Only option selected") }
         ];
 
-        SelectItem<Action> singleResult = Select.Show(singleItem);
+        SelectItem<Action> singleResult = SelectMenu.Show(singleItem);
 
         if (!singleResult.IsEmpty())
         {
@@ -94,7 +95,7 @@ public static class SelectDemo
             new() { Text = "Short", Value = () => Terminal.WriteLine("Short item selected") }
         ];
 
-        SelectItem<Action> longResult = Select.Show(longItems);
+        SelectItem<Action> longResult = SelectMenu.Show(longItems);
 
         if (!longResult.IsEmpty())
         {

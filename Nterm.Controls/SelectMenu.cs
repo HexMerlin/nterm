@@ -2,6 +2,17 @@ using System.Diagnostics;
 
 namespace NTerm.Controls;
 
+public static class SelectMenu
+{
+    public static SelectItem<T> Show<T>(
+        IEnumerable<SelectItem<T>> items,
+        int numberOfVisibleItems = 4
+    )
+    {
+        return new SelectControl<T>(true).Show(items, numberOfVisibleItems);
+    }
+}
+
 /// <summary>
 /// Implementation of a CLI select control that allows users to choose from a list of items.
 /// When the item is selected it will be printed at the cursor position as normal text.
