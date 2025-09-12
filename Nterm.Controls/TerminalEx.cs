@@ -4,7 +4,7 @@ internal static class TerminalEx
 {
     public static void ClearLineFrom(int startColumn, int row)
     {
-        if (row < 0 || row >= Terminal.WindowHeight)
+        if (row < 0 || row >= Terminal.BufferHeight)
             return;
         Terminal.SetCursorPosition(startColumn, row);
         // Erase to the end of the line (reset line width)
@@ -18,7 +18,7 @@ internal static class TerminalEx
         for (int i = 0; i < lineCount; i++)
         {
             int row = startRow + i;
-            if (row >= 0 && row < Terminal.WindowHeight)
+            if (row >= 0 && row < Terminal.BufferHeight)
             {
                 ClearLineFrom(startColumn, row);
             }
@@ -34,8 +34,8 @@ internal static class TerminalEx
     /// <returns>The new row of the anchor after making space.</returns>
     public static int EnsureSpaceBelowAnchor(int columnAnchor, int rowAnchor, int requiredRows)
     {
-        int windowHeight = Terminal.WindowHeight;
-        if (windowHeight < 2)
+        int bufferHeight = Terminal.BufferHeight;
+        if (bufferHeight < 2)
         {
             // No space below, so don't move the anchor.
             return rowAnchor;
@@ -43,9 +43,9 @@ internal static class TerminalEx
 
         // Reserve up to MaxVisibleItems rows BELOW the current line for the list viewport
         int requiredBelow = Math.Min(4, Math.Max(1, requiredRows));
-        int rowsBelow = Math.Max(0, windowHeight - 1 - rowAnchor);
+        int rowsBelow = Math.Max(0, bufferHeight - 1 - rowAnchor);
         int needed = Math.Max(0, requiredBelow - rowsBelow);
-        if (needed == 0 || needed > windowHeight - 1)
+        if (needed == 0 || needed > bufferHeight - 1)
         {
             return rowAnchor;
         }
@@ -53,7 +53,7 @@ internal static class TerminalEx
         // Write the required number of newlines (from start row) to create room.
         // This may cause the terminal to scroll up if we're at the bottom.
         Terminal.SetCursorPosition(columnAnchor, rowAnchor);
-        Terminal.Write(new string('\n', Math.Min(windowHeight - 1, requiredRows)));
+        Terminal.Write(new string('\n', Math.Min(bufferHeight - 1, requiredRows)));
 
         int adjustedStartRow = Math.Max(0, rowAnchor - needed);
 
