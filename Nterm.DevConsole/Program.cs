@@ -13,7 +13,7 @@ internal static class Program
     private static async Task Main()
     {
         Terminal.Title = "Showing some Console Demos";
-        //Terminal.Clear(new Color(0, 0, 40));
+        Terminal.Clear(new Color(0, 0, 40));
         //comment out to run specific demo
 
         ConsoleDemo demo1 = new();
@@ -29,13 +29,6 @@ internal static class Program
             Terminal.WriteLine(i.ToString(CultureInfo.InvariantCulture));
 
         await demo3.RunAsync(); //run demo 3 again
-
-        SetCursorDemo.Run();
-
-        if (OperatingSystem.IsWindows())
-        {
-            ConsoleWindowDemo.Run();
-        }
 
         Terminal.Write("\n\n\n");
     }

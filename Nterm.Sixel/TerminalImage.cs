@@ -39,9 +39,6 @@ public readonly struct TerminalImage : IEquatable<TerminalImage>
     /// <returns>Image dimensions in character cells (width×height)</returns>
     public Size GetSizeInCharacters(Size cellSizeInPixels)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Height);
-
         return new Size(
             (int)Math.Ceiling((double)DisplaySize.Width / cellSizeInPixels.Width),
             (int)Math.Ceiling((double)DisplaySize.Height / cellSizeInPixels.Height)
