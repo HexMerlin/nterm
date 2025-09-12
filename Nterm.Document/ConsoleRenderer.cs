@@ -1,4 +1,5 @@
 ﻿using NTerm.Core;
+
 namespace NTerm.Document;
 
 /// <summary>
@@ -36,11 +37,14 @@ public static class ConsoleRenderer
     /// </remarks>
     public static void Render(StyledDocument document)
     {
-        (ConsoleColor, ConsoleColor) initColors = (System.Console.ForegroundColor, System.Console.BackgroundColor);
+        (ConsoleColor, ConsoleColor) initColors = (
+            System.Console.ForegroundColor,
+            System.Console.BackgroundColor
+        );
 
         foreach ((char character, CharStyle style) in document)
         {
-            Terminal2.Write(character, style.Color, style.BackColor);
+            Terminal.Write(character, style.Color, style.BackColor);
         }
 
         (System.Console.ForegroundColor, System.Console.BackgroundColor) = initColors;

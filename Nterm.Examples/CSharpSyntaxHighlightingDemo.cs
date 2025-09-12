@@ -1,13 +1,13 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
+﻿using System.Text;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using NTerm.Core;
 using NTerm.Document;
-using System.Text;
 
 namespace NTerm.Examples;
+
 public class CSharpSyntaxHighlightingDemo
 {
-
     public CSharpSyntaxHighlightingDemo() { }
 
     /// <summary>
@@ -49,5 +49,6 @@ Terminal.WriteLine(msg + AddFive(5).ToString()); // Just an inline comment
         ConsoleRenderer.Render(document);
         Terminal.WriteLine();
 
+        Terminal.WriteLine("=== CSharp Syntax Highlighting Demo Complete ===");
     }
 }

@@ -1,6 +1,6 @@
-﻿using NTerm.Core;
+﻿using System.Reflection;
+using NTerm.Core;
 using NTerm.Sixel;
-using System.Reflection;
 
 namespace NTerm.Examples;
 
@@ -31,11 +31,26 @@ public sealed class ConsoleImageDemo
         // Use Examples assembly since that's where the embedded resources are
         Assembly examplesAssembly = typeof(ConsoleImageDemo).Assembly;
 
-        UserAvatarImage = TerminalImage.FromEmbeddedResource(ImageUser, examplesAssembly, "[👤]", Transparency.Default);
+        UserAvatarImage = TerminalImage.FromEmbeddedResource(
+            ImageUser,
+            examplesAssembly,
+            "[👤]",
+            Transparency.Default
+        );
 
-        BotAvatarImage = TerminalImage.FromEmbeddedResource(ImageBot, examplesAssembly, "[🤖]", Transparency.Default);
+        BotAvatarImage = TerminalImage.FromEmbeddedResource(
+            ImageBot,
+            examplesAssembly,
+            "[🤖]",
+            Transparency.Default
+        );
 
-        AiAvatarImage = TerminalImage.FromEmbeddedResource(ImageAI, examplesAssembly, "[🧠]", Transparency.Default);
+        AiAvatarImage = TerminalImage.FromEmbeddedResource(
+            ImageAI,
+            examplesAssembly,
+            "[🧠]",
+            Transparency.Default
+        );
     }
 
     /// <summary>
@@ -80,7 +95,11 @@ public sealed class ConsoleImageDemo
         await Task.Delay(300);
 
         botEntry.WriteLineBreak();
-        await WriteStreamingText(botEntry, "First, I'll write some text progressively.", Color.Goldenrod);
+        await WriteStreamingText(
+            botEntry,
+            "First, I'll write some text progressively.",
+            Color.Goldenrod
+        );
         botEntry.WriteLineBreak();
 
         // Demonstrate clear and rewrite
@@ -107,7 +126,12 @@ public sealed class ConsoleImageDemo
         await WriteStreamingText(aiEntry, "Impressive! ", Color.LightGreen, 50);
         await WriteStreamingText(aiEntry, "This streaming approach ", Color.LightGreen, 30);
         aiEntry.WriteLineBreak();
-        await WriteStreamingText(aiEntry, "enables real-time chat experiences ", Color.LightGreen, 40);
+        await WriteStreamingText(
+            aiEntry,
+            "enables real-time chat experiences ",
+            Color.LightGreen,
+            40
+        );
         aiEntry.WriteLineBreak();
         await WriteStreamingText(aiEntry, "with perfect image-text alignment! 🚀", Color.Lime, 60);
 
@@ -115,7 +139,7 @@ public sealed class ConsoleImageDemo
         Terminal.Write("\n\n\n");
 
         Terminal.ForegroundColor = Color.White;
-        Terminal.WriteLine("=== Demo Complete ===");
+        Terminal.WriteLine("=== Console Image Demo Complete ===");
     }
 
     /// <summary>
@@ -130,7 +154,12 @@ public sealed class ConsoleImageDemo
     /// <param name="text">Text to write progressively</param>
     /// <param name="color">Color for the text</param>
     /// <param name="delayMs">Delay between words in milliseconds</param>
-    private static async Task WriteStreamingText(ChatEntryWriter writer, string text, Color color, int delayMs = 20)
+    private static async Task WriteStreamingText(
+        ChatEntryWriter writer,
+        string text,
+        Color color,
+        int delayMs = 20
+    )
     {
         if (string.IsNullOrEmpty(text))
             return;

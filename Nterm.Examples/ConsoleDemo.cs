@@ -1,19 +1,23 @@
 ﻿using NTerm.Core;
 
 namespace NTerm.Examples;
+
 public class ConsoleDemo
 {
     public ConsoleDemo() { }
 
     public void Run()
     {
-
         // Console.ForegroundColor = Color.MediumSpringGreen;
         // Console.WriteLine();
         Terminal.WriteLine("=== Terminal Capabilities ===");
         Terminal.WriteLine($"SIXEL Support: {TerminalCapabilities.IsSixelSupported}");
-        Terminal.WriteLine($"Cell Size: {TerminalCapabilities.CellSize.Width}x{TerminalCapabilities.CellSize.Height}px");
-        Terminal.WriteLine($"Window Size: {TerminalCapabilities.WindowCharacterSize.Width}x{TerminalCapabilities.WindowCharacterSize.Height} chars");
+        Terminal.WriteLine(
+            $"Cell Size: {TerminalCapabilities.CellSize.Width}x{TerminalCapabilities.CellSize.Height}px"
+        );
+        Terminal.WriteLine(
+            $"Window Size: {TerminalCapabilities.WindowCharacterSize.Width}x{TerminalCapabilities.WindowCharacterSize.Height} chars"
+        );
         Terminal.WriteLine();
 
         Terminal.WriteLine("=== Testing New Console API ===");
@@ -53,13 +57,25 @@ public class ConsoleDemo
 
         // Test 5: Show our current 24-bit color properties
         Terminal.WriteLine();
-        Terminal.WriteLine($"Console.ForegroundColor: R={Terminal.ForegroundColor.R}, G={Terminal.ForegroundColor.G}, B={Terminal.ForegroundColor.B}");
-        Terminal.WriteLine($"Console.BackgroundColor: R={Terminal.BackgroundColor.R}, G={Terminal.BackgroundColor.G}, B={Terminal.BackgroundColor.B}");
+        Terminal.WriteLine(
+            $"Console.ForegroundColor: R={Terminal.ForegroundColor.R}, G={Terminal.ForegroundColor.G}, B={Terminal.ForegroundColor.B}"
+        );
+        Terminal.WriteLine(
+            $"Console.BackgroundColor: R={Terminal.BackgroundColor.R}, G={Terminal.BackgroundColor.G}, B={Terminal.BackgroundColor.B}"
+        );
 
         // Test 6: Rapid color changes
         Terminal.WriteLine();
         Terminal.WriteLine("Rapid color changes test:");
-        Color[] colors = [Color.Red, Color.Green, Color.Blue, Color.Yellow, Color.Magenta, Color.Cyan];
+        Color[] colors =
+        [
+            Color.Red,
+            Color.Green,
+            Color.Blue,
+            Color.Yellow,
+            Color.Magenta,
+            Color.Cyan
+        ];
         for (int i = 0; i < colors.Length; i++)
         {
             Terminal.ForegroundColor = colors[i];
@@ -83,11 +99,16 @@ public class ConsoleDemo
         Terminal.WriteLine("Yellow on dark blue!", Color.Yellow, Color.DarkBlue);
 
         // Test longer string
-        string longText = "This is a longer string to test chunked processing with more than 256 characters. ".PadRight(300, 'x');
+        string longText =
+            "This is a longer string to test chunked processing with more than 256 characters. ".PadRight(
+                300,
+                'x'
+            );
         Terminal.WriteLine(longText, Color.Magenta, Color.Black);
 
         // Test empty WriteLine
         Terminal.WriteLine(); // Just newline
 
+        Terminal.WriteLine("=== Console Demo Complete ===");
     }
 }
