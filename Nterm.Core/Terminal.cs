@@ -58,8 +58,8 @@ public static class Terminal
     public static int WindowHeight => Console.WindowHeight;
     public static int BufferWidth => Console.BufferWidth;
     public static int BufferHeight => Console.BufferHeight;
-    public static int CursorLeft => Console.CursorLeft;
-    public static int CursorTop => Console.CursorTop;
+    public static int CursorLeft { get => Console.CursorLeft; set => Console.CursorLeft = value; }
+    public static int CursorTop { get => Console.CursorTop; set => Console.CursorTop = value; }
 
     public static bool CursorVisible
     {
