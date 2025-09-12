@@ -1,1 +1,1 @@
-﻿global using Terminal = NTerm.Core.Terminal2;
+﻿

@@ -5,7 +5,6 @@
 /// </summary>
 public readonly struct Size : IEquatable<Size>
 {
-
     public int Width { get; }
 
     public int Height { get; }
@@ -18,9 +17,10 @@ public readonly struct Size : IEquatable<Size>
 
     public bool Equals(Size other) => Width == other.Width && Height == other.Height;
 
-    public override bool Equals(object obj) => obj is Size && Equals((Size)obj);
+    public override bool Equals(object? obj) => obj is Size size && Equals(size);
 
     public override int GetHashCode() => throw new NotImplementedException();
+
     public static bool operator ==(Size left, Size right) => left.Equals(right);
 
     public static bool operator !=(Size left, Size right) => !(left == right);

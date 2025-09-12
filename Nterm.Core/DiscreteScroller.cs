@@ -39,7 +39,8 @@ public static class DiscreteScroller
         {
             const int DefaultHeadroom = 10; // sensible default for streaming output
             bool didScroll = EnsureHeadroom(DefaultHeadroom, 0);
-            if (didScroll) Terminal2.WriteLine(Notice, Color.DarkGray);
+            if (didScroll)
+                Terminal.WriteLine(Notice, Color.DarkGray);
             return didScroll;
         }
     }
@@ -80,12 +81,12 @@ public static class DiscreteScroller
     {
         lock (writeLock)
         {
-            int windowHeight = Math.Max(1, Terminal2.WindowHeight);
-            int windowTop = Terminal2.WindowTop;
-            int bufferHeight = Math.Max(windowHeight, Terminal2.BufferHeight);
+            int windowHeight = Math.Max(1, Terminal.WindowHeight);
+            int windowTop = Terminal.WindowTop;
+            int bufferHeight = Math.Max(windowHeight, Terminal.BufferHeight);
             int bottomVisible = windowTop + windowHeight - 1;
 
-            int cursorTop = Math.Min(Terminal2.CursorTop, bufferHeight - 1);
+            int cursorTop = Math.Min(Terminal.CursorTop, bufferHeight - 1);
             int rowsFromBottom = bottomVisible - cursorTop;
 
             if (rowsFromBottom >= HeadroomRows)
@@ -94,12 +95,21 @@ public static class DiscreteScroller
             int targetInWin = Math.Clamp(TargetTopFromWindowTop, 0, windowHeight - 1);
             int linesToWrite = Math.Max(1, windowHeight - targetInWin); // create a blank zone
 
-            Terminal2.Write(new string('\n', linesToWrite));
+            Terminal.Write(new string('\n', linesToWrite));
 
-            int newWindowTop = Terminal2.WindowTop;
-            int targetTop = Math.Min(newWindowTop + targetInWin, Math.Max(0, Terminal2.BufferHeight - 1));
+            int newWindowTop = Terminal.WindowTop;
+            int targetTop = Math.Min(
+                newWindowTop + targetInWin,
+                Math.Max(0, Terminal.BufferHeight - 1)
+            );
 
-            try { Terminal2.SetCursorPosition(0, targetTop); } catch { /* redirected output etc. */ }
+            try
+            {
+                Terminal.SetCursorPosition(0, targetTop);
+            }
+            catch
+            { /* redirected output etc. */
+            }
             return true;
         }
     }
@@ -126,8 +136,8 @@ public static class DiscreteScroller
         lock (scrollLock)
         {
             // Using WindowHeight as Headroom guarantees at least one page scroll.
-            _ = EnsureHeadroom(Math.Max(1, Terminal2.WindowHeight), 0);
-            Terminal2.WriteLine(Notice);
+            _ = EnsureHeadroom(Math.Max(1, Terminal.WindowHeight), 0);
+            Terminal.WriteLine(Notice);
         }
     }
 
@@ -140,5 +150,15 @@ public static class DiscreteScroller
         return $"                           {arrow}  {text}  {arrow}  ";
     }
 
-    private static bool UnicodeFriendly() { try { return !System.Console.IsOutputRedirected; } catch { return false; } }
+    private static bool UnicodeFriendly()
+    {
+        try
+        {
+            return !System.Console.IsOutputRedirected;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

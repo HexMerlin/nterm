@@ -2,17 +2,20 @@
 
 public class Constants
 {
+#pragma warning disable CA1707 // Identifiers should not contain underscore
     // Core ANSI characters
     public const char ESC = '\x1b';
     public const byte ESC_BYTE = 0x1B;
 
     // --- CSI / SGR / OSC basics ---
     // NOTE: All codes below are the bracketed/parameter part (you prefix them with ESC).
-    public const string CSI = "[";                 // Control Sequence Introducer ("[")
-    public const string SGR_RESET = "[0m";         // Reset all attributes
+    public const string CSI = "["; // Control Sequence Introducer ("[")
+    public const string SGR_RESET = "[0m"; // Reset all attributes
 
     // True-color SGR prefixes and terminator
+
     public const string SGR_FG_TRUECOLOR_PREFIX = "[38;2;"; // foreground: 38;2;R;G;B
+
     public const string SGR_BG_TRUECOLOR_PREFIX = "[48;2;"; // background: 48;2;R;G;B
     public const char SGR_END = 'm';
 
@@ -21,7 +24,7 @@ public class Constants
     public const string CursorOn = "[?25h";
     public const string CursorSave = "[s";
     public const string CursorRestore = "[u";
-    public const string CursorUp = "[{0}A";  // format with count
+    public const string CursorUp = "[{0}A"; // format with count
     public const string CursorHome = "[H";
 
     // Screen control
@@ -55,4 +58,6 @@ public class Constants
     // Common ANSI escape sequence parts
     public const char ColorIntroducer = '#';
     public const char RepeatIntroducer = '!';
+
+#pragma warning restore CA1707 // Identifiers should not contain underscores
 }

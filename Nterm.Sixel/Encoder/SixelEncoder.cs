@@ -1,9 +1,9 @@
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using NTerm.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using Size = NTerm.Core.Size;
 
 namespace NTerm.Sixel.Encoder;
@@ -67,14 +67,16 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// Create the color palette for the <paramref name="frame"/>
     /// </summary>
     /// <param name="frame"></param>
-    protected virtual ReadOnlySpan<NTerm.Core.Color> GetColorPalette(ImageFrame<Rgba32> frame)
+    protected virtual ReadOnlySpan<Core.Color> GetColorPalette(ImageFrame<Rgba32> frame)
     {
         if (!Quantized)
             _ = Quantize();
-        return SixelEncode.GetColorPalette(frame,
-                                     TransparencyMode,
-                                     TransparentColor,
-                                     BackgroundColor);
+        return SixelEncode.GetColorPalette(
+            frame,
+            TransparencyMode,
+            TransparentColor,
+            BackgroundColor
+        );
     }
 
     /// <summary>
@@ -88,12 +90,14 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         // and get the color palette for the frame
         if (!Quantized)
             _ = Quantize();
-        return SixelEncode.EncodeFrame(frame,
-                                 GetColorPalette(frame),
-                                 CanvasSize,
-                                 TransparencyMode,
-                                 TransparentColor,
-                                 BackgroundColor);
+        return SixelEncode.EncodeFrame(
+            frame,
+            GetColorPalette(frame),
+            CanvasSize,
+            TransparencyMode,
+            TransparentColor,
+            BackgroundColor
+        );
     }
 
     /// <summary>
@@ -108,7 +112,8 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// </summary>
     /// <param name="frameIndex"></param>
     /// <inheritdoc cref="EncodeFrame(ImageFrame{Rgba32})"/>
-    public string EncodeFrame(int frameIndex) => EncodeFrameInternal(Image.Frames[frameIndex % FrameCount]);
+    public string EncodeFrame(int frameIndex) =>
+        EncodeFrameInternal(Image.Frames[frameIndex % FrameCount]);
 
     /// <summary>
     /// Encode a <see cref="ImageFrame"/> into a Sixel string.
@@ -160,11 +165,12 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <param name="cancellationToken">
     /// Cancellation token for the async operation
     /// </param>
-    public async IAsyncEnumerable<string> EncodeFramesAsync(int overwriteRepeat = -1,
-                                                            int startFrame = 0,
-                                                            int endFrame = -1,
-                                                            [EnumeratorCancellation]
-                                                            CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<string> EncodeFramesAsync(
+        int overwriteRepeat = -1,
+        int startFrame = 0,
+        int endFrame = -1,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
     {
         ImageFrameCollection<Rgba32> frames = Image.Frames;
         if (frames.Count < 2)
@@ -192,23 +198,27 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         }
 
         uint repeatCount = overwriteRepeat >= 0 ? (uint)overwriteRepeat : RepeatCount;
-        int[] delayMiliseconds = frameIndexEnumerator().Select(t => GetFrameDelay(t.FrameIndex))
-                                                     .ToArray();
+        int[] delayMiliseconds = frameIndexEnumerator()
+            .Select(t => GetFrameDelay(t.FrameIndex))
+            .ToArray();
 
         // cache of Sixel strings
         string[] sixelFrames = new string[frames.Count];
 
         // Asynchronously store images as Sixel strings
         using BlockingCollection<bool> mutex = [];
-        Task sixelFramesTask = Task.Run(() =>
-        {
-            foreach ((int i, int frameIndex) in frameIndexEnumerator())
+        Task sixelFramesTask = Task.Run(
+            () =>
             {
-                sixelFrames[i] = EncodeFrame(frames[frameIndex]);
-                mutex.Add(true);
-            }
-            mutex.CompleteAdding();
-        }, cancellationToken);
+                foreach ((int i, int frameIndex) in frameIndexEnumerator())
+                {
+                    sixelFrames[i] = EncodeFrame(frames[frameIndex]);
+                    mutex.Add(true);
+                }
+                mutex.CompleteAdding();
+            },
+            cancellationToken
+        );
 
         DateTime start;
         // The first time of loop:
@@ -254,12 +264,14 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <exception cref="NotSupportedException">
     /// This format does not support animation
     /// </exception>
-    public async Task Animate(NTerm.Core.Size cellSize,
-                              bool syncSupported = false,
-                              int overwriteRepeat = -1,
-                              int startFrame = 0,
-                              int endFrame = -1,
-                              CancellationToken cancellationToken = default)
+    public async Task Animate(
+        Size cellSize,
+        bool syncSupported = false,
+        int overwriteRepeat = -1,
+        int startFrame = 0,
+        int endFrame = -1,
+        CancellationToken cancellationToken = default
+    )
     {
         // Check if the image is animated
         if (!CanAnimate)
@@ -267,19 +279,22 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
             if (FrameCount < 2)
                 throw new NotSupportedException($"This image has only one frame.");
             else
-                throw new NotSupportedException($"This format does not support animation: {Format}");
+                throw new NotSupportedException(
+                    $"This format does not support animation: {Format}"
+                );
         }
 
         bool isOpaque = TransparencyMode == Transparency.None;
 
         int lines = (int)Math.Ceiling((double)Image.Height / cellSize.Height);
         // Allocate rows for the image height
-        Core.Terminal2.Write(new string('\n', lines));
+        Terminal.Write(new string('\n', lines));
         // Move up cursor the rows
-        Core.Terminal2.Write($"{Constants.ESC}{string.Format(Constants.CursorUp, lines)}");
+        Terminal.Write($"{Constants.ESC}{string.Format(Constants.CursorUp, lines)}");
         // Save the cursor position
-        Core.Terminal2.Write($"{Constants.ESC}{Constants.CursorSave}");
-        string beginSync = "", endSync = "";
+        Terminal.Write($"{Constants.ESC}{Constants.CursorSave}");
+        string beginSync = "",
+            endSync = "";
         if (syncSupported)
         {
             beginSync = Constants.ESC + Constants.SyncBegin;
@@ -287,21 +302,27 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
         }
         try
         {
-            await foreach (string sixelString in EncodeFramesAsync(overwriteRepeat,
-                                                                startFrame,
-                                                                endFrame,
-                                                                cancellationToken))
+            await foreach (
+                string sixelString in EncodeFramesAsync(
+                    overwriteRepeat,
+                    startFrame,
+                    endFrame,
+                    cancellationToken
+                )
+            )
             {
                 if (isOpaque)
                 {
                     // Restore the cursor position and then output sixel string
-                    Core.Terminal2.Write($"{Constants.ESC}{Constants.CursorRestore}{sixelString}");
+                    Terminal.Write($"{Constants.ESC}{Constants.CursorRestore}{sixelString}");
                 }
                 else
                 {
                     // Restore the cursor position and erase from cursor until end of screen,
                     // and then output sixel string; do the erase and draw in one batch update if possible
-                    Core.Terminal2.Write($"{beginSync}{Constants.ESC}{Constants.CursorRestore}{Constants.ESC}{Constants.EraseFromCursor}{sixelString}{endSync}");
+                    Terminal.Write(
+                        $"{beginSync}{Constants.ESC}{Constants.CursorRestore}{Constants.ESC}{Constants.EraseFromCursor}{sixelString}{endSync}"
+                    );
                 }
             }
         }
@@ -314,12 +335,22 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// <summary>
     /// Animate with standard terminal assumptions (10x20 pixel cells, no sync).
     /// </summary>
-    /// <inheritdoc cref="Animate(NTerm.Core.Size, bool, int, int, int, CancellationToken)"/>
-    public async Task Animate(int overwriteRepeat = -1, CancellationToken cancellationToken = default)
+    /// <inheritdoc cref="Animate(Size, bool, int, int, int, CancellationToken)"/>
+    public async Task Animate(
+        int overwriteRepeat = -1,
+        CancellationToken cancellationToken = default
+    )
     {
         // Use standard monospace cell size assumptions
         Size standardCellSize = new(10, 20);
-        await Animate(standardCellSize, syncSupported: false, overwriteRepeat, 0, -1, cancellationToken);
+        await Animate(
+            standardCellSize,
+            syncSupported: false,
+            overwriteRepeat,
+            0,
+            -1,
+            cancellationToken
+        );
     }
 
     protected virtual void Dispose(bool disposing)

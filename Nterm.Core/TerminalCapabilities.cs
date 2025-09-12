@@ -35,10 +35,7 @@ public static class TerminalCapabilities
     /// Terminal window size in characters.
     /// </summary>
     /// <returns>Window dimensions in character cells</returns>
-    public static Size WindowCharacterSize => new(
-        Terminal2.WindowWidth,
-        Terminal2.WindowHeight
-    );
+    public static Size WindowCharacterSize => new(Terminal.WindowWidth, Terminal.WindowHeight);
 
     /// <summary>
     /// Terminal synchronized output support.
@@ -65,8 +62,9 @@ public static class TerminalCapabilities
             ReadOnlySpan<char> response = QueryTerminal(Constants.DeviceAttributesQuery);
 
             // Traditional SIXEL support indicated by parameter "4" in response
-            bool hasTraditionalSupport = response.Contains(";4;", StringComparison.Ordinal) ||
-                                        response.EndsWith(";4", StringComparison.Ordinal);
+            bool hasTraditionalSupport =
+                response.Contains(";4;", StringComparison.Ordinal)
+                || response.EndsWith(";4", StringComparison.Ordinal);
 
             bool hasSupport = hasTraditionalSupport;
 
@@ -104,9 +102,7 @@ public static class TerminalCapabilities
                 return detectedSize;
             }
         }
-        catch
-        {
-        }
+        catch { }
 
         // Default Windows Terminal cell size
         return new Size(10, 20);
@@ -182,8 +178,8 @@ public static class TerminalCapabilities
         try
         {
             // Send ESC + query (e.g., "\x1b[14t")
-            Terminal2.Write(Constants.ESC);
-            Terminal2.Write(query);
+            Terminal.Write(Constants.ESC);
+            Terminal.Write(query);
 
             // Collect until we see the terminator or timeout
             Stopwatch sw = Stopwatch.StartNew();
@@ -191,7 +187,7 @@ public static class TerminalCapabilities
 
             while (sw.ElapsedMilliseconds < 50)
             {
-                if (!System.Console.KeyAvailable)
+                if (!Terminal.KeyAvailable)
                 {
                     // cheaper than Thread.Sleep(1) in short waits
                     spinner.SpinOnce();
@@ -199,7 +195,7 @@ public static class TerminalCapabilities
                 }
 
                 // Read one char without echo
-                char ch = Terminal2.ReadKey(intercept: true).KeyChar;
+                char ch = Terminal.ReadKey(intercept: true).KeyChar;
 
                 if (ch == term)
                     break;
