@@ -355,8 +355,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         );
 
         bool isFilterFound = false;
-        // Underline the filter text
-        Terminal.Write("\u001b[4m");
+
+        Terminal.Write(Constants.Underline);
         foreach (string part in textParts)
         {
             if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
@@ -371,8 +371,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             }
             Terminal.Write(part);
         }
-        // End underline
-        Terminal.Write("\u001b[24m");
+
+        Terminal.Write(Constants.UnderlineEnd);
     }
 
     private void DisplayNoItems()
