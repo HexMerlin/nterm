@@ -37,13 +37,10 @@ public readonly struct TerminalImage : IEquatable<TerminalImage>
     /// </summary>
     /// <param name="cellSizeInPixels">Terminal character cell size in pixels</param>
     /// <returns>Image dimensions in character cells (width×height)</returns>
-    public Size GetSizeInCharacters(Size cellSizeInPixels)
-    {
-        return new Size(
+    public Size GetSizeInCharacters(Size cellSizeInPixels) => new(
             (int)Math.Ceiling((double)DisplaySize.Width / cellSizeInPixels.Width),
             (int)Math.Ceiling((double)DisplaySize.Height / cellSizeInPixels.Height)
         );
-    }
 
     /// <summary>
     /// Initializes console image with pre-encoded data.

@@ -1,4 +1,6 @@
-﻿namespace NTerm.Core;
+﻿using NTerm.Core;
+
+namespace NTerm.Examples;
 
 public static class DiscreteScroller
 {

@@ -396,28 +396,16 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         Terminal.Write(displayText);
     }
 
-    private static string TruncateText(string text, int maxWidth)
-    {
-        if (string.IsNullOrEmpty(text) || text.Length <= maxWidth)
-            return text;
-        return text[..Math.Min(maxWidth, text.Length)];
-    }
+    private static string TruncateText(string text, int maxWidth) =>
+        string.IsNullOrEmpty(text) || text.Length <= maxWidth
+            ? text
+            : text[..Math.Min(maxWidth, text.Length)];
 
     private static IReadOnlyList<SelectItem<T>> ApplyFilter(
         IReadOnlyList<SelectItem<T>> items,
         string query
-    )
-    {
-        if (string.IsNullOrWhiteSpace(query))
-            return items;
-
-        return [.. items.Where(i => IsMatch(i.Text, query))];
-    }
+    ) => string.IsNullOrWhiteSpace(query) ? items : [.. items.Where(i => IsMatch(i.Text, query))];
 
     private static bool IsMatch(string? source, string query)
-    {
-        if (string.IsNullOrEmpty(source))
-            return false;
-        return source.Contains(query, StringComparison.OrdinalIgnoreCase);
-    }
+        => !string.IsNullOrEmpty(source) && source.Contains(query, StringComparison.OrdinalIgnoreCase);
 }

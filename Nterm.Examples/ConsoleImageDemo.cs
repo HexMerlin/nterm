@@ -1,6 +1,6 @@
-﻿using System.Reflection;
-using NTerm.Core;
+﻿using NTerm.Core;
 using NTerm.Sixel;
+using System.Reflection;
 
 namespace NTerm.Examples;
 

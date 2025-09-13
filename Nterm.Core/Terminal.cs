@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Text;
 
@@ -64,10 +63,7 @@ public static class Terminal
     public static bool CursorVisible
     {
         [SupportedOSPlatform("windows")]
-#pragma warning disable CA1416 // Validate platform compatibility
         get => Console.CursorVisible;
-#pragma warning restore CA1416 // Validate platform compatibility
-
         [UnsupportedOSPlatform("android")]
         [UnsupportedOSPlatform("browser")]
         [UnsupportedOSPlatform("ios")]

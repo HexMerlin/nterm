@@ -1,6 +1,6 @@
-﻿using System.Globalization;
-using NTerm.Core;
+﻿using NTerm.Core;
 using NTerm.Examples;
+using System.Globalization;
 
 namespace NTerm.DevConsole;
 
