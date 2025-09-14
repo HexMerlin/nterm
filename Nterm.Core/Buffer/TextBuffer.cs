@@ -53,15 +53,25 @@ public class TextBuffer
     public IReadOnlyList<LineBuffer> Lines => lines;
 
     /// <summary>
+    /// Number of lines in the <see cref="TextBuffer"/>.
+    /// </summary>
+    public int LineCount => lines.Count;
+
+    /// <summary>
     /// Appends a single character to the current line with the specified colors.
     /// </summary>
     /// <param name="ch">The character to write.</param>
     /// <param name="foreground">The foreground color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
+    /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>
     /// This method mutates the current line. No terminal output occurs until <see cref="Flush()"/> is called.
     /// </remarks>
-    public void Write(char ch, Color foreground = default, Color background = default) => lines[^1].Write(ch, foreground, background);
+    public TextBuffer Write(char ch, Color foreground = default, Color background = default)
+    {
+        lines[^1].Write(ch, foreground, background);
+        return this;
+    }
 
     /// <summary>
     /// Appends a span of characters to the buffer with the specified colors.
@@ -69,6 +79,7 @@ public class TextBuffer
     /// <param name="str">The characters to write. May contain line breaks.</param>
     /// <param name="foreground">The foreground color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
+    /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>
     /// <para>
     /// If <paramref name="str"/> contains line breaks, it is enumerated using
@@ -78,7 +89,7 @@ public class TextBuffer
     /// </para>
     /// <para>No terminal output occurs until <see cref="Flush()"/> is called.</para>
     /// </remarks>
-    public void Write(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    public TextBuffer Write(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
     {
         int lineCount = 0;
         foreach (ReadOnlySpan<char> line in str.EnumerateLines())
@@ -87,6 +98,7 @@ public class TextBuffer
             if (lineCount > 0) WriteLine();
             lineCount++;
         }
+        return this;
     }
 
     /// <summary>
@@ -95,24 +107,28 @@ public class TextBuffer
     /// <param name="str">The text to write.</param>
     /// <param name="foreground">The foreground color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
+    /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>No terminal output occurs until <see cref="Flush()"/> is called.</remarks>
-    public void WriteLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    public TextBuffer WriteLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
     {
         Write(str, foreground, background);
         WriteLine();
+        return this;
     }
 
     /// <summary>
     /// Ends the current line and starts a new, empty line.
     /// </summary>
+    /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>
     /// Trims the capacity of the current line before creating the next line to minimize memory usage.
     /// No terminal output occurs until <see cref="Flush()"/> is called.
     /// </remarks>
-    public void WriteLine()
+    public TextBuffer WriteLine()
     {
         lines[^1].TrimCapacity();
         lines.Add(new LineBuffer());
+        return this;
     }
 
     /// <summary>
