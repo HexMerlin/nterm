@@ -6,8 +6,25 @@ namespace Nterm.Core.Controls;
 /// Immutable-dimension table with beautiful Unicode grid formatting and 24‑bit color support.
 /// Table dimensions are fixed at construction; individual cells and headers are mutable.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Use <see cref="ToTextBuffer()"/> or <see cref="ToTextBuffer(TableTheme)"/> to render the table
+/// into a <see cref="TextBuffer"/> for terminal output. Rendering supports color theming and multiple
+/// border styles via <see cref="TableTheme"/> and <see cref="TableBorders"/>.
+/// </para>
+/// <para>This type is not thread-safe.</para>
+/// </remarks>
+/// <seealso cref="TableTheme"/>
+/// <seealso cref="TableBorders"/>
+/// <seealso cref="TextBuffer"/>
 public class Table
 {
+    /// <summary>
+    /// Gets the header text for each column.
+    /// </summary>
+    /// <remarks>
+    /// The array length is equal to <see cref="ColCount"/>. An empty string indicates no header for that column.
+    /// </remarks>
     public string[] Headers { get; }
 
     private readonly string[,] cells;
@@ -29,17 +46,44 @@ public class Table
     private const int CellPadding = 1; // Padding inside cells (left + right = 2)
     private const int ColumnSpacing = 2; // Spaces between columns when no separators
 
+    /// <summary>
+    /// Gets the number of columns in the table.
+    /// </summary>
     public int ColCount => cells.GetLength(0);
+
+    /// <summary>
+    /// Gets the number of rows in the table.
+    /// </summary>
     public int RowCount => cells.GetLength(1);
 
+    /// <summary>
+    /// Gets a value indicating whether any header cell contains content.
+    /// </summary>
     public bool HasHeaders => Headers.Any(h => h.Length > 0);
 
+    /// <summary>
+    /// Gets or sets the content of a cell at the specified column and row.
+    /// </summary>
+    /// <param name="col">Zero-based column index.</param>
+    /// <param name="row">Zero-based row index.</param>
+    /// <returns>The cell content; never null (empty string is used instead).</returns>
+    /// <remarks>
+    /// Setting a null value stores an empty string.
+    /// </remarks>
     public string this[int col, int row]
     {
         get => cells[col, row] ?? "";
         set => cells[col, row] = value ?? "";
     }
 
+    /// <summary>
+    /// Initializes a new table with fixed dimensions.
+    /// </summary>
+    /// <param name="colCount">Number of columns to allocate.</param>
+    /// <param name="rowCount">Number of rows to allocate.</param>
+    /// <remarks>
+    /// All headers and cells are initialized to empty strings.
+    /// </remarks>
     public Table(int colCount, int rowCount)
     {
         Headers = new string[colCount];
@@ -59,6 +103,7 @@ public class Table
     /// <summary>
     /// Renders the complete table with default theme.
     /// </summary>
+    /// <returns>A <see cref="TextBuffer"/> containing styled, formatted output.</returns>
     public TextBuffer ToTextBuffer() => ToTextBuffer(TableTheme.MonokaiMidnight);
 
     /// <summary>
@@ -66,6 +111,10 @@ public class Table
     /// Headers are displayed if any header has content.
     /// </summary>
     /// <param name="theme">Theme containing border style and styles to use for rendering.</param>
+    /// <returns>A <see cref="TextBuffer"/> containing styled, formatted output.</returns>
+    /// <remarks>
+    /// If <see cref="TableBorders.Header"/> is selected but no headers are present, the border style falls back to <see cref="TableBorders.None"/>.
+    /// </remarks>
     public TextBuffer ToTextBuffer(TableTheme theme)
     {
         TextBuffer output = new();

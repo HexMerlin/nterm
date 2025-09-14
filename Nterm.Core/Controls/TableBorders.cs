@@ -3,6 +3,10 @@ namespace Nterm.Core.Controls;
 /// <summary>
 /// Border style options for table rendering.
 /// </summary>
+/// <remarks>
+/// These options control which outer and inner lines are drawn when a <see cref="Table"/> is rendered.
+/// They are typically supplied via <see cref="TableTheme.Borders"/>.
+/// </remarks>
 public enum TableBorders
 {
     /// <summary>No borders at all - clean text-only output with column alignment.</summary>
