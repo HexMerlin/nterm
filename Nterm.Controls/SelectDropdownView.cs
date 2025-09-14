@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace NTerm.Controls;
+namespace Nterm.Controls;
 
 internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 {

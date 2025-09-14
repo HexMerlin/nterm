@@ -2,7 +2,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace NTerm.Sixel.Encoder;
+namespace Nterm.Sixel.Encoder;
 public class GifEncoder : SixelEncoder
 {
     public GifEncoder(Image<Rgba32> img) : base(img, "GIF")

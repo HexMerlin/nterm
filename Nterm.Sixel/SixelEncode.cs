@@ -1,13 +1,13 @@
-using NTerm.Sixel.Encoder;
+using Nterm.Sixel.Encoder;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
-using Color = NTerm.Core.Color;
-using Constants = NTerm.Core.Constants;
-using Size = NTerm.Core.Size;
+using Color = Nterm.Core.Color;
+using Constants = Nterm.Core.Constants;
+using Size = Nterm.Core.Size;
 
-namespace NTerm.Sixel;
+namespace Nterm.Sixel;
 
 public static class SixelEncode
 {

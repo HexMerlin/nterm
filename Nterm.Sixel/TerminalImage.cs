@@ -2,9 +2,9 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Size = NTerm.Core.Size;
+using Size = Nterm.Core.Size;
 
-namespace NTerm.Sixel;
+namespace Nterm.Sixel;
 
 /// <summary>
 /// Immutable SIXEL image data for display in a terminal.

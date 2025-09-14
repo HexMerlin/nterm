@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
 using System.Text;
 
-namespace NTerm.Examples;
+namespace Nterm.Examples;
 
 public class ConsoleWindowDemo
 {

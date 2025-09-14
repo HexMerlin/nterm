@@ -1,4 +1,4 @@
-namespace NTerm.Controls;
+namespace Nterm.Controls;
 
 public static class SelectMenu
 {

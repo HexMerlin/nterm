@@ -1,4 +1,4 @@
-﻿namespace NTerm.Core;
+﻿namespace Nterm.Core;
 
 public readonly partial struct Color
 {

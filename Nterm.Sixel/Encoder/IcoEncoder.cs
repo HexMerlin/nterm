@@ -3,7 +3,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Ico;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace NTerm.Sixel.Encoder;
+namespace Nterm.Sixel.Encoder;
 
 public class IcoEncoder : SixelEncoder
 {

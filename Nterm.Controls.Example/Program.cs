@@ -1,5 +1,5 @@
-using NTerm.Controls;
-using NTerm.Core;
+using Nterm.Controls;
+using Nterm.Core;
 
 Terminal.ForegroundColor = Color.White;
 

@@ -1,8 +1,8 @@
-﻿using NTerm.Core;
-using NTerm.Examples;
+﻿using Nterm.Core;
+using Nterm.Examples;
 using System.Globalization;
 
-namespace NTerm.DevConsole;
+namespace Nterm.DevConsole;
 
 /// <summary>
 /// Test program demonstrating <see cref="CSharpDocument"/> creation and console rendering.

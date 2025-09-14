@@ -1,4 +1,4 @@
-﻿namespace NTerm.Core;
+﻿namespace Nterm.Core;
 
 /// <summary>
 /// Size struct with Width and Height

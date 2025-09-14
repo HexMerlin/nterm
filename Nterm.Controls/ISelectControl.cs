@@ -1,4 +1,4 @@
-namespace NTerm.Controls;
+namespace Nterm.Controls;
 
 /// <summary>
 /// Interface for a select control that allows users to choose from a list of items.

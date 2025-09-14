@@ -2,7 +2,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Tiff;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace NTerm.Sixel.Encoder;
+namespace Nterm.Sixel.Encoder;
 
 public class TiffEncoder : SixelEncoder
 {
