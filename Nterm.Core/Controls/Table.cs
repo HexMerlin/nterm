@@ -170,18 +170,17 @@ public class Table
     /// </summary>
     private void WriteHorizontalBorderWithJunctions(TextBuffer bufferedOutput, int[] columnWidths, char left, char junction, char right, Color color)
     {
-        bufferedOutput.Append(left, color);
+        _ = bufferedOutput.Append(left, color);
 
         for (int col = 0; col < ColCount; col++)
         {
-            bufferedOutput.Append(new string(Horizontal, columnWidths[col] + (CellPadding * 2)), color);
+            _ = bufferedOutput.Append(new string(Horizontal, columnWidths[col] + (CellPadding * 2)), color);
 
             if (col < ColCount - 1)
-                bufferedOutput.Append(junction, color);
+                _ = bufferedOutput.Append(junction, color);
         }
 
-        bufferedOutput.Append(right, color);
-        bufferedOutput.AppendLine();
+        _ = bufferedOutput.Append(right, color).AppendLine();
     }
 
     /// <summary>
@@ -255,8 +254,7 @@ public class Table
         // Left border
         if (config.SideBorders)
         {
-            textBuffer.Append(Vertical, theme.BorderColor);
-            textBuffer.Append(' ', theme.BorderColor); // Only padding on the inside
+            _ = textBuffer.Append(Vertical, theme.BorderColor).Append(' ', theme.BorderColor); // Only padding on the inside
         }
 
         // Column content
@@ -264,7 +262,7 @@ public class Table
         {
             string content = isHeader ? Headers[col] : this[col, rowIndex];
             Color textColor = GetCellColor(col, isHeader, theme);
-            textBuffer.Append(content.PadRight(columnWidths[col]), textColor);
+            _ = textBuffer.Append(content.PadRight(columnWidths[col]), textColor);
 
             // Column separator or spacing
             if (col < ColCount - 1)
@@ -274,11 +272,11 @@ public class Table
         // Right border
         if (config.SideBorders)
         {
-            textBuffer.Append(' ', theme.BorderColor); // Only padding on the inside
-            textBuffer.Append(Vertical, theme.BorderColor);
+            // Only padding on the inside
+            _ = textBuffer.Append(' ', theme.BorderColor).Append(Vertical, theme.BorderColor);
         }
 
-        textBuffer.AppendLine();
+        _ = textBuffer.AppendLine();
     }
 
     /// <summary>
@@ -335,10 +333,11 @@ public class Table
     private void WriteHorizontalBorderWithSides(TextBuffer textBuffer, int[] columnWidths, char left, char right, Color borderColor)
     {
         int contentWidth = CalculateContentWidth(columnWidths);
-        textBuffer.Append(left, borderColor);
-        textBuffer.Append(new string(Horizontal, contentWidth + (CellPadding * 2)), borderColor);
-        textBuffer.Append(right, borderColor);
-        textBuffer.AppendLine();
+        _ = textBuffer
+            .Append(left, borderColor)
+            .Append(new string(Horizontal, contentWidth + (CellPadding * 2)), borderColor)
+            .Append(right, borderColor)
+            .AppendLine();
     }
 
     /// <summary>
@@ -347,8 +346,9 @@ public class Table
     private void WriteHorizontalLine(TextBuffer textBuffer, int[] columnWidths, Color borderColor)
     {
         int totalWidth = CalculateContentWidth(columnWidths);
-        textBuffer.Append(new string(Horizontal, totalWidth), borderColor);
-        textBuffer.AppendLine();
+        _ = textBuffer
+            .Append(new string(Horizontal, totalWidth), borderColor)
+            .AppendLine();
     }
 
     /// <summary>
@@ -356,9 +356,10 @@ public class Table
     /// </summary>
     private static void WriteCharWithPadding(TextBuffer textBuffer, char character, Color color)
     {
-        textBuffer.Append(' ', color);
-        textBuffer.Append(character, color);
-        textBuffer.Append(' ', color);
+        _ = textBuffer
+            .Append(' ', color)
+            .Append(character, color)
+            .Append(' ', color);
     }
 
     /// <summary>
@@ -369,6 +370,6 @@ public class Table
         if (hasColumnSeparators)
             WriteCharWithPadding(textBuffer, Vertical, borderColor);
         else
-            textBuffer.Append(new string(' ', ColumnSpacing));
+            _ = textBuffer.Append(new string(' ', ColumnSpacing));
     }
 }

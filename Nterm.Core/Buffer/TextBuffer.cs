@@ -95,7 +95,7 @@ public class TextBuffer
         foreach (ReadOnlySpan<char> line in str.EnumerateLines())
         {
             lines[^1].Append(line, foreground, background);
-            if (lineCount > 0) AppendLine();
+            if (lineCount > 0) _ = AppendLine();
             lineCount++;
         }
         return this;
@@ -109,12 +109,8 @@ public class TextBuffer
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>No terminal output occurs until <see cref="Write()"/> is called.</remarks>
-    public TextBuffer AppendLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
-    {
-        Append(str, foreground, background);
-        AppendLine();
-        return this;
-    }
+    public TextBuffer AppendLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default) 
+        => Append(str, foreground, background).AppendLine();
 
     /// <summary>
     /// Ends the current line and starts a new, empty line.
