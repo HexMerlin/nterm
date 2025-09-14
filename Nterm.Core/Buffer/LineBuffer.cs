@@ -8,7 +8,7 @@ namespace Nterm.Core.Buffer;
 /// <remarks>
 /// <para>
 /// A <see cref="LineBuffer"/> records characters and the positions at which a new <see cref="CharStyle"/> is applied.
-/// When <see cref="Flush"/> is called, the content is emitted to the terminal as contiguous segments with the
+/// When <see cref="Write"/> is called, the content is emitted to the terminal as contiguous segments with the
 /// appropriate colors.
 /// </para>
 /// <para>
@@ -40,9 +40,9 @@ public class LineBuffer
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <remarks>
     /// This constructor is equivalent to creating an empty buffer and then calling
-    /// <see cref="Write(ReadOnlySpan{char}, Color, Color)"/> with the same arguments.
+    /// <see cref="Append(ReadOnlySpan{char}, Color, Color)"/> with the same arguments.
     /// </remarks>
-    internal LineBuffer(string str, Color foreground = default, Color background = default) : base() => Write(str, foreground, background);
+    internal LineBuffer(string str, Color foreground = default, Color background = default) : base() => Append(str, foreground, background);
 
     /// <summary>
     /// Writes the buffered content to the terminal as styled segments.
@@ -53,10 +53,10 @@ public class LineBuffer
     /// foreground and background colors are applied, and the characters are written to the terminal.
     /// </para>
     /// <para>
-    /// Invoking <see cref="Flush"/> does not clear the buffer.
+    /// Invoking <see cref="Write"/> does not clear the buffer.
     /// </para>
     /// </remarks>
-    public void Flush()
+    public void Write()
     {
         TrimCapacity();
         Span<char> span = CollectionsMarshal.AsSpan(buf);
@@ -85,9 +85,9 @@ public class LineBuffer
     /// Thrown when <paramref name="ch"/> is a newline character. Use <see cref="TextBuffer"/> for multi-line text.
     /// </exception>
     /// <remarks>
-    /// This method only mutates the buffer; no terminal output occurs until <see cref="Flush"/> is called.
+    /// This method only mutates the buffer; no terminal output occurs until <see cref="Write"/> is called.
     /// </remarks>
-    internal void Write(char ch, Color foreground = default, Color background = default)
+    internal void Append(char ch, Color foreground = default, Color background = default)
     {
         if (ch is '\n' or '\r')
             throw new ArgumentException($"Newline characters are not allowed in {nameof(LineBuffer)}. Use {nameof(TextBuffer)} for multi-line text.", nameof(ch));
@@ -102,10 +102,10 @@ public class LineBuffer
     /// <param name="foreground">The foreground color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <remarks>
-    /// This method only mutates the buffer; no terminal output occurs until <see cref="Flush"/> is called.
+    /// This method only mutates the buffer; no terminal output occurs until <see cref="Write"/> is called.
     /// Callers should ensure that <paramref name="str"/> does not contain newline characters.
     /// </remarks>
-    internal void Write(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    internal void Append(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
     {
         AddCharStyle(foreground, background);
         buf.AddRange(str);

@@ -6,16 +6,16 @@
 /// <remarks>
 /// <para>
 /// A <see cref="TextBuffer"/> is composed of one or more <see cref="LineBuffer"/> instances. Text written
-/// via <see cref="Write(char, Color, Color)"/>, <see cref="Write(ReadOnlySpan{char}, Color, Color)"/>, 
-/// or <see cref="WriteLine(ReadOnlySpan{char}, Color, Color)"/> is appended to the current line, and
-/// <see cref="WriteLine()"/> starts a new one.
+/// via <see cref="Append(char, Color, Color)"/>, <see cref="Append(ReadOnlySpan{char}, Color, Color)"/>, 
+/// or <see cref="AppendLine(ReadOnlySpan{char}, Color, Color)"/> is appended to the current line, and
+/// <see cref="AppendLine()"/> starts a new one.
 /// </para>
 /// <para>
-/// Calling <see cref="Flush()"/> renders the accumulated content to the terminal, delegating styling
-/// application to the underlying line buffers. Flushing does not clear the buffer; it may be flushed
+/// Calling <see cref="Write()"/> renders the accumulated content to the terminal, delegating styling
+/// application to the underlying line buffers. Writing does not clear the buffer; it may be written out
 /// multiple times if desired. 
 /// <para>
-/// If post-processing is needed (e.g. prefixing lines with line numbers), iterate over <see cref="Lines"/> property instead and flush each line individually.
+/// If post-processing is needed (e.g. prefixing lines with line numbers), iterate over <see cref="Lines"/> property instead and write each line individually.
 /// </para>
 /// </para>
 /// <para>This type is not thread-safe.</para>
@@ -42,9 +42,9 @@ public class TextBuffer
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <remarks>
     /// This constructor is equivalent to creating an empty buffer and then calling
-    /// <see cref="Write(ReadOnlySpan{char}, Color, Color)"/> with the same arguments.
+    /// <see cref="Append(ReadOnlySpan{char}, Color, Color)"/> with the same arguments.
     /// </remarks>
-    public TextBuffer(string str, Color foreground = default, Color background = default) : base() => Write(str, foreground, background);
+    public TextBuffer(string str, Color foreground = default, Color background = default) : base() => Append(str, foreground, background);
 
     /// <summary>
     /// Gets the sequence of logical lines contained in this buffer.
@@ -65,11 +65,11 @@ public class TextBuffer
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>
-    /// This method mutates the current line. No terminal output occurs until <see cref="Flush()"/> is called.
+    /// This method mutates the current line. No terminal output occurs until <see cref="Write()"/> is called.
     /// </remarks>
-    public TextBuffer Write(char ch, Color foreground = default, Color background = default)
+    public TextBuffer Append(char ch, Color foreground = default, Color background = default)
     {
-        lines[^1].Write(ch, foreground, background);
+        lines[^1].Append(ch, foreground, background);
         return this;
     }
 
@@ -87,15 +87,15 @@ public class TextBuffer
     /// to the current line. After writing each subsequent segment (beyond the first), a new line is started
     /// to separate segments.
     /// </para>
-    /// <para>No terminal output occurs until <see cref="Flush()"/> is called.</para>
+    /// <para>No terminal output occurs until <see cref="Write()"/> is called.</para>
     /// </remarks>
-    public TextBuffer Write(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    public TextBuffer Append(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
     {
         int lineCount = 0;
         foreach (ReadOnlySpan<char> line in str.EnumerateLines())
         {
-            lines[^1].Write(line, foreground, background);
-            if (lineCount > 0) WriteLine();
+            lines[^1].Append(line, foreground, background);
+            if (lineCount > 0) AppendLine();
             lineCount++;
         }
         return this;
@@ -108,11 +108,11 @@ public class TextBuffer
     /// <param name="foreground">The foreground color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <returns>This <see cref="TextBuffer"/> instance</returns>
-    /// <remarks>No terminal output occurs until <see cref="Flush()"/> is called.</remarks>
-    public TextBuffer WriteLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    /// <remarks>No terminal output occurs until <see cref="Write()"/> is called.</remarks>
+    public TextBuffer AppendLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
     {
-        Write(str, foreground, background);
-        WriteLine();
+        Append(str, foreground, background);
+        AppendLine();
         return this;
     }
 
@@ -122,9 +122,9 @@ public class TextBuffer
     /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>
     /// Trims the capacity of the current line before creating the next line to minimize memory usage.
-    /// No terminal output occurs until <see cref="Flush()"/> is called.
+    /// No terminal output occurs until <see cref="Write()"/> is called.
     /// </remarks>
-    public TextBuffer WriteLine()
+    public TextBuffer AppendLine()
     {
         lines[^1].TrimCapacity();
         lines.Add(new LineBuffer());
@@ -132,18 +132,17 @@ public class TextBuffer
     }
 
     /// <summary>
-    /// Writes the buffered content to the terminal.
+    /// Writes the buffered content to the terminal with a newline written between lines.
     /// </summary>
     /// <remarks>
-    /// Each line is flushed in order, with a newline written between lines. Styling is applied per-line
-    /// according to the content previously written into the buffer.
+    /// Styling is applied according to the content previously written into the buffer.
     /// </remarks>
-    public void Flush()
+    public void Write()
     {
         for (int i = 0; i < lines.Count; i++)
         {
             if (i > 0) Terminal.WriteLine(); // write newline between lines
-            lines[i].Flush();
+            lines[i].Write();
         }
     }
 
