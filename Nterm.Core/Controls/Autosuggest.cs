@@ -92,6 +92,13 @@ public sealed class AutosuggestControl : IAutosuggest
                         suggestion = GetSuggestionSafe(suggest, typedText);
                     }
                     break;
+                case ConsoleKey.Delete:
+                    if (_caretIndex < typedText.Length)
+                    {
+                        typedText = typedText.Remove(_caretIndex, 1);
+                        suggestion = GetSuggestionSafe(suggest, typedText);
+                    }
+                    break;
                 case ConsoleKey.LeftArrow:
                     if (_caretIndex > 0)
                         _caretIndex--;
