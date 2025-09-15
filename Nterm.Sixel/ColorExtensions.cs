@@ -1,10 +1,10 @@
-using NTerm.Core;
+using Nterm.Core;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace NTerm.Sixel;
+namespace Nterm.Sixel;
 
 /// <summary>
-/// Extension methods for converting between NTerm.Core.Color and ImageSharp types.
+/// Extension methods for converting between Nterm.Core.Color and ImageSharp types.
 /// </summary>
 internal static class ColorExtensions
 {
@@ -16,7 +16,7 @@ internal static class ColorExtensions
     public static Color ToColor(this Rgba32 rgba) => new(rgba.R, rgba.G, rgba.B, rgba.A);
 
     /// <summary>
-    /// Converts NTerm Color to ImageSharp Rgba32.
+    /// Converts Nterm Color to ImageSharp Rgba32.
     /// </summary>
     /// <param name="color">Color value</param>
     /// <returns>Equivalent ImageSharp Rgba32 value</returns>
@@ -88,7 +88,7 @@ internal static class ColorExtensions
     }
 
     /// <summary>
-    /// Converts NTerm Color to Sixel palette format string.
+    /// Converts Nterm Color to Sixel palette format string.
     /// </summary>
     /// <param name="color">Color to convert</param>
     /// <returns>Sixel color palette string in format "R;G;B" with values scaled to 0-100 range</returns>

@@ -2,9 +2,9 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Size = NTerm.Core.Size;
+using Size = Nterm.Core.Size;
 
-namespace NTerm.Sixel;
+namespace Nterm.Sixel;
 
 /// <summary>
 /// Immutable SIXEL image data for display in a terminal.
@@ -37,16 +37,10 @@ public readonly struct TerminalImage : IEquatable<TerminalImage>
     /// </summary>
     /// <param name="cellSizeInPixels">Terminal character cell size in pixels</param>
     /// <returns>Image dimensions in character cells (width×height)</returns>
-    public Size GetSizeInCharacters(Size cellSizeInPixels)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSizeInPixels.Height);
-
-        return new Size(
+    public Size GetSizeInCharacters(Size cellSizeInPixels) => new(
             (int)Math.Ceiling((double)DisplaySize.Width / cellSizeInPixels.Width),
             (int)Math.Ceiling((double)DisplaySize.Height / cellSizeInPixels.Height)
         );
-    }
 
     /// <summary>
     /// Initializes console image with pre-encoded data.

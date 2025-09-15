@@ -1,6 +1,6 @@
-using NTerm.Core;
+using Nterm.Core;
 
-namespace NTerm.Document;
+namespace Nterm.Document;
 
 /// <summary>
 /// Descriptor for semantic and visual properties for rendering characters.

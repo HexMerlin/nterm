@@ -1,9 +1,9 @@
 
 using Microsoft.CodeAnalysis.Classification;
-using NTerm.Document;
-using C = NTerm.Core.Color;
+using Nterm.Document;
+using C = Nterm.Core.Color;
 
-namespace NTerm.Examples;
+namespace Nterm.Examples;
 
 /// <summary>
 /// Default theme for <see cref="StyledDocument"/> classifications.

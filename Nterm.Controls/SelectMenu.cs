@@ -1,16 +1,11 @@
-using System.Diagnostics;
-
-namespace NTerm.Controls;
+namespace Nterm.Controls;
 
 public static class SelectMenu
 {
     public static SelectItem<T> Show<T>(
         IEnumerable<SelectItem<T>> items,
         int numberOfVisibleItems = 4
-    )
-    {
-        return new SelectControl<T>(true).Show(items, numberOfVisibleItems);
-    }
+    ) => new SelectControl<T>(true).Show(items, numberOfVisibleItems);
 }
 
 /// <summary>

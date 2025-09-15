@@ -1,1 +1,1 @@
-global using NTerm.Core;
+global using Nterm.Core;

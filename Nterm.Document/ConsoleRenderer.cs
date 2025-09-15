@@ -1,6 +1,6 @@
-﻿using NTerm.Core;
+﻿using Nterm.Core;
 
-namespace NTerm.Document;
+namespace Nterm.Document;
 
 /// <summary>
 /// Ultra-simple console renderer for <see cref="StyledDocument"/>.

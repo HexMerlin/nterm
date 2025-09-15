@@ -1,6 +1,6 @@
-using NTerm.Core;
+using Nterm.Core;
 
-namespace NTerm.Examples;
+namespace Nterm.Examples;
 
 public class SetCursorDemo
 {

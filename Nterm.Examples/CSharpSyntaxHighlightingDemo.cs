@@ -1,10 +1,10 @@
-﻿using System.Text;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
+﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
-using NTerm.Core;
-using NTerm.Document;
+using Nterm.Core;
+using Nterm.Document;
+using System.Text;
 
-namespace NTerm.Examples;
+namespace Nterm.Examples;
 
 public class CSharpSyntaxHighlightingDemo
 {

@@ -2,7 +2,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 
-namespace NTerm.Core;
+namespace Nterm.Core;
 
 /// <summary>
 /// Terminal capability detection with caching and performance.

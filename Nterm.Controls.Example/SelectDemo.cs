@@ -1,6 +1,6 @@
-using NTerm.Core;
+using Nterm.Core;
 
-namespace NTerm.Controls.Example;
+namespace Nterm.Controls.Example;
 
 /// <summary>
 /// Demo program to test the Select control functionality.

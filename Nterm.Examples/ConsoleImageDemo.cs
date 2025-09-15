@@ -1,8 +1,8 @@
-﻿using System.Reflection;
-using NTerm.Core;
-using NTerm.Sixel;
+﻿using Nterm.Core;
+using Nterm.Sixel;
+using System.Reflection;
 
-namespace NTerm.Examples;
+namespace Nterm.Examples;
 
 /// <summary>
 /// Perfect console image demonstration using Optimized ConsoleImage API.

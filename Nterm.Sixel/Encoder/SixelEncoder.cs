@@ -1,12 +1,12 @@
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using NTerm.Core;
+using Nterm.Core;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Size = NTerm.Core.Size;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Size = Nterm.Core.Size;
 
-namespace NTerm.Sixel.Encoder;
+namespace Nterm.Sixel.Encoder;
 
 /// <summary>
 /// Generic encoder to convert an image to Sixel strings

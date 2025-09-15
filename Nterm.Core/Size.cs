@@ -1,4 +1,4 @@
-﻿namespace NTerm.Core;
+﻿namespace Nterm.Core;
 
 /// <summary>
 /// Size struct with Width and Height
@@ -24,4 +24,6 @@ public readonly struct Size : IEquatable<Size>
     public static bool operator ==(Size left, Size right) => left.Equals(right);
 
     public static bool operator !=(Size left, Size right) => !(left == right);
+
+    public override string ToString() => $"{Width}x{Height} (W x H)";
 }

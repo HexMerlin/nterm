@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
 using System.Text;
 
-namespace NTerm.Examples;
+namespace Nterm.Examples;
 
 public class ConsoleWindowDemo
 {
@@ -10,7 +10,6 @@ public class ConsoleWindowDemo
     private static int SaveWindowHeight { get; set; }
     private static int SaveWindowWidth { get; set; }
     private static bool SaveCursorVisible { get; set; }
-
 
     [SupportedOSPlatform("windows")]
     public static void Run()
@@ -23,8 +22,8 @@ public class ConsoleWindowDemo
         string g2 = "|    ";
         string grid1;
         string grid2;
-        StringBuilder sbG1 = new StringBuilder();
-        StringBuilder sbG2 = new StringBuilder();
+        StringBuilder sbG1 = new();
+        StringBuilder sbG2 = new();
         ConsoleKeyInfo cki;
         int y;
         //
@@ -38,7 +37,7 @@ public class ConsoleWindowDemo
             //
             Console.Clear();
             Console.WriteLine(m1);
-            Console.ReadKey(true);
+            _ = Console.ReadKey(true);
 
             // Set the smallest possible window size before setting the buffer size.
             Console.SetWindowSize(1, 1);
@@ -49,11 +48,11 @@ public class ConsoleWindowDemo
             // this same technique could be used with an arbitrary buffer width.)
             for (y = 0; y < Console.BufferWidth / g1.Length; y++)
             {
-                sbG1.Append(g1);
-                sbG2.Append(g2);
+                _ = sbG1.Append(g1);
+                _ = sbG2.Append(g2);
             }
-            sbG1.Append(g1, 0, Console.BufferWidth % g1.Length);
-            sbG2.Append(g2, 0, Console.BufferWidth % g2.Length);
+            _ = sbG1.Append(g1, 0, Console.BufferWidth % g1.Length);
+            _ = sbG2.Append(g2, 0, Console.BufferWidth % g2.Length);
             grid1 = sbG1.ToString();
             grid2 = sbG2.ToString();
 

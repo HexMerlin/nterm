@@ -1,7 +1,7 @@
-﻿using NTerm.Core;
-using NTerm.Sixel;
+﻿using Nterm.Core;
+using Nterm.Sixel;
 
-namespace NTerm.Examples;
+namespace Nterm.Examples;
 
 /// <summary>
 /// Streaming chat message writer with avatar image and progressive text output.

@@ -1,9 +1,8 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Text;
 
-namespace NTerm.Core;
+namespace Nterm.Core;
 
 /// <summary>
 /// Optimized 24‑bit color console writer with VT output and RAW VT input.
@@ -58,16 +57,13 @@ public static class Terminal
     public static int WindowHeight => Console.WindowHeight;
     public static int BufferWidth => Console.BufferWidth;
     public static int BufferHeight => Console.BufferHeight;
-    public static int CursorLeft => Console.CursorLeft;
-    public static int CursorTop => Console.CursorTop;
+    public static int CursorLeft { get => Console.CursorLeft; set => Console.CursorLeft = value; }
+    public static int CursorTop { get => Console.CursorTop; set => Console.CursorTop = value; }
 
     public static bool CursorVisible
     {
         [SupportedOSPlatform("windows")]
-#pragma warning disable CA1416 // Validate platform compatibility
         get => Console.CursorVisible;
-#pragma warning restore CA1416 // Validate platform compatibility
-
         [UnsupportedOSPlatform("android")]
         [UnsupportedOSPlatform("browser")]
         [UnsupportedOSPlatform("ios")]

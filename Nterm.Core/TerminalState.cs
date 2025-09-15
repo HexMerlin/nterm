@@ -1,4 +1,4 @@
-namespace NTerm.Core;
+namespace Nterm.Core;
 
 /// <summary>
 /// Represents the state of the console that can be restored later.

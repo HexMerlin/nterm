@@ -2,10 +2,10 @@
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using NTerm.Document;
+using Nterm.Document;
 using System.Collections.Immutable;
 
-namespace NTerm.Examples;
+namespace Nterm.Examples;
 
 /// <summary>
 /// Immutable document format containing styled characters ready for rendering.

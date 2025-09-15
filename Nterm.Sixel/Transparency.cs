@@ -1,4 +1,4 @@
-namespace NTerm.Sixel;
+namespace Nterm.Sixel;
 
 public enum Transparency
 {
