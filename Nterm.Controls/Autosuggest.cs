@@ -59,6 +59,10 @@ public sealed class AutosuggestControl : IAutosuggest
                     }
                     break;
                 case ConsoleKey.Enter:
+                    if (!string.IsNullOrEmpty(suggestion))
+                    {
+                        typedText = suggestion;
+                    }
                     done = true;
                     break;
                 case ConsoleKey.Escape:
