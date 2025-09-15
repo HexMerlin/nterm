@@ -43,6 +43,7 @@ public sealed class AutosuggestControl : IAutosuggest
         string? suggestion = GetSuggestionSafe(suggest, typedText);
 
         bool done = false;
+        bool cancelled = false;
         while (!done)
         {
             Render(typedText, suggestion);
@@ -59,6 +60,18 @@ public sealed class AutosuggestControl : IAutosuggest
                     break;
                 case ConsoleKey.Enter:
                     done = true;
+                    break;
+                case ConsoleKey.Escape:
+                    if (typedText.Length > 0)
+                    {
+                        typedText = string.Empty;
+                        suggestion = GetSuggestionSafe(suggest, typedText);
+                    }
+                    else
+                    {
+                        cancelled = true;
+                        done = true;
+                    }
                     break;
                 case ConsoleKey.Backspace:
                     if (typedText.Length > 0)
@@ -77,10 +90,9 @@ public sealed class AutosuggestControl : IAutosuggest
             }
         }
 
-        // Final render shows accepted text without trailing suggestion
         Render(typedText, typedText);
 
-        return typedText;
+        return cancelled ? string.Empty : typedText;
     }
 
     private static void PrepareTerminal()
