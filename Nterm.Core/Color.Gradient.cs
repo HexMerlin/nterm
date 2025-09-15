@@ -13,7 +13,7 @@ public readonly partial struct Color
     /// </summary>
     /// <param name="length">Number of colors to produce (≥ 2).</param>
     /// <param name="stops">At least two colors; treated as equally spaced stops.</param>
-    public static Color[] Gradient(int length, ReadOnlySpan<Color> stops)
+    public static Color[] Gradient(int length, params ReadOnlySpan<Color> stops)
     {
         if (length < 2) throw new ArgumentException("length must be ≥ 2", nameof(length));
         if (stops.Length < 2) throw new ArgumentException("stops must contain ≥ 2 colors", nameof(stops));
