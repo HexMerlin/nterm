@@ -2,12 +2,14 @@ using System.Diagnostics;
 
 namespace Nterm.Core.Controls;
 
-public delegate string? AutosuggestProvider(string currentText);
+public delegate string AutosuggestProvider(string currentText, string previousSuggestion = "");
 
 public sealed class AutosuggestOptions
 {
     public Color TypedColor { get; init; } = Color.White;
     public Color SuggestionColor { get; init; } = Color.Gray;
+    public AutosuggestProvider? GetNextSuggestion { get; init; }
+    public AutosuggestProvider? GetPreviousSuggestion { get; init; }
 }
 
 public interface IAutosuggest
@@ -26,6 +28,7 @@ public sealed class AutosuggestControl : IAutosuggest
     private int _anchorLeft;
     private int _anchorTop;
     private AutosuggestOptions _options = new();
+    private int _caretIndex;
 
     public string Read(AutosuggestProvider suggest, AutosuggestOptions? options = null)
     {
@@ -40,7 +43,8 @@ public sealed class AutosuggestControl : IAutosuggest
         ClearInputBuffer();
 
         string typedText = string.Empty;
-        string? suggestion = GetSuggestionSafe(suggest, typedText);
+        _caretIndex = 0;
+        string suggestion = GetSuggestionSafe(suggest, typedText);
 
         bool done = false;
         bool cancelled = false;
@@ -55,6 +59,7 @@ public sealed class AutosuggestControl : IAutosuggest
                     if (!string.IsNullOrEmpty(suggestion))
                     {
                         typedText = suggestion;
+                        _caretIndex = typedText.Length;
                         suggestion = GetSuggestionSafe(suggest, typedText);
                     }
                     break;
@@ -62,6 +67,7 @@ public sealed class AutosuggestControl : IAutosuggest
                     if (!string.IsNullOrEmpty(suggestion))
                     {
                         typedText = suggestion;
+                        _caretIndex = typedText.Length;
                     }
                     done = true;
                     break;
@@ -69,6 +75,7 @@ public sealed class AutosuggestControl : IAutosuggest
                     if (typedText.Length > 0)
                     {
                         typedText = string.Empty;
+                        _caretIndex = 0;
                         suggestion = GetSuggestionSafe(suggest, typedText);
                     }
                     else
@@ -78,16 +85,48 @@ public sealed class AutosuggestControl : IAutosuggest
                     }
                     break;
                 case ConsoleKey.Backspace:
-                    if (typedText.Length > 0)
+                    if (_caretIndex > 0 && typedText.Length > 0)
                     {
-                        typedText = typedText[..^1];
+                        typedText = typedText.Remove(_caretIndex - 1, 1);
+                        _caretIndex--;
                         suggestion = GetSuggestionSafe(suggest, typedText);
                     }
+                    break;
+                case ConsoleKey.LeftArrow:
+                    if (_caretIndex > 0)
+                        _caretIndex--;
+                    break;
+                case ConsoleKey.RightArrow:
+                    if (_caretIndex < typedText.Length)
+                        _caretIndex++;
+                    break;
+                case ConsoleKey.DownArrow:
+                    if (_options.GetNextSuggestion != null)
+                    {
+                        suggestion = _options.GetNextSuggestion.Invoke(typedText, suggestion);
+                    }
+
+                    break;
+                case ConsoleKey.UpArrow:
+                    if (_options.GetPreviousSuggestion != null)
+                    {
+                        suggestion = _options.GetPreviousSuggestion.Invoke(typedText, suggestion);
+                    }
+
                     break;
                 default:
                     if (keyInfo.KeyChar != '\0' && !char.IsControl(keyInfo.KeyChar))
                     {
-                        typedText += keyInfo.KeyChar;
+                        string ch = keyInfo.KeyChar.ToString();
+                        if (_caretIndex >= typedText.Length)
+                        {
+                            typedText += ch;
+                        }
+                        else
+                        {
+                            typedText = typedText.Insert(_caretIndex, ch);
+                        }
+                        _caretIndex++;
                         suggestion = GetSuggestionSafe(suggest, typedText);
                     }
                     break;
@@ -131,7 +170,7 @@ public sealed class AutosuggestControl : IAutosuggest
         (int matchStart, int matchLength) = FindFirstMatch(display, typedText);
 
         WriteColored(display, matchStart, matchLength);
-        PlaceCursor(matchStart, matchLength);
+        PlaceCursor(matchStart, Math.Min(_caretIndex, matchLength));
     }
 
     private string ComputeDisplayText(string typedText, string? suggestion)
@@ -181,12 +220,12 @@ public sealed class AutosuggestControl : IAutosuggest
         Terminal.Write(right);
     }
 
-    private void PlaceCursor(int matchStart, int matchLength)
+    private void PlaceCursor(int matchStart, int caretWithinMatch)
     {
         int caretColumn =
             _anchorLeft
             + Math.Clamp(
-                matchStart + matchLength,
+                matchStart + caretWithinMatch,
                 0,
                 Math.Max(0, Terminal.BufferWidth - _anchorLeft)
             );
@@ -208,7 +247,7 @@ public sealed class AutosuggestControl : IAutosuggest
         return text[..Math.Min(maxWidth, text.Length)];
     }
 
-    private static string? GetSuggestionSafe(AutosuggestProvider provider, string typed)
+    private static string GetSuggestionSafe(AutosuggestProvider provider, string typed)
     {
         try
         {
@@ -217,7 +256,7 @@ public sealed class AutosuggestControl : IAutosuggest
         catch (Exception ex)
         {
             Debug.WriteLine($"Autosuggest provider error: {ex.Message}");
-            return null;
+            return string.Empty;
         }
     }
 }

@@ -82,11 +82,26 @@ else
 }
 
 Terminal.Write("Type Console...: ");
-string result = Autosuggest.Read(current =>
-{
-    string[] candidates = ["Console.WriteLine", "Console.ReadKey", "Console.ReadLine"];
-    return candidates.FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase));
-});
+
+string[] candidates = ["Console.WriteLine", "Console.ReadKey", "Console.ReadLine"];
+string result = Autosuggest.Read(
+    (current, _) =>
+        candidates.FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
+        ?? string.Empty,
+    options: new AutosuggestOptions
+    {
+        GetNextSuggestion = (current, previous) =>
+            candidates
+                .Except([previous])
+                .LastOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
+            ?? string.Empty,
+        GetPreviousSuggestion = (current, previous) =>
+            candidates
+                .Except([previous])
+                .FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
+            ?? string.Empty,
+    }
+);
 
 Terminal.WriteLine("\nPress any key to exit...");
 ConsoleKeyInfo key = Terminal.ReadKey();
