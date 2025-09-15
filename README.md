@@ -7,7 +7,6 @@ This repo is currently under active development.
 - `Nterm.Core` - Contains core functionality and types, including
   - `Terminal` - A fast, optimized terminal API with Truecolor (24-bit) and graphics support
   - `Color` - Core true-color struct
-- `Nterm.Controls` - Control library for building terminal UIs
 - `Nterm.Controls.Example` - Examples using controls
 - - `Nterm.DevConsole` - Developer console
 - `Nterm.Document` - Styled Documents logic
@@ -19,4 +18,3 @@ This repo is currently under active development.
 
 
 
-  
