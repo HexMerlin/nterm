@@ -81,8 +81,12 @@ else
     return;
 }
 
-Terminal.Write("Type something else here: ");
-string userInput2 = Terminal.ReadLine();
+Terminal.Write("Type Console...: ");
+string result = Autosuggest.Read(current =>
+{
+    string[] candidates = ["Console.WriteLine", "Console.ReadKey", "Console.ReadLine"];
+    return candidates.FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase));
+});
 
 Terminal.WriteLine("\nPress any key to exit...");
 ConsoleKeyInfo key = Terminal.ReadKey();
