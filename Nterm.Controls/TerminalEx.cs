@@ -26,7 +26,7 @@ internal static class TerminalEx
     }
 
     /// <summary>
-    /// Makes space for the required rows below the anchor and sets the cursor to it.
+    /// Makes space for the required rows below the anchor and keeps the cursor at the (new) anchor.
     /// </summary>
     /// <param name="columnAnchor">The column of the anchor.</param>
     /// <param name="rowAnchor">The row of the anchor.</param>
