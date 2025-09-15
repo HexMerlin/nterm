@@ -197,12 +197,6 @@ public readonly partial struct Color
     public static Color Goldenrod => new(goldenrod);
     private const uint goldenrod = 0xFFDAA520u;
 
-    public static Color GradientActiveCaption => new(gradientActiveCaption);
-    private const uint gradientActiveCaption = 0xFFB9D1EAu;
-
-    public static Color GradientInactiveCaption => new(gradientInactiveCaption);
-    private const uint gradientInactiveCaption = 0xFFD7E4F2u;
-
     public static Color Gray => new(gray);
     private const uint gray = 0xFF808080u;
 
@@ -602,8 +596,6 @@ public readonly partial struct Color
             ghostWhite => nameof(GhostWhite),
             gold => nameof(Gold),
             goldenrod => nameof(Goldenrod),
-            gradientActiveCaption => nameof(GradientActiveCaption),
-            gradientInactiveCaption => nameof(GradientInactiveCaption),
             gray => nameof(Gray),
             grayText => nameof(GrayText),
             green => nameof(Green),

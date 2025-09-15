@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Nterm.Core.Buffer; 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 
@@ -203,7 +205,58 @@ public static class Terminal
         WriteLine();
     }
 
+    /// <summary>
+    /// Writes a line break to the terminal.
+    /// </summary>
     public static void WriteLine() => Console.WriteLine();
+
+    /// <summary>
+    /// Writes a <see cref="TextBuffer"/> to the terminal with any embedded newlines and styling.
+    /// </summary>
+    public static void Write(TextBuffer textBuffer)
+    {
+        for (int i = 0; i < textBuffer.LineCount; i++)
+        {
+            if (i > 0) WriteLine(); // write newline between lines
+            Write(textBuffer.Lines[i]);
+        }
+    }
+
+    /// <summary>
+    /// Writes a <see cref="TextBuffer"/> to the terminal with any embedded newlines and styling and an additional newline at the end.
+    /// </summary>
+    public static void WriteLine(TextBuffer textBuffer)
+    {
+        Write(textBuffer);
+        WriteLine();
+    }
+
+    /// <summary>
+    /// Writes a <see cref="LineBuffer"/> to the terminal with any embedded styling.
+    /// </summary>
+    public static void Write(LineBuffer lineBuffer)
+    {
+        lineBuffer.TrimCapacity(); //Since we are writing it out, we are not in a in-memory building hotpath - Do a fast trim of excess capacity.
+        (List<char> buf, List<(int pos, CharStyle charStyle)> styles) = lineBuffer.GetInternalData();
+        Span<char> span = CollectionsMarshal.AsSpan(buf);
+
+        for (int i = -1; i < styles.Count; i++)
+        {
+            int start = i >= 0 ? styles[i].pos : 0;
+            int end = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
+            CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
+            Write(span[start..end], charStyle.Color, charStyle.BackColor);
+        }
+    }
+
+    /// <summary>
+    /// Writes a <see cref="LineBuffer"/> to the terminal with any embedded styling and an additional newline at the end.
+    /// </summary>
+    public static void WriteLine(LineBuffer lineBuffer)
+    {
+        Write(lineBuffer);
+        WriteLine();
+    }
 
     /// <summary>
     /// Writes pre-encoded image data to console.
