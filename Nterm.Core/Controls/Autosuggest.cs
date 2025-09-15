@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Nterm.Controls;
+namespace Nterm.Core.Controls;
 
 public delegate string? AutosuggestProvider(string currentText);
 

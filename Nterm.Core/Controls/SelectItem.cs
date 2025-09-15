@@ -1,4 +1,4 @@
-namespace Nterm.Controls;
+namespace Nterm.Core.Controls;
 
 /// <summary>
 /// Represents an item in a select control with text and an associated action.

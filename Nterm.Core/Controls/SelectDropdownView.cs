@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace Nterm.Controls;
+namespace Nterm.Core.Controls;
 
 internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 {
@@ -406,6 +406,6 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         string query
     ) => string.IsNullOrWhiteSpace(query) ? items : [.. items.Where(i => IsMatch(i.Text, query))];
 
-    private static bool IsMatch(string? source, string query)
-        => !string.IsNullOrEmpty(source) && source.Contains(query, StringComparison.OrdinalIgnoreCase);
+    private static bool IsMatch(string? source, string query) =>
+        !string.IsNullOrEmpty(source) && source.Contains(query, StringComparison.OrdinalIgnoreCase);
 }

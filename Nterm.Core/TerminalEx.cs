@@ -1,4 +1,4 @@
-namespace Nterm.Controls;
+namespace Nterm.Core;
 
 internal static class TerminalEx
 {
