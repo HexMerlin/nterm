@@ -28,7 +28,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         using TerminalState state = new();
 
         PrepareTerminalForSelection();
-        ClearInputBuffer();
+        TerminalEx.ClearInputBuffer();
 
         FilterEnabled = enableFilter;
         FilterText = string.Empty;
@@ -93,21 +93,6 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         {
             // Cursor visibility not supported on this platform
             Debug.WriteLine("Cursor visibility manipulation not supported on this platform.");
-        }
-    }
-
-    /// <summary>
-    /// Clears any buffered input to prevent unwanted key presses.
-    /// </summary>
-    private static void ClearInputBuffer()
-    {
-        int clearedKeys = 0;
-        const int maxKeysToClear = 1000;
-
-        while (Terminal.KeyAvailable && clearedKeys < maxKeysToClear)
-        {
-            _ = Terminal.ReadKey(true);
-            clearedKeys++;
         }
     }
 
