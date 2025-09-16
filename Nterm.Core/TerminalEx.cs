@@ -2,6 +2,17 @@ namespace Nterm.Core;
 
 internal static class TerminalEx
 {
+    public static void ClearInputBuffer()
+    {
+        int clearedKeys = 0;
+        const int maxKeysToClear = 1000;
+        while (Terminal.KeyAvailable && clearedKeys < maxKeysToClear)
+        {
+            _ = Terminal.ReadKey(true);
+            clearedKeys++;
+        }
+    }
+
     public static void ClearLineFrom(int startColumn, int row)
     {
         if (row < 0 || row >= Terminal.BufferHeight)
