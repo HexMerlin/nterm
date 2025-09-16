@@ -128,21 +128,6 @@ public class TextBuffer
     }
 
     /// <summary>
-    /// Writes the buffered content to the terminal with a newline written between lines.
-    /// </summary>
-    /// <remarks>
-    /// Styling is applied according to the content previously written into the buffer.
-    /// </remarks>
-    public void Write()
-    {
-        for (int i = 0; i < lines.Count; i++)
-        {
-            if (i > 0) Terminal.WriteLine(); // write newline between lines
-            lines[i].Write();
-        }
-    }
-
-    /// <summary>
     /// Returns the concatenated textual representation of the buffer.
     /// </summary>
     /// <returns>A string formed by joining lines with a newline character ('\n').</returns>

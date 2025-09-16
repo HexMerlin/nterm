@@ -45,32 +45,6 @@ public class LineBuffer
     internal LineBuffer(string str, Color foreground = default, Color background = default) : base() => Append(str, foreground, background);
 
     /// <summary>
-    /// Writes the buffered content to the terminal as styled segments.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The buffer is partitioned using the recorded style boundaries. For each segment, the corresponding
-    /// foreground and background colors are applied, and the characters are written to the terminal.
-    /// </para>
-    /// <para>
-    /// Invoking <see cref="Write"/> does not clear the buffer.
-    /// </para>
-    /// </remarks>
-    public void Write()
-    {
-        TrimCapacity();
-        Span<char> span = CollectionsMarshal.AsSpan(buf);
-
-        for (int i = -1; i < styles.Count; i++)
-        {
-            int start = i >= 0 ? styles[i].pos : 0;
-            int end = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
-            CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
-            Terminal.Write(span[start..end], charStyle.Color, charStyle.BackColor);
-        }
-    }
-
-    /// <summary>
     /// Gets the current active style derived from the last entry in the style list.
     /// </summary>
     private CharStyle CurrentStyle => styles.Count > 0 ? styles[^1].charStyle : default;
@@ -134,6 +108,8 @@ public class LineBuffer
         if (charStyle != CurrentStyle)
             styles.Add((buf.Count, charStyle));
     }
+
+    internal (List<char> buf, List<(int pos, CharStyle charStyle)> styles) GetInternalData() => (buf, styles);
 
     /// <summary>
     /// Returns the plain text contained in the buffer without styling.
