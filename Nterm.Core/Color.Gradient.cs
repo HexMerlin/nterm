@@ -1,11 +1,10 @@
-﻿#nullable enable
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Nterm.Core;
 
 public readonly partial struct Color
 {
-  
+
     /// <summary>
     /// Generate a perceptual gradient (OKLCH piecewise-linear) over <paramref name="length"/> steps.
     /// Input <paramref name="stops"/> are treated as equidistant along the gradient.
@@ -22,7 +21,7 @@ public readonly partial struct Color
         int outLast = length - 1;
         int segLast = m - 2;
 
-        var result = new Color[length];
+        Color[] result = new Color[length];
 
         for (int k = 0; k < length; k++)
         {
@@ -35,15 +34,15 @@ public readonly partial struct Color
             float τ = s - i;
 
             // Convert the two adjacent stops to OKLCH (on-the-fly to avoid allocations)
-            var c0 = stops[i];
-            var c1 = stops[i + 1];
+            Color c0 = stops[i];
+            Color c1 = stops[i + 1];
 
             ToOKLCH(c0, out float L0, out float C0, out float h0);
             ToOKLCH(c1, out float L1, out float C1, out float h1);
 
             // Linear in L and C
-            float L = L0 + (L1 - L0) * τ;
-            float C = C0 + (C1 - C0) * τ;
+            float L = L0 + ((L1 - L0) * τ);
+            float C = C0 + ((C1 - C0) * τ);
 
             // Hue interpolation with robust gray handling
             float h;
@@ -145,7 +144,6 @@ public readonly partial struct Color
     /// </summary>
     public static Color[] GradientMoonlitAsteroid => [new Color(15, 32, 39), new Color(32, 58, 67), new Color(44, 83, 100)];
 
-
     // ========= Internal implementation details =========
 
     private const float C_Eps = 5e-4f;        // chroma epsilon for gray handling in OKLCH
@@ -160,7 +158,7 @@ public readonly partial struct Color
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float LinearToSrgb(float v)
-        => v <= 0.0031308f ? v * 12.92f : 1.055f * MathF.Pow(v, 1f / 2.4f) - 0.055f;
+        => v <= 0.0031308f ? v * 12.92f : (1.055f * MathF.Pow(v, 1f / 2.4f)) - 0.055f;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float Clamp01(float x) => x < 0f ? 0f : (x > 1f ? 1f : x);
@@ -170,7 +168,7 @@ public readonly partial struct Color
     {
         v = Clamp01(v);
         // Round-to-nearest
-        int i = (int)(v * 255f + 0.5f);
+        int i = (int)((v * 255f) + 0.5f);
         if ((uint)i > 255u) i = i < 0 ? 0 : 255;
         return (byte)i;
     }
@@ -181,40 +179,40 @@ public readonly partial struct Color
     private static void LinearRgbToOklab(float r, float g, float b, out float L, out float a, out float c_b)
     {
         // LMS
-        float l = 0.4122214708f * r + 0.5363325363f * g + 0.0514459929f * b;
-        float m = 0.2119034982f * r + 0.6806995451f * g + 0.1073969566f * b;
-        float s = 0.0883024619f * r + 0.2817188376f * g + 0.6299787005f * b;
+        float l = (0.4122214708f * r) + (0.5363325363f * g) + (0.0514459929f * b);
+        float m = (0.2119034982f * r) + (0.6806995451f * g) + (0.1073969566f * b);
+        float s = (0.0883024619f * r) + (0.2817188376f * g) + (0.6299787005f * b);
 
         float l_ = MathF.Cbrt(l);
         float m_ = MathF.Cbrt(m);
         float s_ = MathF.Cbrt(s);
 
-        L = 0.2104542553f * l_ + 0.7936177850f * m_ - 0.0040720468f * s_;
-        a = 1.9779984951f * l_ - 2.4285922050f * m_ + 0.4505937099f * s_;
-        c_b = 0.0259040371f * l_ + 0.7827717662f * m_ - 0.8086757660f * s_;
+        L = (0.2104542553f * l_) + (0.7936177850f * m_) - (0.0040720468f * s_);
+        a = (1.9779984951f * l_) - (2.4285922050f * m_) + (0.4505937099f * s_);
+        c_b = (0.0259040371f * l_) + (0.7827717662f * m_) - (0.8086757660f * s_);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void OklabToLinearRgb(float L, float a, float b, out float r, out float g, out float bl)
     {
-        float l_ = L + 0.3963377774f * a + 0.2158037573f * b;
-        float m_ = L - 0.1055613458f * a - 0.0638541728f * b;
-        float s_ = L - 0.0894841775f * a - 1.2914855480f * b;
+        float l_ = L + (0.3963377774f * a) + (0.2158037573f * b);
+        float m_ = L - (0.1055613458f * a) - (0.0638541728f * b);
+        float s_ = L - (0.0894841775f * a) - (1.2914855480f * b);
 
         float l = l_ * l_ * l_;
         float m = m_ * m_ * m_;
         float s = s_ * s_ * s_;
 
-        r = +4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s;
-        g = -1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s;
-        bl = -0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s;
+        r = (+4.0767416621f * l) - (3.3077115913f * m) + (0.2309699292f * s);
+        g = (-1.2684380046f * l) + (2.6097574011f * m) - (0.3413193965f * s);
+        bl = (-0.0041960863f * l) - (0.7034186147f * m) + (1.7076147010f * s);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void OklabToOklch(float L, float a, float b, out float oL, out float C, out float hDeg)
     {
         oL = L;
-        C = MathF.Sqrt(a * a + b * b);
+        C = MathF.Sqrt((a * a) + (b * b));
         if (C < C_Eps)
         {
             hDeg = 0f; // arbitrary when near gray
@@ -260,7 +258,7 @@ public readonly partial struct Color
     private static float LerpHueShortest(float h0, float h1, float t)
     {
         float dh = ((h1 - h0 + 540f) % 360f) - 180f;
-        float h = h0 + t * dh;
+        float h = h0 + (t * dh);
         h %= 360f;
         if (h < 0f) h += 360f;
         return h;

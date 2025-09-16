@@ -109,7 +109,7 @@ public class TextBuffer
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>No terminal output occurs until <see cref="Write()"/> is called.</remarks>
-    public TextBuffer AppendLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default) 
+    public TextBuffer AppendLine(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
         => Append(str, foreground, background).AppendLine();
 
     /// <summary>

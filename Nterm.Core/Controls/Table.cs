@@ -354,13 +354,10 @@ public class Table
     /// <summary>
     /// Writes a character with padding spaces around it.
     /// </summary>
-    private static void WriteCharWithPadding(TextBuffer textBuffer, char character, Color color)
-    {
-        _ = textBuffer
+    private static void WriteCharWithPadding(TextBuffer textBuffer, char character, Color color) => _ = textBuffer
             .Append(' ', color)
             .Append(character, color)
             .Append(' ', color);
-    }
 
     /// <summary>
     /// Writes column separator: either vertical bar with spaces or just spacing.

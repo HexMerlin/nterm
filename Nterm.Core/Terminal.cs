@@ -1,4 +1,4 @@
-﻿using Nterm.Core.Buffer; 
+﻿using Nterm.Core.Buffer;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;

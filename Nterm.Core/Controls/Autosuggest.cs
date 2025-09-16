@@ -239,19 +239,15 @@ public sealed class AutosuggestControl : IAutosuggest
         Terminal.SetCursorPosition(caretColumn, _anchorTop);
     }
 
-    private static int IndexOfIgnoreCase(string source, string value)
-    {
-        if (string.IsNullOrEmpty(value))
-            return 0;
-        return source.IndexOf(value, StringComparison.OrdinalIgnoreCase);
-    }
+    private static int IndexOfIgnoreCase(string source, string value) =>
+        string.IsNullOrEmpty(value)
+            ? 0
+            : source.IndexOf(value, StringComparison.OrdinalIgnoreCase);
 
     private static string TruncateToWidth(string text, int startColumn)
     {
         int maxWidth = Math.Max(0, Terminal.BufferWidth - startColumn);
-        if (text.Length <= maxWidth)
-            return text;
-        return text[..Math.Min(maxWidth, text.Length)];
+        return text.Length <= maxWidth ? text : text[..Math.Min(maxWidth, text.Length)];
     }
 
     private static string GetSuggestionSafe(AutosuggestProvider provider, string typed)
