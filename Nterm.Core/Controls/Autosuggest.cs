@@ -52,7 +52,6 @@ public sealed class AutosuggestControl : IAutosuggest
                         s.CaretIndex = s.Text.Length;
                         suggestion = GetSuggestionSafe(suggest, s.Text);
                     }
-                    Render(s.Text, suggestion, s.CaretIndex);
                     return true;
                 case ConsoleKey.Enter:
                     if (!string.IsNullOrEmpty(suggestion))
@@ -68,7 +67,6 @@ public sealed class AutosuggestControl : IAutosuggest
                         s.Text = string.Empty;
                         s.CaretIndex = 0;
                         suggestion = GetSuggestionSafe(suggest, s.Text);
-                        Render(s.Text, suggestion, s.CaretIndex);
                     }
                     else
                     {
@@ -80,14 +78,12 @@ public sealed class AutosuggestControl : IAutosuggest
                     if (_options.GetNextSuggestion != null)
                     {
                         suggestion = _options.GetNextSuggestion.Invoke(s.Text, suggestion);
-                        Render(s.Text, suggestion, s.CaretIndex);
                     }
                     return true;
                 case ConsoleKey.UpArrow:
                     if (_options.GetPreviousSuggestion != null)
                     {
                         suggestion = _options.GetPreviousSuggestion.Invoke(s.Text, suggestion);
-                        Render(s.Text, suggestion, s.CaretIndex);
                     }
                     return true;
                 default:
