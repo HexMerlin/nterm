@@ -28,7 +28,6 @@ public sealed class AutosuggestControl : IAutosuggest
     private int _anchorLeft;
     private int _anchorTop;
     private AutosuggestOptions _options = new();
-    private int _caretIndex;
 
     public string Read(AutosuggestProvider suggest, AutosuggestOptions? options = null)
     {
@@ -38,137 +37,88 @@ public sealed class AutosuggestControl : IAutosuggest
         _anchorLeft = state.OriginalCursorLeft;
         _anchorTop = state.OriginalCursorTop;
         _options = options ?? new AutosuggestOptions();
+        string suggestion = GetSuggestionSafe(suggest, string.Empty);
 
-        PrepareTerminal();
-        ClearInputBuffer();
+        TextInputController controller = new();
 
-        string typedText = string.Empty;
-        _caretIndex = 0;
-        string suggestion = GetSuggestionSafe(suggest, typedText);
-
-        bool done = false;
-        bool cancelled = false;
-        while (!done)
+        TextInputKeyHandler handleSpecial = (ref TextInputState s, ConsoleKeyInfo keyInfo) =>
         {
-            Render(typedText, suggestion);
-
-            ConsoleKeyInfo keyInfo = Terminal.ReadKey(true);
             switch (keyInfo.Key)
             {
                 case ConsoleKey.Tab:
                     if (!string.IsNullOrEmpty(suggestion))
                     {
-                        typedText = suggestion;
-                        _caretIndex = typedText.Length;
-                        suggestion = GetSuggestionSafe(suggest, typedText);
+                        s.Text = suggestion;
+                        s.CaretIndex = s.Text.Length;
+                        suggestion = GetSuggestionSafe(suggest, s.Text);
                     }
-                    break;
+                    Render(s.Text, suggestion, s.CaretIndex);
+                    return true;
                 case ConsoleKey.Enter:
                     if (!string.IsNullOrEmpty(suggestion))
                     {
-                        typedText = suggestion;
-                        _caretIndex = typedText.Length;
+                        s.Text = suggestion;
+                        s.CaretIndex = s.Text.Length;
                     }
-                    done = true;
-                    break;
+                    s.Done = true;
+                    return true;
                 case ConsoleKey.Escape:
-                    if (typedText.Length > 0)
+                    if (s.Text.Length > 0)
                     {
-                        typedText = string.Empty;
-                        _caretIndex = 0;
-                        suggestion = GetSuggestionSafe(suggest, typedText);
+                        s.Text = string.Empty;
+                        s.CaretIndex = 0;
+                        suggestion = GetSuggestionSafe(suggest, s.Text);
+                        Render(s.Text, suggestion, s.CaretIndex);
                     }
                     else
                     {
-                        cancelled = true;
-                        done = true;
+                        s.Cancelled = true;
+                        s.Done = true;
                     }
-                    break;
-                case ConsoleKey.Backspace:
-                    if (_caretIndex > 0 && typedText.Length > 0)
-                    {
-                        typedText = typedText.Remove(_caretIndex - 1, 1);
-                        _caretIndex--;
-                        suggestion = GetSuggestionSafe(suggest, typedText);
-                    }
-                    break;
-                case ConsoleKey.Delete:
-                    if (_caretIndex < typedText.Length)
-                    {
-                        typedText = typedText.Remove(_caretIndex, 1);
-                        suggestion = GetSuggestionSafe(suggest, typedText);
-                    }
-                    break;
-                case ConsoleKey.LeftArrow:
-                    if (_caretIndex > 0)
-                        _caretIndex--;
-                    break;
-                case ConsoleKey.RightArrow:
-                    if (_caretIndex < typedText.Length)
-                        _caretIndex++;
-                    break;
+                    return true;
                 case ConsoleKey.DownArrow:
                     if (_options.GetNextSuggestion != null)
                     {
-                        suggestion = _options.GetNextSuggestion.Invoke(typedText, suggestion);
+                        suggestion = _options.GetNextSuggestion.Invoke(s.Text, suggestion);
+                        Render(s.Text, suggestion, s.CaretIndex);
                     }
-
-                    break;
+                    return true;
                 case ConsoleKey.UpArrow:
                     if (_options.GetPreviousSuggestion != null)
                     {
-                        suggestion = _options.GetPreviousSuggestion.Invoke(typedText, suggestion);
+                        suggestion = _options.GetPreviousSuggestion.Invoke(s.Text, suggestion);
+                        Render(s.Text, suggestion, s.CaretIndex);
                     }
-
-                    break;
+                    return true;
                 default:
-                    if (keyInfo.KeyChar != '\0' && !char.IsControl(keyInfo.KeyChar))
-                    {
-                        string ch = keyInfo.KeyChar.ToString();
-                        if (_caretIndex >= typedText.Length)
-                        {
-                            typedText += ch;
-                        }
-                        else
-                        {
-                            typedText = typedText.Insert(_caretIndex, ch);
-                        }
-                        _caretIndex++;
-                        suggestion = GetSuggestionSafe(suggest, typedText);
-                    }
-                    break;
+                    return false;
             }
-        }
+        };
 
-        Render(typedText, typedText);
+        TextInputState finalState = controller.Read(
+            handleSpecial,
+            (s, key) =>
+            {
+                // Update suggestion only when text changes (roughly: on char, backspace, delete)
+                bool textChangingKey =
+                    key.Key is ConsoleKey.Backspace or ConsoleKey.Delete
+                    || (key.KeyChar != '\0' && !char.IsControl(key.KeyChar));
+                if (textChangingKey)
+                {
+                    suggestion = GetSuggestionSafe(suggest, s.Text);
+                }
+                Render(s.Text, suggestion, s.CaretIndex);
+            }
+        );
 
-        return cancelled ? string.Empty : typedText;
+        Render(finalState.Text, finalState.Text, finalState.CaretIndex);
+
+        return finalState.Cancelled ? string.Empty : finalState.Text;
     }
 
-    private static void PrepareTerminal()
-    {
-        try
-        {
-            Terminal.CursorVisible = true;
-        }
-        catch (PlatformNotSupportedException)
-        {
-            Debug.WriteLine("Cursor visibility manipulation not supported on this platform.");
-        }
-    }
+    // Terminal preparation and input buffer clearing is handled by TextInputController
 
-    private static void ClearInputBuffer()
-    {
-        int clearedKeys = 0;
-        const int maxKeysToClear = 1000;
-        while (Terminal.KeyAvailable && clearedKeys < maxKeysToClear)
-        {
-            _ = Terminal.ReadKey(true);
-            clearedKeys++;
-        }
-    }
-
-    private void Render(string typedText, string? suggestion)
+    private void Render(string typedText, string? suggestion, int caretIndex)
     {
         Terminal.SetCursorPosition(_anchorLeft, _anchorTop);
         TerminalEx.ClearLineFrom(_anchorLeft, _anchorTop);
@@ -177,7 +127,7 @@ public sealed class AutosuggestControl : IAutosuggest
         (int matchStart, int matchLength) = FindFirstMatch(display, typedText);
 
         WriteColored(display, matchStart, matchLength);
-        PlaceCursor(matchStart, Math.Min(_caretIndex, matchLength));
+        PlaceCursor(matchStart, Math.Min(caretIndex, matchLength));
     }
 
     private string ComputeDisplayText(string typedText, string? suggestion)
@@ -240,9 +190,7 @@ public sealed class AutosuggestControl : IAutosuggest
     }
 
     private static int IndexOfIgnoreCase(string source, string value) =>
-        string.IsNullOrEmpty(value)
-            ? 0
-            : source.IndexOf(value, StringComparison.OrdinalIgnoreCase);
+        string.IsNullOrEmpty(value) ? 0 : source.IndexOf(value, StringComparison.OrdinalIgnoreCase);
 
     private static string TruncateToWidth(string text, int startColumn)
     {
