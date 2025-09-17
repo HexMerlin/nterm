@@ -39,73 +39,87 @@ public sealed class AutosuggestControl : IAutosuggest
         _options = options ?? new AutosuggestOptions();
         string suggestion = GetSuggestionSafe(suggest, string.Empty);
 
-        TextInputController controller = new();
+        TextInputController controller =
+            new(state =>
+            {
+                // Default render path (text changed): recompute suggestion from text and render
+                suggestion = GetSuggestionSafe(suggest, state.Text);
+                Render(state.Text, suggestion, state.CaretIndex);
+            });
 
-        TextInputKeyHandler handleSpecial = (ref TextInputState s, ConsoleKeyInfo keyInfo) =>
+        controller.KeyUp += (sender, e) =>
         {
-            switch (keyInfo.Key)
+            // Handle special keys before default editing
+            switch (e.KeyInfo.Key)
             {
                 case ConsoleKey.Tab:
                     if (!string.IsNullOrEmpty(suggestion))
                     {
-                        s.Text = suggestion;
-                        s.CaretIndex = s.Text.Length;
-                        suggestion = GetSuggestionSafe(suggest, s.Text);
+                        TextInputState accepted = e.ProposedState with
+                        {
+                            Text = suggestion,
+                            CaretIndex = suggestion.Length
+                        };
+                        e.ProposedState = accepted;
+                        e.Handled = true;
                     }
-                    return true;
+                    break;
                 case ConsoleKey.Enter:
                     if (!string.IsNullOrEmpty(suggestion))
                     {
-                        s.Text = suggestion;
-                        s.CaretIndex = s.Text.Length;
+                        TextInputState accepted = e.ProposedState with
+                        {
+                            Text = suggestion,
+                            CaretIndex = suggestion.Length
+                        };
+                        e.ProposedState = accepted;
                     }
-                    s.Done = true;
-                    return true;
+                    e.ProposedState = e.ProposedState with { Done = true };
+                    e.Handled = true;
+                    break;
                 case ConsoleKey.Escape:
-                    if (s.Text.Length > 0)
+                    if (e.ProposedState.Text.Length > 0)
                     {
-                        s.Text = string.Empty;
-                        s.CaretIndex = 0;
-                        suggestion = GetSuggestionSafe(suggest, s.Text);
+                        e.ProposedState = e.ProposedState with
+                        {
+                            Text = string.Empty,
+                            CaretIndex = 0
+                        };
+                        // Re-render will happen via controller renderer (text changed)
                     }
                     else
                     {
-                        s.Cancelled = true;
-                        s.Done = true;
+                        e.ProposedState = e.ProposedState with { Cancelled = true, Done = true };
                     }
-                    return true;
+                    e.Handled = true;
+                    break;
                 case ConsoleKey.DownArrow:
                     if (_options.GetNextSuggestion != null)
                     {
-                        suggestion = _options.GetNextSuggestion.Invoke(s.Text, suggestion);
+                        suggestion = _options.GetNextSuggestion.Invoke(
+                            e.ProposedState.Text,
+                            suggestion
+                        );
+                        // Suggestion change without text change – render immediately
+                        Render(e.ProposedState.Text, suggestion, e.ProposedState.CaretIndex);
+                        e.Handled = true;
                     }
-                    return true;
+                    break;
                 case ConsoleKey.UpArrow:
                     if (_options.GetPreviousSuggestion != null)
                     {
-                        suggestion = _options.GetPreviousSuggestion.Invoke(s.Text, suggestion);
+                        suggestion = _options.GetPreviousSuggestion.Invoke(
+                            e.ProposedState.Text,
+                            suggestion
+                        );
+                        Render(e.ProposedState.Text, suggestion, e.ProposedState.CaretIndex);
+                        e.Handled = true;
                     }
-                    return true;
-                default:
-                    return false;
+                    break;
             }
         };
 
-        TextInputState finalState = controller.Read(
-            handleSpecial,
-            (s, key) =>
-            {
-                // Update suggestion only when text changes (roughly: on char, backspace, delete)
-                bool textChangingKey =
-                    key.Key is ConsoleKey.Backspace or ConsoleKey.Delete
-                    || (key.KeyChar != '\0' && !char.IsControl(key.KeyChar));
-                if (textChangingKey)
-                {
-                    suggestion = GetSuggestionSafe(suggest, s.Text);
-                }
-                Render(s.Text, suggestion, s.CaretIndex);
-            }
-        );
+        TextInputState finalState = controller.Read();
 
         Render(finalState.Text, finalState.Text, finalState.CaretIndex);
 

@@ -2,96 +2,120 @@ using System.Diagnostics;
 
 namespace Nterm.Core.Controls;
 
-public sealed class TextInputState
-{
-    public string Text { get; set; } = string.Empty;
-    public int CaretIndex { get; set; }
-    public bool Done { get; set; }
-    public bool Cancelled { get; set; }
-}
+public readonly record struct TextInputState(
+    string Text,
+    int CaretIndex,
+    bool Done,
+    bool Cancelled
+);
 
-public delegate bool TextInputKeyHandler(ref TextInputState state, ConsoleKeyInfo keyInfo);
+public sealed class TextInputKeyEventArgs : EventArgs
+{
+    public ConsoleKeyInfo KeyInfo { get; }
+    public TextInputState CurrentState { get; }
+    public TextInputState ProposedState { get; set; }
+    public bool Handled { get; set; }
+
+    public TextInputKeyEventArgs(ConsoleKeyInfo keyInfo, TextInputState currentState)
+    {
+        KeyInfo = keyInfo;
+        CurrentState = currentState;
+        ProposedState = currentState;
+        Handled = false;
+    }
+}
 
 public sealed class TextInputController
 {
-    public TextInputState Read(
-        TextInputKeyHandler? handleSpecialKey,
-        Action<TextInputState, ConsoleKeyInfo>? onKeystroke = null
-    )
+    private readonly Action<TextInputState> _render;
+
+    public TextInputController(Action<TextInputState> render)
+    {
+        _render = render ?? throw new ArgumentNullException(nameof(render));
+    }
+
+    public event EventHandler<TextInputKeyEventArgs>? KeyUp;
+
+    public TextInputState Read()
     {
         PrepareTerminal();
         TerminalEx.ClearInputBuffer();
 
-        TextInputState state =
-            new()
-            {
-                Text = string.Empty,
-                CaretIndex = 0,
-                Done = false,
-                Cancelled = false,
-            };
+        TextInputState state = new(string.Empty, 0, false, false);
 
         while (!state.Done)
         {
             ConsoleKeyInfo keyInfo = Terminal.ReadKey(true);
 
-            bool handledByCaller = false;
-            if (handleSpecialKey != null)
+            TextInputKeyEventArgs args = new(keyInfo, state);
+            KeyUp?.Invoke(this, args);
+
+            TextInputState next = args.Handled
+                ? args.ProposedState
+                : ApplyDefaultEditing(args.ProposedState, keyInfo);
+
+            if (
+                !string.Equals(next.Text, state.Text, StringComparison.Ordinal)
+                || next.CaretIndex != state.CaretIndex
+            )
             {
-                handledByCaller = handleSpecialKey(ref state, keyInfo);
+                _render(next);
             }
 
-            if (!handledByCaller)
-            {
-                HandleDefaultEditing(ref state, keyInfo);
-            }
-
-            onKeystroke?.Invoke(state, keyInfo);
+            state = next;
         }
 
         return state;
     }
 
-    private static void HandleDefaultEditing(ref TextInputState state, ConsoleKeyInfo keyInfo)
+    private static TextInputState ApplyDefaultEditing(TextInputState state, ConsoleKeyInfo keyInfo)
     {
         switch (keyInfo.Key)
         {
             case ConsoleKey.Backspace:
                 if (state.CaretIndex > 0 && state.Text.Length > 0)
                 {
-                    state.Text = state.Text.Remove(state.CaretIndex - 1, 1);
-                    state.CaretIndex--;
+                    string newText = state.Text.Remove(state.CaretIndex - 1, 1);
+                    return state with { Text = newText, CaretIndex = state.CaretIndex - 1 };
                 }
-                break;
+                return state;
             case ConsoleKey.Delete:
                 if (state.CaretIndex < state.Text.Length)
                 {
-                    state.Text = state.Text.Remove(state.CaretIndex, 1);
+                    string newText = state.Text.Remove(state.CaretIndex, 1);
+                    return state with { Text = newText };
                 }
-                break;
+                return state;
             case ConsoleKey.LeftArrow:
-                if (state.CaretIndex > 0)
-                    state.CaretIndex--;
-                break;
+                return state.CaretIndex > 0
+                    ? state with
+                    {
+                        CaretIndex = state.CaretIndex - 1
+                    }
+                    : state;
             case ConsoleKey.RightArrow:
-                if (state.CaretIndex < state.Text.Length)
-                    state.CaretIndex++;
-                break;
+                return state.CaretIndex < state.Text.Length
+                    ? state with
+                    {
+                        CaretIndex = state.CaretIndex + 1
+                    }
+                    : state;
             default:
                 if (keyInfo.KeyChar != '\0' && !char.IsControl(keyInfo.KeyChar))
                 {
                     string ch = keyInfo.KeyChar.ToString();
+                    string newText;
                     if (state.CaretIndex >= state.Text.Length)
                     {
-                        state.Text += ch;
+                        newText = state.Text + ch;
                     }
                     else
                     {
-                        state.Text = state.Text.Insert(state.CaretIndex, ch);
+                        newText = state.Text.Insert(state.CaretIndex, ch);
                     }
-                    state.CaretIndex++;
+                    return state with { Text = newText, CaretIndex = state.CaretIndex + 1 };
                 }
-                break;
+                return state;
         }
     }
 
