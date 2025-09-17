@@ -52,6 +52,8 @@ public class TextBuffer
     /// <value>A read-only view of the internal line collection.</value>
     public IReadOnlyList<LineBuffer> Lines => lines;
 
+    private LineBuffer CurrentLine => lines[^1];
+
     /// <summary>
     /// Number of lines in the <see cref="TextBuffer"/>.
     /// </summary>
@@ -69,7 +71,7 @@ public class TextBuffer
     /// </remarks>
     public TextBuffer Append(char ch, Color foreground = default, Color background = default)
     {
-        lines[^1].Append(ch, foreground, background);
+        CurrentLine.Append(ch, foreground, background);
         return this;
     }
 
@@ -94,8 +96,8 @@ public class TextBuffer
         int lineCount = 0;
         foreach (ReadOnlySpan<char> line in str.EnumerateLines())
         {
-            lines[^1].Append(line, foreground, background);
             if (lineCount > 0) _ = AppendLine();
+            CurrentLine.Append(line, foreground, background);
             lineCount++;
         }
         return this;
@@ -122,7 +124,7 @@ public class TextBuffer
     /// </remarks>
     public TextBuffer AppendLine()
     {
-        lines[^1].TrimCapacity();
+        CurrentLine.TrimCapacity();
         lines.Add(new LineBuffer());
         return this;
     }
