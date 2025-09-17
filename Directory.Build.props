@@ -8,6 +8,12 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<LangVersion>preview</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<PropertyGroup>
 		<AnalysisLevel>latest-Recommended</AnalysisLevel>
 
 		<!-- Disable warnings for missing XML comments. Review when there is time. -->
