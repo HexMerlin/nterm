@@ -19,8 +19,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     private bool FilterEnabled { get; set; }
     private string FilterText { get; set; } = string.Empty;
 
-    public SelectItem<T> Show(
-        IReadOnlyList<SelectItem<T>> items,
+    public TextItem<T> Show(
+        IReadOnlyList<TextItem<T>> items,
         int numberOfVisibleItems = 4,
         bool enableFilter = true
     )
@@ -33,10 +33,10 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         FilterEnabled = enableFilter;
         FilterText = string.Empty;
 
-        IReadOnlyList<SelectItem<T>> viewItems = items;
+        IReadOnlyList<TextItem<T>> viewItems = items;
         int currentIndex = 0;
         bool selectionMade = false;
-        SelectItem<T> selectedItem = SelectItem.Empty<T>();
+        TextItem<T> selectedItem = TextItem.Empty<T>();
 
         while (!selectionMade)
         {
@@ -54,9 +54,9 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             // Handle user input
             ConsoleKeyInfo keyInfo = Terminal.ReadKey(true);
             (
-                SelectItem<T> result,
+                TextItem<T> result,
                 int newIndex,
-                IReadOnlyList<SelectItem<T>> newViewItems,
+                IReadOnlyList<TextItem<T>> newViewItems,
                 bool cancel
             ) = HandleUserInput(items, viewItems, currentIndex, keyInfo);
             viewItems = newViewItems;
@@ -69,7 +69,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             }
             else if (cancel)
             {
-                selectedItem = SelectItem.Empty<T>();
+                selectedItem = TextItem.Empty<T>();
                 selectionMade = true;
             }
         }
@@ -131,13 +131,13 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     /// Handles user input and returns the result, the new index, possibly updated filtered view, and whether cancel was requested.
     /// </summary>
     private (
-        SelectItem<T> result,
+        TextItem<T> result,
         int newIndex,
-        IReadOnlyList<SelectItem<T>> viewItems,
+        IReadOnlyList<TextItem<T>> viewItems,
         bool cancel
     ) HandleUserInput(
-        IReadOnlyList<SelectItem<T>> allItems,
-        IReadOnlyList<SelectItem<T>> currentViewItems,
+        IReadOnlyList<TextItem<T>> allItems,
+        IReadOnlyList<TextItem<T>> currentViewItems,
         int currentIndex,
         ConsoleKeyInfo keyInfo
     )
@@ -149,9 +149,9 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             {
                 FilterText = FilterText[..^1];
             }
-            IReadOnlyList<SelectItem<T>> updated = ApplyFilter(allItems, FilterText);
+            IReadOnlyList<TextItem<T>> updated = ApplyFilter(allItems, FilterText);
             int nextIndex = updated.Count == 0 ? 0 : Math.Clamp(currentIndex, 0, updated.Count - 1);
-            return (SelectItem.Empty<T>(), nextIndex, updated, false);
+            return (TextItem.Empty<T>(), nextIndex, updated, false);
         }
 
         if (FilterEnabled && keyInfo.Key == ConsoleKey.Escape)
@@ -160,18 +160,18 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             {
                 // Clear filter first ESC
                 FilterText = string.Empty;
-                return (SelectItem.Empty<T>(), 0, allItems, false);
+                return (TextItem.Empty<T>(), 0, allItems, false);
             }
             // No filter to clear: treat as cancel
-            return (SelectItem.Empty<T>(), currentIndex, currentViewItems, true);
+            return (TextItem.Empty<T>(), currentIndex, currentViewItems, true);
         }
 
         if (FilterEnabled && keyInfo.KeyChar != '\0' && !char.IsControl(keyInfo.KeyChar))
         {
             FilterText += keyInfo.KeyChar;
-            IReadOnlyList<SelectItem<T>> updated = ApplyFilter(allItems, FilterText);
+            IReadOnlyList<TextItem<T>> updated = ApplyFilter(allItems, FilterText);
             int nextIndex = updated.Count == 0 ? 0 : Math.Clamp(currentIndex, 0, updated.Count - 1);
-            return (SelectItem.Empty<T>(), nextIndex, updated, false);
+            return (TextItem.Empty<T>(), nextIndex, updated, false);
         }
 
         // Navigation and selection within current filtered view
@@ -180,32 +180,32 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             case ConsoleKey.UpArrow:
             {
                 if (currentViewItems.Count == 0)
-                    return (SelectItem.Empty<T>(), 0, currentViewItems, false);
+                    return (TextItem.Empty<T>(), 0, currentViewItems, false);
                 int nextIndex =
                     (currentIndex + currentViewItems.Count - 1)
                     % Math.Max(1, currentViewItems.Count);
-                return (SelectItem.Empty<T>(), nextIndex, currentViewItems, false);
+                return (TextItem.Empty<T>(), nextIndex, currentViewItems, false);
             }
             case ConsoleKey.DownArrow:
             {
                 if (currentViewItems.Count == 0)
-                    return (SelectItem.Empty<T>(), 0, currentViewItems, false);
+                    return (TextItem.Empty<T>(), 0, currentViewItems, false);
                 int nextIndex = (currentIndex + 1) % Math.Max(1, currentViewItems.Count);
-                return (SelectItem.Empty<T>(), nextIndex, currentViewItems, false);
+                return (TextItem.Empty<T>(), nextIndex, currentViewItems, false);
             }
             case ConsoleKey.Enter:
             {
                 if (currentViewItems.Count == 0)
-                    return (SelectItem.Empty<T>(), currentIndex, currentViewItems, false);
+                    return (TextItem.Empty<T>(), currentIndex, currentViewItems, false);
                 return (currentViewItems[currentIndex], currentIndex, currentViewItems, false);
             }
             default:
-                return (SelectItem.Empty<T>(), currentIndex, currentViewItems, false);
+                return (TextItem.Empty<T>(), currentIndex, currentViewItems, false);
         }
     }
 
     private int Render(
-        IReadOnlyList<SelectItem<T>> items,
+        IReadOnlyList<TextItem<T>> items,
         int selectedIndex,
         int numberOfVisibleItems
     )
@@ -271,7 +271,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     }
 
     private int RenderViewport(
-        IReadOnlyList<SelectItem<T>> items,
+        IReadOnlyList<TextItem<T>> items,
         int selectedIndex,
         int rowsToRender,
         int offset
@@ -368,7 +368,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         Terminal.Write("No items found");
     }
 
-    private void DisplayListItem(SelectItem<T> item, bool isSelected, int startColumn, int startRow)
+    private void DisplayListItem(TextItem<T> item, bool isSelected, int startColumn, int startRow)
     {
         string prefix = isSelected ? "• " : "  ";
         Terminal.SetCursorPosition(startColumn, startRow);
@@ -386,8 +386,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             ? text
             : text[..Math.Min(maxWidth, text.Length)];
 
-    private static IReadOnlyList<SelectItem<T>> ApplyFilter(
-        IReadOnlyList<SelectItem<T>> items,
+    private static IReadOnlyList<TextItem<T>> ApplyFilter(
+        IReadOnlyList<TextItem<T>> items,
         string query
     ) => string.IsNullOrWhiteSpace(query) ? items : [.. items.Where(i => IsMatch(i.Text, query))];
 

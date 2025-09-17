@@ -9,31 +9,17 @@ public readonly record struct TextInputState(
     bool Cancelled
 );
 
-public sealed class TextInputKeyEventArgs : EventArgs
+public sealed class TextInputKeyEventArgs(ConsoleKeyInfo keyInfo, TextInputState currentState)
+    : EventArgs
 {
-    public ConsoleKeyInfo KeyInfo { get; }
-    public TextInputState CurrentState { get; }
-    public TextInputState ProposedState { get; set; }
+    public ConsoleKeyInfo KeyInfo { get; } = keyInfo;
+    public TextInputState CurrentState { get; } = currentState;
+    public TextInputState ProposedState { get; set; } = currentState;
     public bool Handled { get; set; }
-
-    public TextInputKeyEventArgs(ConsoleKeyInfo keyInfo, TextInputState currentState)
-    {
-        KeyInfo = keyInfo;
-        CurrentState = currentState;
-        ProposedState = currentState;
-        Handled = false;
-    }
 }
 
-public sealed class TextInputController
+public sealed class TextInputController(Action<TextInputState> render)
 {
-    private readonly Action<TextInputState> _render;
-
-    public TextInputController(Action<TextInputState> render)
-    {
-        _render = render ?? throw new ArgumentNullException(nameof(render));
-    }
-
     public event EventHandler<TextInputKeyEventArgs>? KeyUp;
 
     public TextInputState Read()
@@ -59,7 +45,7 @@ public sealed class TextInputController
                 || next.CaretIndex != state.CaretIndex
             )
             {
-                _render(next);
+                render(next);
             }
 
             state = next;
@@ -104,15 +90,10 @@ public sealed class TextInputController
                 if (keyInfo.KeyChar != '\0' && !char.IsControl(keyInfo.KeyChar))
                 {
                     string ch = keyInfo.KeyChar.ToString();
-                    string newText;
-                    if (state.CaretIndex >= state.Text.Length)
-                    {
-                        newText = state.Text + ch;
-                    }
-                    else
-                    {
-                        newText = state.Text.Insert(state.CaretIndex, ch);
-                    }
+                    string newText =
+                        state.CaretIndex >= state.Text.Length
+                            ? state.Text + ch
+                            : state.Text.Insert(state.CaretIndex, ch);
                     return state with { Text = newText, CaretIndex = state.CaretIndex + 1 };
                 }
                 return state;

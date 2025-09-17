@@ -12,5 +12,5 @@ public interface ISelectControl<T>
     /// <param name="numberOfVisibleItems">Maximum number of items to render below the anchor.</param>
     /// <param name="enableFilter">Whether to enable interactive typing filter (default: true).</param>
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
-    SelectItem<T> Show(IEnumerable<SelectItem<T>> items, int numberOfVisibleItems = 4);
+    TextItem<T> Show(IEnumerable<TextItem<T>> items, int numberOfVisibleItems = 4);
 }

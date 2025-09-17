@@ -2,7 +2,10 @@ using System.Diagnostics;
 
 namespace Nterm.Core.Controls;
 
-public delegate string AutosuggestProvider(string currentText, string previousSuggestion = "");
+public delegate TextItem<string> AutosuggestProvider(
+    string currentText,
+    TextItem<string>? previousSuggestion = null
+);
 
 public sealed class AutosuggestOptions
 {
@@ -12,15 +15,19 @@ public sealed class AutosuggestOptions
     public AutosuggestProvider? GetPreviousSuggestion { get; init; }
 }
 
+public record AutosuggestResult(string TypedText, TextItem<string>? LastSuggestion);
+
 public interface IAutosuggest
 {
-    string Read(AutosuggestProvider suggest, AutosuggestOptions? options = null);
+    AutosuggestResult Read(AutosuggestProvider suggest, AutosuggestOptions? options = null);
 }
 
 public static class Autosuggest
 {
-    public static string Read(AutosuggestProvider suggest, AutosuggestOptions? options = null) =>
-        new AutosuggestControl().Read(suggest, options);
+    public static AutosuggestResult Read(
+        AutosuggestProvider suggest,
+        AutosuggestOptions? options = null
+    ) => new AutosuggestControl().Read(suggest, options);
 }
 
 public sealed class AutosuggestControl : IAutosuggest
@@ -29,22 +36,22 @@ public sealed class AutosuggestControl : IAutosuggest
     private int _anchorTop;
     private AutosuggestOptions _options = new();
 
-    public string Read(AutosuggestProvider suggest, AutosuggestOptions? options = null)
+    public AutosuggestResult Read(AutosuggestProvider suggest, AutosuggestOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(suggest);
 
-        using TerminalState state = new();
-        _anchorLeft = state.OriginalCursorLeft;
-        _anchorTop = state.OriginalCursorTop;
+        using TerminalState terminalState = new();
+        _anchorLeft = terminalState.OriginalCursorLeft;
+        _anchorTop = terminalState.OriginalCursorTop;
         _options = options ?? new AutosuggestOptions();
-        string suggestion = GetSuggestionSafe(suggest, string.Empty);
-        Render(string.Empty, suggestion, 0);
+        TextItem<string> suggestion = GetSuggestionSafe(suggest, string.Empty, null);
+        Render(string.Empty, suggestion.Text, 0);
         TextInputController controller =
             new(state =>
             {
                 // Default render path (text changed): recompute suggestion from text and render
-                suggestion = GetSuggestionSafe(suggest, state.Text);
-                Render(state.Text, suggestion, state.CaretIndex);
+                suggestion = GetSuggestionSafe(suggest, state.Text, null);
+                Render(state.Text, suggestion.Text, state.CaretIndex);
             });
 
         controller.KeyUp += (sender, e) =>
@@ -53,24 +60,24 @@ public sealed class AutosuggestControl : IAutosuggest
             switch (e.KeyInfo.Key)
             {
                 case ConsoleKey.Tab:
-                    if (!string.IsNullOrEmpty(suggestion))
+                    if (!suggestion.IsEmpty())
                     {
                         TextInputState accepted = e.ProposedState with
                         {
-                            Text = suggestion,
-                            CaretIndex = suggestion.Length
+                            Text = suggestion.Text,
+                            CaretIndex = suggestion.Text.Length
                         };
                         e.ProposedState = accepted;
                         e.Handled = true;
                     }
                     break;
                 case ConsoleKey.Enter:
-                    if (!string.IsNullOrEmpty(suggestion))
+                    if (!suggestion.IsEmpty())
                     {
                         TextInputState accepted = e.ProposedState with
                         {
-                            Text = suggestion,
-                            CaretIndex = suggestion.Length
+                            Text = suggestion.Text,
+                            CaretIndex = suggestion.Text.Length
                         };
                         e.ProposedState = accepted;
                     }
@@ -78,19 +85,12 @@ public sealed class AutosuggestControl : IAutosuggest
                     e.Handled = true;
                     break;
                 case ConsoleKey.Escape:
-                    if (e.ProposedState.Text.Length > 0)
-                    {
-                        e.ProposedState = e.ProposedState with
-                        {
-                            Text = string.Empty,
-                            CaretIndex = 0
-                        };
-                        // Re-render will happen via controller renderer (text changed)
-                    }
-                    else
+                    if (suggestion.IsEmpty())
                     {
                         e.ProposedState = e.ProposedState with { Cancelled = true, Done = true };
                     }
+                    suggestion = TextItem.Empty<string>();
+                    Render(e.ProposedState.Text, suggestion.Text, e.ProposedState.CaretIndex);
                     e.Handled = true;
                     break;
                 case ConsoleKey.DownArrow:
@@ -101,7 +101,7 @@ public sealed class AutosuggestControl : IAutosuggest
                             suggestion
                         );
                         // Suggestion change without text change – render immediately
-                        Render(e.ProposedState.Text, suggestion, e.ProposedState.CaretIndex);
+                        Render(e.ProposedState.Text, suggestion.Text, e.ProposedState.CaretIndex);
                         e.Handled = true;
                     }
                     break;
@@ -112,7 +112,7 @@ public sealed class AutosuggestControl : IAutosuggest
                             e.ProposedState.Text,
                             suggestion
                         );
-                        Render(e.ProposedState.Text, suggestion, e.ProposedState.CaretIndex);
+                        Render(e.ProposedState.Text, suggestion.Text, e.ProposedState.CaretIndex);
                         e.Handled = true;
                     }
                     break;
@@ -123,7 +123,7 @@ public sealed class AutosuggestControl : IAutosuggest
 
         Render(finalState.Text, finalState.Text, finalState.CaretIndex);
 
-        return finalState.Cancelled ? string.Empty : finalState.Text;
+        return new AutosuggestResult(finalState.Text, suggestion);
     }
 
     // Terminal preparation and input buffer clearing is handled by TextInputController
@@ -208,16 +208,20 @@ public sealed class AutosuggestControl : IAutosuggest
         return text.Length <= maxWidth ? text : text[..Math.Min(maxWidth, text.Length)];
     }
 
-    private static string GetSuggestionSafe(AutosuggestProvider provider, string typed)
+    private static TextItem<string> GetSuggestionSafe(
+        AutosuggestProvider provider,
+        string typed,
+        TextItem<string>? previous
+    )
     {
         try
         {
-            return provider(typed);
+            return provider(typed, previous);
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Autosuggest provider error: {ex.Message}");
-            return string.Empty;
+            return TextItem.Empty<string>();
         }
     }
 }

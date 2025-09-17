@@ -1,3 +1,4 @@
+using System.Globalization;
 using Nterm.Core;
 using Nterm.Core.Controls;
 
@@ -18,7 +19,7 @@ Terminal.Write("Type something here: ");
 string userInput = Terminal.ReadLine();
 Terminal.Write("Now select an option: ");
 
-List<SelectItem<Action>> items =
+List<TextItem<Action>> items =
 [
     new()
     {
@@ -59,7 +60,7 @@ List<SelectItem<Action>> items =
     new() { Text = "Option M", Value = () => Terminal.WriteLine("Doing stuff with Option M") },
 ];
 
-SelectItem<Action> selectedItem1 = SelectMenu.Show(items);
+TextItem<Action> selectedItem1 = SelectMenu.Show(items);
 if (selectedItem1.IsEmpty())
 {
     Terminal.WriteLine("Selection cancelled");
@@ -67,7 +68,7 @@ if (selectedItem1.IsEmpty())
 }
 
 Terminal.Write(" and now select another option: ");
-SelectItem<Action> selectedItem2 = SelectMenu.Show(items, 1);
+TextItem<Action> selectedItem2 = SelectMenu.Show(items, 1);
 
 if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
 {
@@ -84,24 +85,46 @@ else
 Terminal.Write("Type Console...: ");
 
 string[] candidates = ["Console.WriteLine", "Console.ReadKey", "Console.ReadLine"];
-string result = Autosuggest.Read(
+AutosuggestResult result = Autosuggest.Read(
     (current, _) =>
-        candidates.FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
-        ?? string.Empty,
+    {
+        string text =
+            candidates.FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
+            ?? string.Empty;
+        return new TextItem<string>
+        {
+            Text = text,
+            Value = candidates.IndexOf(text).ToString(CultureInfo.InvariantCulture)
+        };
+    },
     options: new AutosuggestOptions
     {
         GetNextSuggestion = (current, previous) =>
-            candidates
-                .Except([previous])
-                .LastOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
-            ?? string.Empty,
+        {
+            string previousText = previous?.Text ?? string.Empty;
+            string text =
+                candidates
+                    .Except([previousText])
+                    .LastOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
+                ?? string.Empty;
+            return new TextItem<string> { Text = text, Value = text };
+        },
         GetPreviousSuggestion = (current, previous) =>
-            candidates
-                .Except([previous])
-                .FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
-            ?? string.Empty,
+        {
+            string previousText = previous?.Text ?? string.Empty;
+            string text =
+                candidates
+                    .Except([previousText])
+                    .FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
+                ?? string.Empty;
+            return new TextItem<string> { Text = text, Value = text };
+        },
     }
 );
+
+Terminal.WriteLine();
+Terminal.WriteLine($"Selected suggestion: {result.LastSuggestion?.Value}");
+Terminal.WriteLine($"Typed text: {result.TypedText}");
 
 Terminal.WriteLine("\nPress any key to exit...");
 ConsoleKeyInfo key = Terminal.ReadKey();
