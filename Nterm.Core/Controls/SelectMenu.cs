@@ -2,8 +2,8 @@ namespace Nterm.Core.Controls;
 
 public static class SelectMenu
 {
-    public static SelectItem<T> Show<T>(
-        IEnumerable<SelectItem<T>> items,
+    public static TextItem<T> Show<T>(
+        IEnumerable<TextItem<T>> items,
         int numberOfVisibleItems = 4
     ) => new SelectControl<T>(true).Show(items, numberOfVisibleItems);
 }
@@ -21,21 +21,21 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
     /// </summary>
     /// <param name="items">The list of items to display.</param>
     /// <returns>The selected item, or SelectItem.Empty if cancelled or list is empty.</returns>
-    public SelectItem<T> Show(IEnumerable<SelectItem<T>> items, int numberOfVisibleItems = 4)
+    public TextItem<T> Show(IEnumerable<TextItem<T>> items, int numberOfVisibleItems = 4)
     {
         // Use TerminalState to automatically manage terminal state restoration
         using TerminalState terminalState = new();
 
-        List<SelectItem<T>> itemList = ValidateInput(items);
+        List<TextItem<T>> itemList = ValidateInput(items);
         if (itemList.Count == 0)
         {
-            return SelectItem.Empty<T>();
+            return TextItem.Empty<T>();
         }
 
         SelectDropdownView<T> view =
             new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop);
 
-        SelectItem<T> selectedItem = view.Show(itemList, numberOfVisibleItems, enableFilter);
+        TextItem<T> selectedItem = view.Show(itemList, numberOfVisibleItems, enableFilter);
 
         RenderFinalSelection(selectedItem);
         return selectedItem;
@@ -46,7 +46,7 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
     /// </summary>
     /// <param name="items">The items to validate.</param>
     /// <returns>A list of valid items.</returns>
-    private static List<SelectItem<T>> ValidateInput(IEnumerable<SelectItem<T>> items)
+    private static List<TextItem<T>> ValidateInput(IEnumerable<TextItem<T>> items)
     {
         ArgumentNullException.ThrowIfNull(items);
 
@@ -80,7 +80,7 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
     /// Clears any previously rendered dropdown lines and shows only the selected item.
     /// Ensures cursor ends after the selected text.
     /// </summary>
-    private static void RenderFinalSelection(SelectItem<T> selectedItem)
+    private static void RenderFinalSelection(TextItem<T> selectedItem)
     {
         string displayText = TruncateText(
             selectedItem.Text,

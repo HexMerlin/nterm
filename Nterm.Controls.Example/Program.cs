@@ -18,7 +18,7 @@ Terminal.Write("Type something here: ");
 string userInput = Terminal.ReadLine();
 Terminal.Write("Now select an option: ");
 
-List<SelectItem<Action>> items =
+List<TextItem<Action>> items =
 [
     new()
     {
@@ -59,7 +59,7 @@ List<SelectItem<Action>> items =
     new() { Text = "Option M", Value = () => Terminal.WriteLine("Doing stuff with Option M") },
 ];
 
-SelectItem<Action> selectedItem1 = SelectMenu.Show(items);
+TextItem<Action> selectedItem1 = SelectMenu.Show(items);
 if (selectedItem1.IsEmpty())
 {
     Terminal.WriteLine("Selection cancelled");
@@ -67,7 +67,7 @@ if (selectedItem1.IsEmpty())
 }
 
 Terminal.Write(" and now select another option: ");
-SelectItem<Action> selectedItem2 = SelectMenu.Show(items, 1);
+TextItem<Action> selectedItem2 = SelectMenu.Show(items, 1);
 
 if (!selectedItem1.IsEmpty() && !selectedItem2.IsEmpty())
 {

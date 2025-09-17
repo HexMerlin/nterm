@@ -3,7 +3,7 @@ namespace Nterm.Core.Controls;
 /// <summary>
 /// Represents an item in a select control with text and an associated action.
 /// </summary>
-public class SelectItem<T>
+public class TextItem<T>
 {
     public required string Text { get; init; }
 
@@ -13,7 +13,7 @@ public class SelectItem<T>
 }
 
 // Non-generic factory for "empty" items
-public static class SelectItem
+public static class TextItem
 {
-    public static SelectItem<T> Empty<T>() => new() { Text = string.Empty, Value = default! };
+    public static TextItem<T> Empty<T>() => new() { Text = string.Empty, Value = default! };
 }
