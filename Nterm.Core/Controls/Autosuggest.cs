@@ -38,7 +38,7 @@ public sealed class AutosuggestControl : IAutosuggest
         _anchorTop = state.OriginalCursorTop;
         _options = options ?? new AutosuggestOptions();
         string suggestion = GetSuggestionSafe(suggest, string.Empty);
-
+        Render(string.Empty, suggestion, 0);
         TextInputController controller =
             new(state =>
             {
