@@ -33,9 +33,9 @@ public sealed class AutosuggestControl : IAutosuggest
     {
         ArgumentNullException.ThrowIfNull(suggest);
 
-        using TerminalState state = new();
-        _anchorLeft = state.OriginalCursorLeft;
-        _anchorTop = state.OriginalCursorTop;
+        using TerminalState terminalState = new();
+        _anchorLeft = terminalState.OriginalCursorLeft;
+        _anchorTop = terminalState.OriginalCursorTop;
         _options = options ?? new AutosuggestOptions();
         string suggestion = GetSuggestionSafe(suggest, string.Empty);
         Render(string.Empty, suggestion, 0);
@@ -85,7 +85,6 @@ public sealed class AutosuggestControl : IAutosuggest
                             Text = string.Empty,
                             CaretIndex = 0
                         };
-                        // Re-render will happen via controller renderer (text changed)
                     }
                     else
                     {

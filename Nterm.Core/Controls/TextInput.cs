@@ -9,20 +9,13 @@ public readonly record struct TextInputState(
     bool Cancelled
 );
 
-public sealed class TextInputKeyEventArgs : EventArgs
+public sealed class TextInputKeyEventArgs(ConsoleKeyInfo keyInfo, TextInputState currentState)
+    : EventArgs
 {
-    public ConsoleKeyInfo KeyInfo { get; }
-    public TextInputState CurrentState { get; }
-    public TextInputState ProposedState { get; set; }
+    public ConsoleKeyInfo KeyInfo { get; } = keyInfo;
+    public TextInputState CurrentState { get; } = currentState;
+    public TextInputState ProposedState { get; set; } = currentState;
     public bool Handled { get; set; }
-
-    public TextInputKeyEventArgs(ConsoleKeyInfo keyInfo, TextInputState currentState)
-    {
-        KeyInfo = keyInfo;
-        CurrentState = currentState;
-        ProposedState = currentState;
-        Handled = false;
-    }
 }
 
 public sealed class TextInputController(Action<TextInputState> render)
