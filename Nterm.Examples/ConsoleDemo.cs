@@ -6,7 +6,7 @@ public class ConsoleDemo
 {
     public ConsoleDemo() { }
 
-    public void Run()
+    public static void Run()
     {
         // Console.ForegroundColor = Color.MediumSpringGreen;
         // Console.WriteLine();

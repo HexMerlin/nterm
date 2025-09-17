@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Nterm.Core;
+﻿namespace Nterm.Core;
 public readonly partial struct Color
 {
     /// <summary>

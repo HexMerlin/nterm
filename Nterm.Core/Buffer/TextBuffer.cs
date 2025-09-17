@@ -62,7 +62,6 @@ public class TextBuffer
     /// </summary>
     public int LineCount => lines.Count;
 
-
     private LineBuffer CurrentLine => lines[^1];
 
     /// <summary>

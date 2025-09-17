@@ -16,7 +16,7 @@ public class CSharpSyntaxHighlightingDemo
     /// resolves styling, and renders to console with colors.
     /// </summary>
     /// <returns>Task representing the asynchronous operation.</returns>
-    public async Task Run()
+    public static async Task Run()
     {
         System.Console.OutputEncoding = Encoding.UTF8;
 
