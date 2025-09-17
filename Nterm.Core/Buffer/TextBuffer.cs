@@ -52,12 +52,18 @@ public class TextBuffer
     /// <value>A read-only view of the internal line collection.</value>
     public IReadOnlyList<LineBuffer> Lines => lines;
 
-    private LineBuffer CurrentLine => lines[^1];
+    /// <summary>
+    /// Idicates whether this <see cref="TextBuffer"/> is empty.
+    /// </summary>
+    public bool IsEmpty => lines[0].IsEmpty;
 
     /// <summary>
     /// Number of lines in the <see cref="TextBuffer"/>.
     /// </summary>
     public int LineCount => lines.Count;
+
+
+    private LineBuffer CurrentLine => lines[^1];
 
     /// <summary>
     /// Appends a single character to the current line with the specified colors.

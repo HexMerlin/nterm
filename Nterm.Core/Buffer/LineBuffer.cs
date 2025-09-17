@@ -45,6 +45,11 @@ public class LineBuffer
     internal LineBuffer(string str, Color foreground = default, Color background = default) : base() => Append(str, foreground, background);
 
     /// <summary>
+    /// Idicates whether this <see cref="LineBuffer"/> is empty.
+    /// </summary>
+    internal bool IsEmpty => buf.Count == 0;
+
+    /// <summary>
     /// Gets the current active style derived from the last entry in the style list.
     /// </summary>
     private CharStyle CurrentStyle => styles.Count > 0 ? styles[^1].charStyle : default;
