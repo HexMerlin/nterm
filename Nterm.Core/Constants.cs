@@ -1,9 +1,12 @@
 ﻿namespace Nterm.Core;
 
+#pragma warning disable CA1707 // Identifiers should not contain underscores
+
 public class Constants
 {
     // Core ANSI characters
     public const char ESC = '\x1b';
+
     public const byte ESC_BYTE = 0x1B;
 
     //// --- CSI / SGR / OSC basics ---
@@ -29,6 +32,7 @@ public class Constants
     //// Screen control
     public const string EraseFromCursor = "[0J";
     public const string EraseDisplayAll = "[2J";
+
     //public const string EraseScrollback = "[3J";
 
     // Terminal synchronization
@@ -59,3 +63,5 @@ public class Constants
     public const char ColorIntroducer = '#';
     public const char RepeatIntroducer = '!';
 }
+
+#pragma warning restore CA1707 // Identifiers should not contain underscores
