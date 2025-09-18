@@ -2,49 +2,55 @@ using System.Diagnostics;
 
 namespace Nterm.Core.Controls;
 
-public delegate TextItem<string> AutosuggestProvider(
+public delegate TextItem<TValue> AutosuggestProvider<TValue>(
     string currentText,
-    TextItem<string>? previousSuggestion = null
+    TextItem<TValue>? previousSuggestion = null
 );
 
-public sealed class AutosuggestOptions
+public sealed class AutosuggestOptions<TValue>
 {
     public Color TypedColor { get; init; } = Color.White;
     public Color SuggestionColor { get; init; } = Color.Gray;
-    public AutosuggestProvider? GetNextSuggestion { get; init; }
-    public AutosuggestProvider? GetPreviousSuggestion { get; init; }
+    public AutosuggestProvider<TValue>? GetNextSuggestion { get; init; }
+    public AutosuggestProvider<TValue>? GetPreviousSuggestion { get; init; }
 }
 
-public record AutosuggestResult(string TypedText, TextItem<string>? LastSuggestion);
+public record AutosuggestResult<TValue>(string TypedText, TextItem<TValue>? LastSuggestion);
 
-public interface IAutosuggest
+public interface IAutosuggest<TValue>
 {
-    AutosuggestResult Read(AutosuggestProvider suggest, AutosuggestOptions? options = null);
+    AutosuggestResult<TValue> Read(
+        AutosuggestProvider<TValue> suggest,
+        AutosuggestOptions<TValue>? options = null
+    );
 }
 
 public static class Autosuggest
 {
-    public static AutosuggestResult Read(
-        AutosuggestProvider suggest,
-        AutosuggestOptions? options = null
-    ) => new AutosuggestControl().Read(suggest, options);
+    public static AutosuggestResult<TValue> Read<TValue>(
+        AutosuggestProvider<TValue> suggest,
+        AutosuggestOptions<TValue>? options = null
+    ) => new AutosuggestControl<TValue>().Read(suggest, options);
 }
 
-public sealed class AutosuggestControl : IAutosuggest
+public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
 {
     private int _anchorLeft;
     private int _anchorTop;
-    private AutosuggestOptions _options = new();
+    private AutosuggestOptions<TValue> _options = new();
 
-    public AutosuggestResult Read(AutosuggestProvider suggest, AutosuggestOptions? options = null)
+    public AutosuggestResult<TValue> Read(
+        AutosuggestProvider<TValue> suggest,
+        AutosuggestOptions<TValue>? options = null
+    )
     {
         ArgumentNullException.ThrowIfNull(suggest);
 
         using TerminalState terminalState = new();
         _anchorLeft = terminalState.OriginalCursorLeft;
         _anchorTop = terminalState.OriginalCursorTop;
-        _options = options ?? new AutosuggestOptions();
-        TextItem<string> suggestion = GetSuggestionSafe(suggest, string.Empty, null);
+        _options = options ?? new AutosuggestOptions<TValue>();
+        TextItem<TValue> suggestion = GetSuggestionSafe(suggest, string.Empty, null);
         Render(string.Empty, suggestion.Text, 0);
         TextInputController controller =
             new(state =>
@@ -89,7 +95,7 @@ public sealed class AutosuggestControl : IAutosuggest
                     {
                         e.ProposedState = e.ProposedState with { Cancelled = true, Done = true };
                     }
-                    suggestion = TextItem.Empty<string>();
+                    suggestion = TextItem.Empty<TValue>();
                     Render(e.ProposedState.Text, suggestion.Text, e.ProposedState.CaretIndex);
                     e.Handled = true;
                     break;
@@ -123,7 +129,7 @@ public sealed class AutosuggestControl : IAutosuggest
 
         Render(finalState.Text, finalState.Text, finalState.CaretIndex);
 
-        return new AutosuggestResult(finalState.Text, suggestion);
+        return new AutosuggestResult<TValue>(finalState.Text, suggestion);
     }
 
     // Terminal preparation and input buffer clearing is handled by TextInputController
@@ -208,10 +214,10 @@ public sealed class AutosuggestControl : IAutosuggest
         return text.Length <= maxWidth ? text : text[..Math.Min(maxWidth, text.Length)];
     }
 
-    private static TextItem<string> GetSuggestionSafe(
-        AutosuggestProvider provider,
+    private static TextItem<TValue> GetSuggestionSafe(
+        AutosuggestProvider<TValue> provider,
         string typed,
-        TextItem<string>? previous
+        TextItem<TValue>? previous
     )
     {
         try
@@ -221,7 +227,7 @@ public sealed class AutosuggestControl : IAutosuggest
         catch (Exception ex)
         {
             Debug.WriteLine($"Autosuggest provider error: {ex.Message}");
-            return TextItem.Empty<string>();
+            return TextItem.Empty<TValue>();
         }
     }
 }

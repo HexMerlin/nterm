@@ -1,6 +1,8 @@
 using System.Globalization;
 using Nterm.Core;
 using Nterm.Core.Controls;
+using AutosuggestOptions = Nterm.Core.Controls.AutosuggestOptions<string>;
+using AutosuggestResult = Nterm.Core.Controls.AutosuggestResult<string>;
 
 Terminal.ForegroundColor = Color.White;
 

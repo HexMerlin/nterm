@@ -1,13 +1,13 @@
 namespace Nterm.Core.Controls;
 
 /// <summary>
-/// Represents an item in a select control with text and an associated action.
+/// Represents an item with a text representation.
 /// </summary>
-public class TextItem<T>
+public class TextItem<TValue>
 {
     public required string Text { get; init; }
 
-    public required T Value { get; init; }
+    public required TValue Value { get; init; }
 
     public bool IsEmpty() => string.IsNullOrEmpty(Text);
 }
@@ -15,5 +15,6 @@ public class TextItem<T>
 // Non-generic factory for "empty" items
 public static class TextItem
 {
-    public static TextItem<T> Empty<T>() => new() { Text = string.Empty, Value = default! };
+    public static TextItem<TValue> Empty<TValue>() =>
+        new() { Text = string.Empty, Value = default! };
 }
