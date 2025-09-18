@@ -128,6 +128,26 @@ Terminal.WriteLine();
 Terminal.WriteLine($"Selected suggestion: {result.LastSuggestion?.Value}");
 Terminal.WriteLine($"Typed text: {result.TypedText}");
 
+TextItem<FileSystemInfo> picked = FilePicker.Show(); // or FilePicker.Show("/path", numberOfVisibleItems: 8)
+if (!picked.IsEmpty())
+{
+    FileSystemInfo fs = picked.Value; // FileInfo or DirectoryInfo
+    Terminal.WriteLine();
+    Terminal.WriteLine($"Picked: {fs.FullName}");
+    // handle result
+}
+
+// TextInputController textInput =
+//     new(state =>
+//     {
+//         //Terminal.SetCursorPosition();
+//         Terminal.WriteLine($"Typed text: {state.Text}");
+//     });
+// TextInputState state = textInput.Read();
+
+// Terminal.WriteLine();
+// Terminal.WriteLine($"Typed text: {state.Text}");
+
 Terminal.WriteLine("\nPress any key to exit...");
 ConsoleKeyInfo key = Terminal.ReadKey();
 
