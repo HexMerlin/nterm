@@ -9,6 +9,9 @@ public class TextItem<TValue>
 
     public required TValue Value { get; init; }
 
+    // Optional description shown after the text in list views (e.g., gray-colored suffix)
+    public string? Description { get; init; }
+
     public bool IsEmpty() => string.IsNullOrEmpty(Text);
 }
 

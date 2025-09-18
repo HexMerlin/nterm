@@ -1,5 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 
 namespace Nterm.Core.Controls;
 
@@ -25,13 +25,15 @@ public static class FilePicker
     {
         using TerminalState terminalState = new();
 
-        string currentDirectoryPath = ResolveStartDirectory(startDirectory);
+        string startRoot = ResolveStartDirectory(startDirectory);
+        string currentDirectoryPath = startRoot;
         SelectDropdownView<FileSystemInfo> view =
             new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop);
 
         while (true)
         {
-            IReadOnlyList<TextItem<FileSystemInfo>> items = BuildDirectoryItems(
+            List<TextItem<FileSystemInfo>> items = BuildDirectoryItems(
+                startRoot,
                 currentDirectoryPath
             );
 
@@ -94,32 +96,76 @@ public static class FilePicker
         return string.Equals(selected.Text, expected, StringComparison.Ordinal);
     }
 
-    private static IReadOnlyList<TextItem<FileSystemInfo>> BuildDirectoryItems(string directoryPath)
+    private static List<TextItem<FileSystemInfo>> BuildDirectoryItems(
+        string startRoot,
+        string directoryPath
+    )
     {
-        var items = new List<TextItem<FileSystemInfo>>();
+        List<TextItem<FileSystemInfo>> items = new();
 
         DirectoryInfo dirInfo = new(directoryPath);
         string headerText = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name;
 
         // Header item: selecting it returns the directory itself
-        items.Add(new TextItem<FileSystemInfo> { Text = headerText, Value = dirInfo });
+        items.Add(
+            new TextItem<FileSystemInfo>
+            {
+                Text = headerText,
+                Description = GetRelativeDescriptor(startRoot, dirInfo.FullName),
+                Value = dirInfo
+            }
+        );
 
         // Directories first
         foreach (DirectoryInfo subDir in SafeEnumerateDirectories(dirInfo))
         {
-            items.Add(new TextItem<FileSystemInfo> { Text = $"{subDir.Name}/", Value = subDir });
+            items.Add(
+                new TextItem<FileSystemInfo>
+                {
+                    Text = $"{subDir.Name}/",
+                    Description = GetRelativeDescriptor(startRoot, subDir.FullName),
+                    Value = subDir
+                }
+            );
         }
 
         // Then files
         foreach (FileInfo file in SafeEnumerateFiles(dirInfo))
         {
-            items.Add(new TextItem<FileSystemInfo> { Text = file.Name, Value = file });
+            items.Add(
+                new TextItem<FileSystemInfo>
+                {
+                    Text = file.Name,
+                    Description = GetRelativeDescriptor(
+                        startRoot,
+                        file.Directory?.FullName ?? dirInfo.FullName
+                    ),
+                    Value = file
+                }
+            );
         }
 
         return items;
     }
 
-    private static IEnumerable<DirectoryInfo> SafeEnumerateDirectories(DirectoryInfo dir)
+    private static string GetRelativeDescriptor(string root, string path)
+    {
+        try
+        {
+            string rel = Path.GetRelativePath(root, path);
+            if (string.IsNullOrEmpty(rel))
+                return ".";
+            if (rel == ".")
+                return ".";
+            return rel;
+        }
+        catch
+        {
+            return path;
+        }
+    }
+
+    private static DirectoryInfo[] SafeEnumerateDirectories(DirectoryInfo dir)
     {
         try
         {
@@ -133,7 +179,7 @@ public static class FilePicker
         }
     }
 
-    private static IEnumerable<FileInfo> SafeEnumerateFiles(DirectoryInfo dir)
+    private static FileInfo[] SafeEnumerateFiles(DirectoryInfo dir)
     {
         try
         {

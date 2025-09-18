@@ -374,11 +374,21 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
-        string rawText = (prefix ?? string.Empty) + (item.Text ?? string.Empty);
-        string displayText = TruncateText(rawText, Math.Max(0, Terminal.BufferWidth - startColumn));
+        int maxWidth = Math.Max(0, Terminal.BufferWidth - startColumn);
+        string mainRaw = (prefix ?? string.Empty) + (item.Text ?? string.Empty);
+        string mainTruncated = TruncateText(mainRaw, maxWidth);
 
         Terminal.ForegroundColor = isSelected ? MenuColor : ForegroundColor;
-        Terminal.Write(displayText);
+        Terminal.Write(mainTruncated);
+
+        int remaining = maxWidth - mainTruncated.Length;
+        if (!string.IsNullOrWhiteSpace(item.Description) && remaining > 1)
+        {
+            Terminal.ForegroundColor = Color.Gray;
+            Terminal.Write(" ");
+            string descTruncated = TruncateText(item.Description!, remaining - 1);
+            Terminal.Write(descTruncated);
+        }
     }
 
     private static string TruncateText(string text, int maxWidth) =>
