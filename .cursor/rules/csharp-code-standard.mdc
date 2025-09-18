@@ -1,0 +1,8 @@
+---
+globs: *.cs
+alwaysApply: false
+---
+Follow the C# code standard.
+Use the latest C# features.
+Use the latest .NET features.
+Avoid writing large code blocks.
