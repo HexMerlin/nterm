@@ -1,6 +1,6 @@
-﻿using Nterm.Core;
+﻿using System.Globalization;
+using Nterm.Core;
 using Nterm.Examples;
-using System.Globalization;
 
 namespace Nterm.DevConsole;
 
@@ -16,11 +16,9 @@ internal static class Program
         Terminal.Clear(new Color(0, 0, 40));
         //comment out to run specific demo
 
-        ConsoleDemo demo1 = new();
-        demo1.Run();
+        ConsoleDemo.Run();
 
-        CSharpSyntaxHighlightingDemo demo2 = new();
-        await demo2.Run();
+        await CSharpSyntaxHighlightingDemo.Run();
 
         ConsoleImageDemo demo3 = new();
         await demo3.RunAsync(); //run demo 3
