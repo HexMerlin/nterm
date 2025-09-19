@@ -9,6 +9,8 @@ namespace Nterm.Core.Controls;
 /// </summary>
 public static class FilePicker
 {
+    private const string CurrentDir = ".";
+
     /// <summary>
     /// Shows a file/directory picker rooted at <paramref name="startDirectory"/> or the current directory.
     /// </summary>
@@ -51,10 +53,10 @@ public static class FilePicker
                 // If user selected the directory header (first item), return it and write its name.
                 // We detect header by comparing Text to the display name for the directory and by position 0.
                 // Since SelectDropdownView returns the selected item, we can consider header by matching text.
-                bool isHeader = IsDirectoryHeader(selected, dirInfo);
-                if (isHeader)
+
+                if (selected.Text == CurrentDir)
                 {
-                    RenderFinalSelection(selected.Text);
+                    RenderFinalSelection(selected.Text, selected.Description);
                     return selected;
                 }
 
@@ -64,7 +66,7 @@ public static class FilePicker
             }
 
             // File selected: print and return
-            RenderFinalSelection(selected.Text);
+            RenderFinalSelection(selected.Text, selected.Description);
             return selected;
         }
     }
@@ -101,14 +103,13 @@ public static class FilePicker
         List<TextItem<FileSystemInfo>> items = new();
 
         DirectoryInfo dirInfo = new(directoryPath);
-        string headerText = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name;
 
         // Header item: selecting it returns the directory itself
         items.Add(
             new TextItem<FileSystemInfo>
             {
-                Text = headerText,
-                Description = GetRelativeDescriptor(startRoot, dirInfo.FullName),
+                Text = CurrentDir,
+                Description = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name,
                 Value = dirInfo
             }
         );
@@ -151,9 +152,9 @@ public static class FilePicker
         {
             string rel = Path.GetRelativePath(root, path);
             if (string.IsNullOrEmpty(rel))
-                return ".";
-            if (rel == ".")
-                return ".";
+                return CurrentDir;
+            if (rel == CurrentDir)
+                return CurrentDir;
             return rel;
         }
         catch
@@ -190,8 +191,12 @@ public static class FilePicker
         }
     }
 
-    private static void RenderFinalSelection(string text)
+    private static void RenderFinalSelection(string text, string description)
     {
+        if (text == CurrentDir)
+        {
+            text = description;
+        }
         string displayText = TruncateText(
             text,
             Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft)
