@@ -10,6 +10,7 @@ namespace Nterm.Core.Controls;
 public static class FilePicker
 {
     private const string CurrentDir = ".";
+    private const string ParentDir = "..";
 
     /// <summary>
     /// Shows a file/directory picker rooted at <paramref name="startDirectory"/> or the current directory.
@@ -113,6 +114,19 @@ public static class FilePicker
                 Value = dirInfo
             }
         );
+
+        // Parent directory item: selecting it navigates up
+        if (dirInfo.Parent is not null)
+        {
+            items.Add(
+                new TextItem<FileSystemInfo>
+                {
+                    Text = ParentDir,
+                    Description = GetRelativeDescriptor(startRoot, dirInfo.Parent.FullName),
+                    Value = dirInfo.Parent
+                }
+            );
+        }
 
         // Directories first
         foreach (DirectoryInfo subDir in SafeEnumerateDirectories(dirInfo))
