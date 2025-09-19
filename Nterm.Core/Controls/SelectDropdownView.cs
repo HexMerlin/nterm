@@ -386,7 +386,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         {
             Terminal.ForegroundColor = Color.Gray;
             Terminal.Write(" ");
-            string descTruncated = TruncateText(item.Description!, remaining - 1);
+            string descTruncated = TruncateText(item.Description, remaining - 1);
             Terminal.Write(descTruncated);
         }
     }

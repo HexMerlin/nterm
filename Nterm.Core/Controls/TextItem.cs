@@ -1,16 +1,24 @@
 namespace Nterm.Core.Controls;
 
 /// <summary>
-/// Represents an item with a text representation.
+/// Represents an item with a text representation and a description.
 /// </summary>
 public class TextItem<TValue>
 {
+    /// <summary>
+    /// The text representation of the item.
+    /// </summary>
     public required string Text { get; init; }
 
+    /// <summary>
+    /// The value of the item.
+    /// </summary>
     public required TValue Value { get; init; }
 
-    // Optional description shown after the text in list views (e.g., gray-colored suffix)
-    public string? Description { get; init; }
+    /// <summary>
+    /// Optional description of the item.
+    /// </summary>
+    public string Description { get; init; } = string.Empty;
 
     public bool IsEmpty() => string.IsNullOrEmpty(Text);
 }
