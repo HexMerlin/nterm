@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Nterm.Core.Buffer;
 
@@ -19,7 +21,7 @@ namespace Nterm.Core.Buffer;
 /// <seealso cref="TextBuffer"/>
 /// <seealso cref="CharStyle"/>
 /// <seealso cref="Color"/>
-public class LineBuffer
+public class LineBuffer : IEquatable<LineBuffer>
 {
     private readonly List<char> buf = [];
     private readonly List<(int pos, CharStyle charStyle)> styles = [];
@@ -42,7 +44,19 @@ public class LineBuffer
     /// This constructor is equivalent to creating an empty buffer and then calling
     /// <see cref="Append(ReadOnlySpan{char}, Color, Color)"/> with the same arguments.
     /// </remarks>
-    internal LineBuffer(string str, Color foreground = default, Color background = default) : base() => Append(str, foreground, background);
+    internal LineBuffer(string str, Color foreground = default, Color background = default)
+        : base() => Append(str, foreground, background);
+
+    private LineBuffer(LineBuffer other)
+    {
+        buf = [.. other.buf];
+        styles = [.. other.styles];
+    }
+
+    /// <summary>
+    /// Length of the <see cref="LineBuffer"/>.
+    /// </summary>
+    public int Length => buf.Count;
 
     /// <summary>
     /// Idicates whether this <see cref="LineBuffer"/> is empty.
@@ -69,7 +83,10 @@ public class LineBuffer
     internal void Append(char ch, Color foreground = default, Color background = default)
     {
         if (ch is '\n' or '\r')
-            throw new ArgumentException($"Newline characters are not allowed in {nameof(LineBuffer)}. Use {nameof(TextBuffer)} for multi-line text.", nameof(ch));
+            throw new ArgumentException(
+                $"Newline characters are not allowed in {nameof(LineBuffer)}. Use {nameof(TextBuffer)} for multi-line text.",
+                nameof(ch)
+            );
         AddCharStyle(foreground, background);
         buf.Add(ch);
     }
@@ -84,11 +101,50 @@ public class LineBuffer
     /// This method only mutates the buffer; no terminal output occurs until <see cref="Write"/> is called.
     /// Callers should ensure that <paramref name="str"/> does not contain newline characters.
     /// </remarks>
-    internal void Append(ReadOnlySpan<char> str, Color foreground = default, Color background = default)
+    internal void Append(
+        ReadOnlySpan<char> str,
+        Color foreground = default,
+        Color background = default
+    )
     {
         AddCharStyle(foreground, background);
         buf.AddRange(str);
     }
+
+    /// <summary>
+    /// Truncates the buffer to the specified maximum number of characters.
+    /// </summary>
+    /// <param name="maxCharacters">The maximum number of characters to truncate to.</param>
+    /// <returns>The number of characters removed from the buffer.</returns>
+    internal LineBuffer Truncate(int maxCharacters)
+    {
+        if (buf.Count <= maxCharacters)
+            return new(this);
+        LineBuffer result = new();
+        for (int i = -1; i < styles.Count; i++)
+        {
+            int start = i >= 0 ? styles[i].pos : 0;
+            int end = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
+            CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
+            result.Append(
+                CollectionsMarshal.AsSpan(buf[start..end]),
+                charStyle.Color,
+                charStyle.BackColor
+            );
+        }
+
+        return result;
+    }
+
+    public LineBuffer[] Split(
+        [StringSyntax("Regex", ["options"])] string pattern,
+        RegexOptions options
+    )
+    {
+        throw new NotImplementedException();
+    }
+
+    internal LineBuffer Clone() => new(this);
 
     /// <summary>
     /// Trims internal list capacities to their current counts to reduce memory usage.
@@ -114,11 +170,25 @@ public class LineBuffer
             styles.Add((buf.Count, charStyle));
     }
 
-    internal (List<char> buf, List<(int pos, CharStyle charStyle)> styles) GetInternalData() => (buf, styles);
+    internal (List<char> buf, List<(int pos, CharStyle charStyle)> styles) GetInternalData() =>
+        (buf, styles);
 
     /// <summary>
     /// Returns the plain text contained in the buffer without styling.
     /// </summary>
     public override string ToString() => new(CollectionsMarshal.AsSpan(buf));
 
+    public static bool Equals(LineBuffer? left, LineBuffer? right) =>
+        left == right || left?.Equals(right) == true;
+
+    public static bool operator ==(LineBuffer? left, LineBuffer? right) => Equals(left, right);
+
+    public static bool operator !=(LineBuffer? left, LineBuffer? right) => !Equals(left, right);
+
+    public bool Equals(LineBuffer? other) =>
+        other != null && buf.SequenceEqual(other.buf) && styles.SequenceEqual(other.styles);
+
+    public override bool Equals(object? obj) => obj is LineBuffer other && Equals(other);
+
+    public override int GetHashCode() => HashCode.Combine(buf, styles);
 }

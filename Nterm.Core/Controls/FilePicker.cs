@@ -1,3 +1,5 @@
+using Nterm.Core.Buffer;
+
 namespace Nterm.Core.Controls;
 
 /// <summary>
@@ -89,19 +91,12 @@ public static class FilePicker
         }
     }
 
-    private static bool IsDirectoryHeader(TextItem<FileSystemInfo> selected, DirectoryInfo dir)
-    {
-        // Directory header text equals the directory name (not full path), consistent with BuildDirectoryItems
-        string expected = dir.Name.Length == 0 ? dir.FullName : dir.Name;
-        return string.Equals(selected.Text, expected, StringComparison.Ordinal);
-    }
-
     private static List<TextItem<FileSystemInfo>> BuildDirectoryItems(
         string startRoot,
         string directoryPath
     )
     {
-        List<TextItem<FileSystemInfo>> items = new();
+        List<TextItem<FileSystemInfo>> items = [];
 
         DirectoryInfo dirInfo = new(directoryPath);
 
@@ -181,9 +176,10 @@ public static class FilePicker
     {
         try
         {
-            return dir.EnumerateDirectories()
-                .OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return
+            [
+                .. dir.EnumerateDirectories().OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
+            ];
         }
         catch
         {
@@ -195,9 +191,7 @@ public static class FilePicker
     {
         try
         {
-            return dir.EnumerateFiles()
-                .OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return [.. dir.EnumerateFiles().OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
         }
         catch
         {
@@ -205,23 +199,13 @@ public static class FilePicker
         }
     }
 
-    private static void RenderFinalSelection(string text, string description)
+    private static void RenderFinalSelection(TextBuffer text, TextBuffer description)
     {
         if (text == CurrentDir)
         {
             text = description;
         }
-        string displayText = TruncateText(
-            text,
-            Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft)
-        );
-        Terminal.Write(displayText);
-    }
-
-    private static string TruncateText(string text, int maxWidth)
-    {
-        if (string.IsNullOrEmpty(text) || text.Length <= maxWidth)
-            return text;
-        return text[..Math.Min(maxWidth, text.Length)];
+        text.TruncateWidth(Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft));
+        Terminal.Write(text);
     }
 }
