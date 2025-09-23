@@ -166,28 +166,29 @@ public class LineBuffer : IEquatable<LineBuffer>
     }
 
     /// <summary>
-    /// Truncates the buffer to the specified maximum number of characters.
+    /// Truncates this buffer in-place to the specified maximum number of characters.
     /// </summary>
-    /// <param name="maxCharacters">The maximum number of characters to truncate to.</param>
-    /// <returns>The number of characters removed from the buffer.</returns>
+    /// <param name="maxCharacters">The maximum number of characters to keep.</param>
+    /// <returns>This <see cref="LineBuffer"/>.</returns>
     internal LineBuffer Truncate(int maxCharacters)
     {
+        // Normalize max to a non-negative value
+        maxCharacters = Math.Max(0, maxCharacters);
+
         if (buf.Count <= maxCharacters)
-            return new(this);
-        LineBuffer result = new();
-        for (int i = -1; i < styles.Count; i++)
+            return this;
+
+        // Remove extra characters beyond the limit
+        buf.RemoveRange(maxCharacters, buf.Count - maxCharacters);
+
+        // Drop any style changes that start at or beyond the new length
+        for (int i = styles.Count - 1; i >= 0; i--)
         {
-            int start = i >= 0 ? styles[i].pos : 0;
-            int end = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
-            CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
-            result.Append(
-                CollectionsMarshal.AsSpan(buf[start..end]),
-                charStyle.Color,
-                charStyle.BackColor
-            );
+            if (styles[i].pos >= maxCharacters)
+                styles.RemoveAt(i);
         }
 
-        return result;
+        return this;
     }
 
     public LineBuffer[] Split(

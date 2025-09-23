@@ -113,17 +113,22 @@ public class TextBuffer : IEquatable<TextBuffer>
 
         // Append the first line to the last line. The motivation for this is that the last
         // line does not end with a newline character.
-        CurrentLine.Append(text.lines[0].Clone());
+        CurrentLine.Append(text.lines[0]);
         foreach (LineBuffer line in text.lines[1..])
         {
-            Append(line.Clone());
+            Append(line);
         }
         return this;
     }
 
+    /// <summary>
+    /// Appends a (cloned) <see cref="LineBuffer"/> to the current line.
+    /// </summary>
+    /// <param name="line">The <see cref="LineBuffer"/> to append.</param>
+    /// <returns>This <see cref="TextBuffer"/> instance</returns>
     internal TextBuffer Append(LineBuffer line)
     {
-        CurrentLine.Append(line);
+        CurrentLine.Append(line.Clone());
         return this;
     }
 
