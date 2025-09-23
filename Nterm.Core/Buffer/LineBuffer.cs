@@ -258,9 +258,79 @@ public class LineBuffer : IEquatable<LineBuffer>
 
     public override int GetHashCode() => HashCode.Combine(buf, styles);
 
-    internal void SetColor(Color foreground = default, Color background = default) =>
-        throw new NotImplementedException();
+    internal void SetColor(Color foreground = default, Color background = default)
+    {
+        SetColor(0, Length, foreground, background);
+    }
 
-    internal void SetColor(int start, int end, Color foreground, Color background) =>
-        throw new NotImplementedException();
+    internal void SetColor(int start, int end, Color foreground, Color background)
+    {
+        // Normalize range
+        start = Math.Clamp(start, 0, Length);
+        end = Math.Clamp(end, 0, Length);
+        if (end <= start)
+            return;
+        if (foreground == default && background == default)
+            return; // nothing to change
+
+        // Build breakpoints: 0, existing style positions, start, end
+        SortedSet<int> breakpoints = [0, start, end];
+        foreach ((int pos, _) in styles)
+            _ = breakpoints.Add(pos);
+
+        // Rebuild styles across segments
+        List<(int pos, CharStyle charStyle)> newStyles = [];
+        CharStyle lastStyle = default;
+        bool hasLast = false;
+
+        // Helper: current index into existing styles while walking segments
+        int styleIndex = -1;
+
+        int previousBreakpoint = -1;
+        foreach (int bp in breakpoints)
+        {
+            if (previousBreakpoint == -1)
+            {
+                previousBreakpoint = bp;
+                continue;
+            }
+
+            int segmentStart = previousBreakpoint;
+            int segmentEnd = bp;
+            if (segmentStart >= segmentEnd)
+            {
+                previousBreakpoint = bp;
+                continue;
+            }
+
+            // Determine base style at segmentStart
+            while (styleIndex + 1 < styles.Count && styles[styleIndex + 1].pos <= segmentStart)
+                styleIndex++;
+            CharStyle baseStyle = styleIndex >= 0 ? styles[styleIndex].charStyle : default;
+
+            // Overlay within [start,end)
+            bool inRange = segmentStart < end && segmentEnd > start;
+            CharStyle newStyle = baseStyle;
+            if (inRange)
+            {
+                Color fg = foreground != default ? foreground : baseStyle.Color;
+                Color bg = background != default ? background : baseStyle.BackColor;
+                newStyle = new CharStyle(fg, bg);
+            }
+
+            // Emit change if different from lastStyle
+            if (!hasLast || newStyle != lastStyle)
+            {
+                if (!(newStyle == default && newStyles.Count == 0))
+                    newStyles.Add((segmentStart, newStyle));
+                lastStyle = newStyle;
+                hasLast = true;
+            }
+
+            previousBreakpoint = bp;
+        }
+
+        styles.Clear();
+        styles.AddRange(newStyles);
+    }
 }

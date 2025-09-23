@@ -430,8 +430,50 @@ public class TextBuffer : IEquatable<TextBuffer>
 
     public override int GetHashCode() => HashCode.Combine(Lines);
 
-    internal void SetColor(Color suggestionColor) => throw new NotImplementedException();
+    private int GetGlobalLength() => Length + Math.Max(0, LineCount - 1);
 
-    internal void SetColor(int start, int end, Color foreground, Color background = default) =>
-        throw new NotImplementedException();
+    internal void SetColor(Color foreground) => SetColor(0, GetGlobalLength(), foreground, default);
+
+    internal void SetColor(int start, int end, Color foreground, Color background = default)
+    {
+        int lc = LineCount;
+        if (lc == 0)
+            return;
+
+        // Build global mapping
+        int[] lineStarts = new int[lc];
+        int[] lineLengths = new int[lc];
+        int cumulative = 0;
+        for (int i = 0; i < lc; i++)
+        {
+            lineStarts[i] = cumulative;
+            int len = Lines[i].Length;
+            lineLengths[i] = len;
+            cumulative += len;
+            if (i < lc - 1)
+                cumulative += 1; // '\n' separator
+        }
+
+        int totalLength = cumulative;
+        start = Math.Clamp(start, 0, totalLength);
+        end = Math.Clamp(end, 0, totalLength);
+        if (end <= start)
+            return;
+        if (foreground == default && background == default)
+            return;
+
+        for (int i = 0; i < lc; i++)
+        {
+            int ls = lineStarts[i];
+            int le = ls + lineLengths[i];
+            int segStart = Math.Max(start, ls);
+            int segEnd = Math.Min(end, le);
+            if (segEnd <= segStart)
+                continue;
+
+            int localStart = segStart - ls;
+            int localEnd = segEnd - ls;
+            lines[i].SetColor(localStart, localEnd, foreground, background);
+        }
+    }
 }
