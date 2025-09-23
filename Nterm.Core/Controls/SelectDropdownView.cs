@@ -7,7 +7,7 @@ namespace Nterm.Core.Controls;
 internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 {
     public Color ForegroundColor { get; init; } = Color.White;
-    public Color MenuColor { get; init; } = Color.Yellow;
+    public Color SelectedColor { get; init; } = Color.Yellow;
     public Color FilterColor { get; init; } = Color.Gray;
     public Color NoItemsColor { get; init; } = Color.Gray;
 
@@ -350,13 +350,13 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         {
             if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
             {
-                Terminal.ForegroundColor = ForegroundColor;
+                part.SetColor(ForegroundColor);
                 // Only color the first occurrence of the filter text
                 isFilterFound = true;
             }
             else
             {
-                Terminal.ForegroundColor = FilterText.Length > 0 ? FilterColor : MenuColor;
+                part.SetColor(FilterText.Length > 0 ? FilterColor : SelectedColor);
             }
             Terminal.Write(part);
         }
@@ -374,13 +374,14 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
     private void DisplayListItem(TextItem<T> item, bool isSelected, int startColumn, int startRow)
     {
-        TextBuffer text = new(isSelected ? "• " : "  ", isSelected ? MenuColor : ForegroundColor);
+        TextBuffer text =
+            new(isSelected ? "• " : "  ", isSelected ? SelectedColor : ForegroundColor);
         Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
-        text.Append(item.Text.Clone());
-
-        Terminal.ForegroundColor = isSelected ? MenuColor : ForegroundColor;
+        TextBuffer itemText = item.Text.Clone();
+        itemText.SetColor(isSelected ? SelectedColor : default);
+        text.Append(itemText);
 
         if (!item.Description.IsEmpty)
         {

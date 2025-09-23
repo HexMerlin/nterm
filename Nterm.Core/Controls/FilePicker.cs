@@ -2,6 +2,14 @@ using Nterm.Core.Buffer;
 
 namespace Nterm.Core.Controls;
 
+public static class FilePicker
+{
+    public static TextItem<FileSystemInfo> Show(
+        string? startDirectory = null,
+        int numberOfVisibleItems = 4
+    ) => new FilePickerControl().Show(startDirectory, numberOfVisibleItems);
+}
+
 /// <summary>
 /// Interactive file/directory picker built on top of the select dropdown view.
 /// - Lists contents of a directory (current directory by default)
@@ -9,8 +17,10 @@ namespace Nterm.Core.Controls;
 /// - The directory header appears at the top; selecting it returns the directory itself
 /// - Selecting a file writes its name to the terminal and returns the file item
 /// </summary>
-public static class FilePicker
+public class FilePickerControl
 {
+    public Color DirectoryColor { get; init; } = Color.Beige;
+
     private const string CurrentDir = ".";
     private const string ParentDir = "..";
 
@@ -20,7 +30,7 @@ public static class FilePicker
     /// <param name="startDirectory">Directory to start from; defaults to Environment.CurrentDirectory.</param>
     /// <param name="numberOfVisibleItems">Maximum number of items to render below the anchor.</param>
     /// <returns>The selected item, whose value is a <see cref="FileSystemInfo"/>.</returns>
-    public static TextItem<FileSystemInfo> Show(
+    public TextItem<FileSystemInfo> Show(
         string? startDirectory = null,
         int numberOfVisibleItems = 4
     )
@@ -59,7 +69,7 @@ public static class FilePicker
 
                 if (selected.Text == CurrentDir)
                 {
-                    RenderFinalSelection(selected.Text, selected.Description);
+                    RenderFinalSelection(dirInfo.Name, selected.Description);
                     return selected;
                 }
 
@@ -91,7 +101,7 @@ public static class FilePicker
         }
     }
 
-    private static List<TextItem<FileSystemInfo>> BuildDirectoryItems(
+    private List<TextItem<FileSystemInfo>> BuildDirectoryItems(
         string startRoot,
         string directoryPath
     )
@@ -117,7 +127,7 @@ public static class FilePicker
                 new TextItem<FileSystemInfo>
                 {
                     Text = ParentDir,
-                    Description = GetRelativeDescriptor(startRoot, dirInfo.Parent.FullName),
+                    Description = GetPathDescriptor(startRoot, dirInfo.Parent.FullName),
                     Value = dirInfo.Parent
                 }
             );
@@ -129,8 +139,8 @@ public static class FilePicker
             items.Add(
                 new TextItem<FileSystemInfo>
                 {
-                    Text = $"{subDir.Name}/",
-                    Description = GetRelativeDescriptor(startRoot, subDir.FullName),
+                    Text = new($"📁{subDir.Name}/", DirectoryColor),
+                    Description = GetPathDescriptor(startRoot, subDir.FullName),
                     Value = subDir
                 }
             );
@@ -143,7 +153,7 @@ public static class FilePicker
                 new TextItem<FileSystemInfo>
                 {
                     Text = file.Name,
-                    Description = GetRelativeDescriptor(
+                    Description = GetPathDescriptor(
                         startRoot,
                         file.Directory?.FullName ?? dirInfo.FullName
                     ),
@@ -155,15 +165,20 @@ public static class FilePicker
         return items;
     }
 
-    private static string GetRelativeDescriptor(string root, string path)
+    private static string GetPathDescriptor(string root, string path)
     {
         try
         {
             string rel = Path.GetRelativePath(root, path);
-            if (string.IsNullOrEmpty(rel))
-                return CurrentDir;
-            if (rel == CurrentDir)
-                return CurrentDir;
+            if (
+                string.IsNullOrEmpty(rel)
+                || rel == CurrentDir
+                || rel.StartsWith(ParentDir, StringComparison.Ordinal)
+            )
+            {
+                return path;
+            }
+
             return rel;
         }
         catch
