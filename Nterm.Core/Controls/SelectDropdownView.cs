@@ -346,7 +346,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         bool isFilterFound = false;
 
         Terminal.Write(Constants.Underline);
-        foreach (string part in textParts)
+        foreach (TextBuffer part in textParts)
         {
             if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
             {
@@ -374,31 +374,26 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
     private void DisplayListItem(TextItem<T> item, bool isSelected, int startColumn, int startRow)
     {
-        TextBuffer prefix = isSelected ? "• " : "  ";
+        TextBuffer text = new(isSelected ? "• " : "  ", isSelected ? MenuColor : ForegroundColor);
         Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
-        int maxWidth = Math.Max(0, Terminal.BufferWidth - startColumn);
-        TextBuffer mainRaw = prefix.Append(item.Text);
-        TextBuffer mainTruncated = mainRaw.Clone().TruncateWidth(maxWidth);
+        text.Append(item.Text.Clone());
 
         Terminal.ForegroundColor = isSelected ? MenuColor : ForegroundColor;
-        Terminal.Write(mainTruncated);
 
-        int remaining = maxWidth - mainTruncated.MaxWidth;
-        if (!item.Description.IsEmpty && remaining > 1)
+        if (!item.Description.IsEmpty)
         {
-            Terminal.ForegroundColor = Color.Gray;
-            Terminal.Write(" ");
-            TextBuffer descTruncated = item.Description.Clone().TruncateWidth(remaining - 1);
-            Terminal.Write(descTruncated);
+            TextBuffer description = new(" ", Color.Gray);
+            description.Append(item.Description.Clone());
+            description.SetColor(Color.Gray);
+            text.Append(description);
         }
-    }
 
-    private static string TruncateText(string text, int maxWidth) =>
-        string.IsNullOrEmpty(text) || text.Length <= maxWidth
-            ? text
-            : text[..Math.Min(maxWidth, text.Length)];
+        int maxWidth = Math.Max(0, Terminal.BufferWidth - startColumn);
+        text.TruncateWidth(maxWidth);
+        Terminal.Write(text);
+    }
 
     private static IReadOnlyList<TextItem<T>> ApplyFilter(
         IReadOnlyList<TextItem<T>> items,

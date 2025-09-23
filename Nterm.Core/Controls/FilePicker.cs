@@ -183,7 +183,7 @@ public static class FilePicker
         }
         catch
         {
-            return Array.Empty<DirectoryInfo>();
+            return [];
         }
     }
 
@@ -195,7 +195,7 @@ public static class FilePicker
         }
         catch
         {
-            return Array.Empty<FileInfo>();
+            return [];
         }
     }
 
