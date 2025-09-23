@@ -91,6 +91,60 @@ public class LineBuffer : IEquatable<LineBuffer>
         buf.Add(ch);
     }
 
+    internal void Append(LineBuffer line)
+    {
+        if (line is null)
+            return;
+        (List<char> srcBuf, List<(int pos, CharStyle charStyle)> srcStyles) =
+            line.GetInternalData();
+        if (srcBuf.Count == 0)
+            return;
+
+        int destStart = buf.Count;
+
+        // Append characters
+        buf.AddRange(srcBuf);
+
+        CharStyle destCurrent = CurrentStyle;
+
+        if (srcStyles.Count == 0)
+        {
+            // Entire source line is default style. Ensure we switch back to default if needed.
+            if (destCurrent != default)
+                styles.Add((destStart, default));
+            return;
+        }
+
+        // If the first style change does not start at 0, the initial run is default style
+        if (srcStyles[0].pos > 0)
+        {
+            if (destCurrent != default)
+                styles.Add((destStart, default));
+        }
+        else
+        {
+            // First entry begins at 0 with explicit style
+            CharStyle firstStyle = srcStyles[0].charStyle;
+            if (destCurrent != firstStyle)
+                styles.Add((destStart, firstStyle));
+        }
+
+        // Append subsequent style changes with adjusted positions
+        for (int i = 0; i < srcStyles.Count; i++)
+        {
+            int newPos = destStart + srcStyles[i].pos;
+            CharStyle newStyle = srcStyles[i].charStyle;
+            if (newPos == destStart && styles.Count > 0 && styles[^1].pos == destStart)
+            {
+                // Already emitted a style at destStart; ensure no duplicate with same style
+                if (styles[^1].charStyle != newStyle)
+                    styles[^1] = (destStart, newStyle);
+                continue;
+            }
+            styles.Add((newPos, newStyle));
+        }
+    }
+
     /// <summary>
     /// Appends a span of characters to the buffer with the specified colors.
     /// </summary>
@@ -244,17 +298,38 @@ public class LineBuffer : IEquatable<LineBuffer>
     /// </summary>
     public override string ToString() => new(CollectionsMarshal.AsSpan(buf));
 
-    public static bool Equals(LineBuffer? left, LineBuffer? right) =>
-        left == right || left?.Equals(right) == true;
+    public bool Equals(LineBuffer? other) => Equals(other, null);
 
-    public static bool operator ==(LineBuffer? left, LineBuffer? right) => Equals(left, right);
+    public static bool Equals(
+        LineBuffer? left,
+        LineBuffer? right,
+        StringComparison? comparisonType
+    ) => ReferenceEquals(left, right) || left?.Equals(right, comparisonType) == true;
 
-    public static bool operator !=(LineBuffer? left, LineBuffer? right) => !Equals(left, right);
+    public static bool operator ==(LineBuffer? left, LineBuffer? right) =>
+        Equals(left, right, null);
 
-    public bool Equals(LineBuffer? other) =>
-        other != null && buf.SequenceEqual(other.buf) && styles.SequenceEqual(other.styles);
+    public static bool operator !=(LineBuffer? left, LineBuffer? right) =>
+        !Equals(left, right, null);
 
-    public override bool Equals(object? obj) => obj is LineBuffer other && Equals(other);
+    public bool Equals(LineBuffer? other, StringComparison? comparisonType) =>
+        other != null
+        && new string([.. buf]).Equals(
+            new string([.. other.buf]),
+            comparisonType ?? StringComparison.CurrentCulture
+        )
+        && styles.SequenceEqual(other.styles);
+
+    /// <summary>
+    /// Indicates whether this <see cref="LineBuffer"/> is equal to the specified string. Does not consider styles.
+    /// </summary>
+    /// <param name="other">The string to compare with this <see cref="LineBuffer"/>.</param>
+    /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="LineBuffer"/>.</returns>
+    public bool Equals(string other, StringComparison? comparisonType) =>
+        Equals(new LineBuffer(other), comparisonType);
+
+    public override bool Equals(object? obj) =>
+        obj is LineBuffer other && Equals(other) || obj is string otherStr && Equals(otherStr);
 
     public override int GetHashCode() => HashCode.Combine(buf, styles);
 

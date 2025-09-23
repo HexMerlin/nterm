@@ -108,9 +108,15 @@ public class TextBuffer : IEquatable<TextBuffer>
 
     public TextBuffer Append(TextBuffer text)
     {
-        foreach (LineBuffer line in text.lines)
+        if (text.IsEmpty)
+            return this;
+
+        // Append the first line to the last line. The motivation for this is that the last
+        // line does not end with a newline character.
+        lines[^1].Append(text.lines[0].Clone());
+        foreach (LineBuffer line in text.lines[1..])
         {
-            Append(line);
+            Append(line.Clone());
         }
         return this;
     }
@@ -418,15 +424,29 @@ public class TextBuffer : IEquatable<TextBuffer>
     public static implicit operator TextBuffer(string str) => new(str);
 
     public static bool Equals(TextBuffer? left, TextBuffer? right) =>
-        left == right || left?.Equals(right) == true;
+        ReferenceEquals(left, right)
+        || left?.Equals(right, StringComparison.OrdinalIgnoreCase) == true;
 
     public static bool operator ==(TextBuffer? left, TextBuffer? right) => Equals(left, right);
 
     public static bool operator !=(TextBuffer? left, TextBuffer? right) => !Equals(left, right);
 
-    public bool Equals(TextBuffer? other) => other != null && Lines.SequenceEqual(other.Lines);
+    public bool Equals(TextBuffer? other) =>
+        other != null && Lines.All(l => other.Lines.Any(l2 => l.Equals(l2, null)));
 
-    public override bool Equals(object? obj) => obj is TextBuffer other && Equals(other);
+    public bool Equals(TextBuffer? other, StringComparison? comparisonType) =>
+        other != null && Lines.All(l => other.Lines.Any(l2 => l.Equals(l2, comparisonType)));
+
+    /// <summary>
+    /// Indicates whether this <see cref="TextBuffer"/> is equal to the specified string. Does not consider styles.
+    /// </summary>
+    /// <param name="other">The string to compare with this <see cref="TextBuffer"/>.</param>
+    /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="TextBuffer"/>.</returns>
+    public bool Equals(string other) =>
+        Equals(new TextBuffer(other), StringComparison.OrdinalIgnoreCase);
+
+    public override bool Equals(object? obj) =>
+        obj is TextBuffer other && Equals(other, StringComparison.OrdinalIgnoreCase);
 
     public override int GetHashCode() => HashCode.Combine(Lines);
 
