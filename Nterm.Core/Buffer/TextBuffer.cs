@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Nterm.Core.Buffer;
@@ -212,7 +213,10 @@ public class TextBuffer : IEquatable<TextBuffer>
             if (maxCharacters <= 0)
                 break;
 
-            result.Append(line.Truncate(maxCharacters));
+            LineBuffer truncatedLine = line.Truncate(Math.Min(maxCharacters, line.Length));
+            result.Append(truncatedLine);
+
+            maxCharacters -= line.Length;
         }
 
         return result;
@@ -229,7 +233,169 @@ public class TextBuffer : IEquatable<TextBuffer>
         RegexOptions options
     )
     {
-        throw new NotImplementedException();
+        if (LineCount == 0)
+            return [new TextBuffer()];
+
+        if (string.IsNullOrEmpty(pattern))
+            return [Clone()];
+
+        // Prepare global view: cumulative starts for each line in the joined string with '\n' separators
+        int lineCount = LineCount;
+        int[] lineStarts = new int[lineCount];
+        int[] lineLengths = new int[lineCount];
+        int cumulative = 0;
+        for (int i = 0; i < lineCount; i++)
+        {
+            lineStarts[i] = cumulative;
+            int len = Lines[i].Length;
+            lineLengths[i] = len;
+            cumulative += len;
+            if (i < lineCount - 1)
+                cumulative += 1; // account for '\n' between lines
+        }
+
+        string global = ToString();
+        Regex regex = new(pattern, options);
+        MatchCollection matches = regex.Matches(global);
+        if (matches.Count == 0)
+            return [Clone()];
+
+        List<TextBuffer> results = [];
+        int cursor = 0;
+
+        foreach (Match m in matches)
+        {
+            // Preceding non-matching text
+            AddSegment(cursor, m.Index - cursor);
+
+            // Include captured groups like Regex.Split does when the pattern contains captures
+            for (int g = 1; g < m.Groups.Count; g++)
+            {
+                Group grp = m.Groups[g];
+                if (grp.Success && grp.Length > 0)
+                    AddSegment(grp.Index, grp.Length);
+            }
+
+            cursor = m.Index + m.Length;
+        }
+
+        // Trailing remainder
+        AddSegment(cursor, global.Length - cursor);
+
+        return [.. results];
+
+        void AddSegment(int globalStart, int length)
+        {
+            if (length <= 0)
+                return;
+
+            int globalEnd = globalStart + length;
+
+            // Find starting line index
+            int lineIndex = FindLineIndex(globalStart);
+            int localStart = globalStart - lineStarts[lineIndex];
+            if (localStart == lineLengths[lineIndex] && lineIndex < lineCount - 1)
+            {
+                // Start is exactly on a '\n' separator, move to next line
+                lineIndex++;
+                localStart = 0;
+            }
+
+            TextBuffer segment = new();
+            bool firstSlice = true;
+
+            while (lineIndex < lineCount)
+            {
+                int thisLineStartGlobal = lineStarts[lineIndex];
+                int thisLineEndGlobalExclusive = thisLineStartGlobal + lineLengths[lineIndex];
+
+                if (globalStart >= thisLineEndGlobalExclusive && lineIndex < lineCount - 1)
+                {
+                    // Starting beyond this line, skip
+                    lineIndex++;
+                    localStart = 0;
+                    continue;
+                }
+
+                int sliceStartLocal = localStart;
+                int sliceEndLocal = Math.Min(
+                    lineLengths[lineIndex],
+                    globalEnd - thisLineStartGlobal
+                );
+                if (sliceEndLocal <= sliceStartLocal)
+                {
+                    // No more coverage on this line
+                    break;
+                }
+
+                AppendSliceWithStyles(
+                    segment,
+                    Lines[lineIndex],
+                    sliceStartLocal,
+                    sliceEndLocal,
+                    firstSlice
+                );
+                firstSlice = false;
+
+                if (globalEnd <= thisLineEndGlobalExclusive)
+                    break; // Completed within this line
+
+                // Continue into next line
+                lineIndex++;
+                localStart = 0;
+            }
+
+            results.Add(segment);
+        }
+
+        int FindLineIndex(int globalPos)
+        {
+            // Linear search is acceptable for small line counts; can be optimized to binary search if needed
+            for (int i = 0; i < lineCount; i++)
+            {
+                int start = lineStarts[i];
+                int endExclusive = start + lineLengths[i] + (i < lineCount - 1 ? 1 : 0); // include '\n' slot
+                if (globalPos < endExclusive)
+                    return i;
+            }
+            return Math.Max(0, lineCount - 1);
+        }
+
+        static void AppendSliceWithStyles(
+            TextBuffer target,
+            LineBuffer sourceLine,
+            int startLocal,
+            int endLocal,
+            bool firstSlice
+        )
+        {
+            if (!firstSlice)
+                _ = target.AppendLine();
+
+            (List<char> buf, List<(int pos, CharStyle charStyle)> styles) data =
+                sourceLine.GetInternalData();
+            List<char> buf = data.buf;
+            List<(int pos, CharStyle charStyle)> styles = data.styles;
+
+            // Walk style runs and intersect with [startLocal, endLocal)
+            for (int i = -1; i < styles.Count; i++)
+            {
+                int runStart = i >= 0 ? styles[i].pos : 0;
+                int runEnd = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
+                CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
+
+                int s = Math.Max(runStart, startLocal);
+                int e = Math.Min(runEnd, endLocal);
+                if (s >= e)
+                    continue;
+
+                _ = target.Append(
+                    CollectionsMarshal.AsSpan(buf[s..e]),
+                    charStyle.Color,
+                    charStyle.BackColor
+                );
+            }
+        }
     }
 
     /// <summary>
@@ -263,4 +429,9 @@ public class TextBuffer : IEquatable<TextBuffer>
     public override bool Equals(object? obj) => obj is TextBuffer other && Equals(other);
 
     public override int GetHashCode() => HashCode.Combine(Lines);
+
+    internal void SetColor(Color suggestionColor) => throw new NotImplementedException();
+
+    internal void SetColor(int start, int end, Color foreground, Color background = default) =>
+        throw new NotImplementedException();
 }

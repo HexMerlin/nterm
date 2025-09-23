@@ -141,7 +141,73 @@ public class LineBuffer : IEquatable<LineBuffer>
         RegexOptions options
     )
     {
-        throw new NotImplementedException();
+        // Fast-path: empty buffer → single empty segment
+        if (buf.Count == 0)
+            return [new LineBuffer()];
+
+        if (string.IsNullOrEmpty(pattern))
+            return [Clone()];
+
+        string input = ToString();
+        Regex regex = new(pattern, options);
+        MatchCollection matches = regex.Matches(input);
+
+        if (matches.Count == 0)
+            return [Clone()];
+
+        List<LineBuffer> parts = [];
+        int cursor = 0;
+
+        foreach (Match m in matches)
+        {
+            // Preceding non-matching text
+            AddSegment(cursor, m.Index - cursor);
+
+            // Include captured groups like Regex.Split does when the pattern contains captures
+            for (int g = 1; g < m.Groups.Count; g++)
+            {
+                Group grp = m.Groups[g];
+                if (grp.Success && grp.Length > 0)
+                    AddSegment(grp.Index, grp.Length);
+            }
+
+            cursor = m.Index + m.Length;
+        }
+
+        // Trailing remainder
+        AddSegment(cursor, buf.Count - cursor);
+
+        return [.. parts];
+
+        void AddSegment(int start, int length)
+        {
+            if (length <= 0)
+                return;
+
+            int end = start + length;
+            LineBuffer segment = new();
+
+            // Walk style runs and intersect with [start, end)
+            for (int i = -1; i < styles.Count; i++)
+            {
+                int runStart = i >= 0 ? styles[i].pos : 0;
+                int runEnd = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
+                CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
+
+                int s = Math.Max(runStart, start);
+                int e = Math.Min(runEnd, end);
+                if (s >= e)
+                    continue;
+
+                segment.Append(
+                    CollectionsMarshal.AsSpan(buf[s..e]),
+                    charStyle.Color,
+                    charStyle.BackColor
+                );
+            }
+
+            parts.Add(segment);
+        }
     }
 
     internal LineBuffer Clone() => new(this);
@@ -191,4 +257,10 @@ public class LineBuffer : IEquatable<LineBuffer>
     public override bool Equals(object? obj) => obj is LineBuffer other && Equals(other);
 
     public override int GetHashCode() => HashCode.Combine(buf, styles);
+
+    internal void SetColor(Color foreground = default, Color background = default) =>
+        throw new NotImplementedException();
+
+    internal void SetColor(int start, int end, Color foreground, Color background) =>
+        throw new NotImplementedException();
 }
