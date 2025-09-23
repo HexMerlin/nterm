@@ -1,3 +1,5 @@
+using Nterm.Core.Buffer;
+
 namespace Nterm.Core.Controls;
 
 public static class SelectMenu
@@ -59,7 +61,7 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
     /// </summary>
     private static void RenderFinalSelection(TextItem<T> selectedItem)
     {
-        Buffer.TextBuffer displayText = selectedItem.Text.TruncateWidth(
+        TextBuffer displayText = selectedItem.Text.TruncateWidth(
             Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft)
         );
         Terminal.Write(displayText);

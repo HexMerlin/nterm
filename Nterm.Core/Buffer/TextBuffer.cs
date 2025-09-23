@@ -113,7 +113,7 @@ public class TextBuffer : IEquatable<TextBuffer>
 
         // Append the first line to the last line. The motivation for this is that the last
         // line does not end with a newline character.
-        lines[^1].Append(text.lines[0].Clone());
+        CurrentLine.Append(text.lines[0].Clone());
         foreach (LineBuffer line in text.lines[1..])
         {
             Append(line.Clone());
@@ -123,7 +123,7 @@ public class TextBuffer : IEquatable<TextBuffer>
 
     internal TextBuffer Append(LineBuffer line)
     {
-        lines.Add(line.Clone());
+        CurrentLine.Append(line);
         return this;
     }
 
@@ -187,45 +187,6 @@ public class TextBuffer : IEquatable<TextBuffer>
         CurrentLine.TrimCapacity();
         lines.Add(new LineBuffer());
         return this;
-    }
-
-    /// <summary>
-    /// Truncates the <see cref="TextBuffer"/> to the specified maximum width.
-    /// </summary>
-    /// <param name="maxWidth">The maximum width to truncate to.</param>
-    /// <returns>A new <see cref="TextBuffer"/> instance</returns>
-    public TextBuffer TruncateWidth(int maxWidth)
-    {
-        if (IsEmpty)
-            return new(this);
-
-        TextBuffer result = new();
-        foreach (LineBuffer line in Lines)
-        {
-            result.Append(line.Truncate(maxWidth));
-        }
-
-        return this;
-    }
-
-    public TextBuffer TruncateCharacters(int maxCharacters)
-    {
-        if (IsEmpty)
-            return new(this);
-
-        TextBuffer result = new();
-        foreach (LineBuffer line in Lines)
-        {
-            if (maxCharacters <= 0)
-                break;
-
-            LineBuffer truncatedLine = line.Truncate(Math.Min(maxCharacters, line.Length));
-            result.Append(truncatedLine);
-
-            maxCharacters -= line.Length;
-        }
-
-        return result;
     }
 
     /// <summary>
