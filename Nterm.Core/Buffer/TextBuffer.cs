@@ -416,13 +416,39 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// </summary>
     /// <param name="other">The string to compare with this <see cref="TextBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="TextBuffer"/>.</returns>
-    public bool Equals(string other) => Equals(new TextBuffer(other), null, false);
+    public bool TextEquals(string other) => throw new NotImplementedException();
 
     public override bool Equals(object? obj) => obj is TextBuffer other && Equals(other);
 
-    private bool Equals(TextBuffer? other, StringComparison? comparisonType, bool compareStyles) =>
-        other != null
-        && Lines.All(l => other.Lines.Any(l2 => l.Equals(l2, comparisonType, compareStyles)));
+    private bool Equals(TextBuffer? other, StringComparison? comparisonType, bool compareStyles)
+    {
+        if (other == null)
+            return false;
+
+        if (Lines.Count != other.Lines.Count)
+            return false;
+
+        for (int i = 0; i < Lines.Count; i++)
+        {
+            (List<char> otherStr, List<(int, CharStyle)> otherStyles) = other
+                .Lines[i]
+                .GetInternalData();
+
+            if (
+                !Lines[i]
+                    .Equals(
+                        CollectionsMarshal.AsSpan(otherStr),
+                        otherStyles,
+                        comparisonType,
+                        compareStyles
+                    )
+            )
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
     public override int GetHashCode()
     {

@@ -295,28 +295,31 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
         !Equals(left, right, null);
 
     public bool Equals(LineBuffer? other, StringComparison? comparisonType) =>
-        Equals(other, comparisonType, true);
+        ReferenceEquals(this, other)
+        || other != null
+            && Equals(CollectionsMarshal.AsSpan(other.buf), other.styles, comparisonType, true);
 
     /// <summary>
     /// Indicates whether this <see cref="LineBuffer"/> is equal to the specified string. Does not consider styles.
     /// </summary>
     /// <param name="other">The string to compare with this <see cref="LineBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="LineBuffer"/>.</returns>
-    public bool Equals(string other, StringComparison? comparisonType) =>
-        Equals(new LineBuffer(other), comparisonType, false);
+    public bool TextEquals(string other, StringComparison? comparisonType = null) =>
+        Equals(other, [], comparisonType, false);
 
     public override bool Equals(object? obj) =>
-        obj is LineBuffer other && Equals(other) || obj is string otherStr && Equals(otherStr);
+        obj is LineBuffer other && Equals(other) || obj is string otherStr && TextEquals(otherStr);
 
-    internal bool Equals(LineBuffer? other, StringComparison? comparisonType, bool compareStyles) =>
-        other != null
-        && CollectionsMarshal
+    internal bool Equals(
+        ReadOnlySpan<char> otherStr,
+        List<(int pos, CharStyle charStyle)> otherStyles,
+        StringComparison? comparisonType,
+        bool compareStyles
+    ) =>
+        CollectionsMarshal
             .AsSpan([.. buf])
-            .Equals(
-                CollectionsMarshal.AsSpan([.. other.buf]),
-                comparisonType ?? StringComparison.Ordinal
-            )
-        && (!compareStyles || styles.SequenceEqual(other.styles));
+            .Equals(otherStr, comparisonType ?? StringComparison.Ordinal)
+        && (!compareStyles || styles.SequenceEqual(otherStyles));
 
     public override int GetHashCode() => HashCode.Combine(buf.GetHashCode(), styles.GetHashCode());
 
