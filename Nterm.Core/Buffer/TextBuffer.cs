@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
@@ -16,7 +15,6 @@ namespace Nterm.Core.Buffer;
 /// <see cref="AppendLine()"/> starts a new one.
 /// </para>
 /// If post-processing is needed (e.g. prefixing lines with line numbers), iterate over <see cref="Lines"/> property instead and write each line individually.
-/// </para>
 /// </para>
 /// <para>This type is not thread-safe.</para>
 /// </remarks>
@@ -70,7 +68,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// <summary>
     /// Indicates whether this <see cref="TextBuffer"/> is empty.
     /// </summary>
-    public bool IsEmpty => lines.Count == 0 || (lines.Count == 1 && lines[0].IsEmpty);
+    public bool IsEmpty => lines.Count == 1 && lines[0].IsEmpty;
 
     /// <summary>
     /// Number of lines in the <see cref="TextBuffer"/>.
@@ -115,6 +113,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
         CurrentLine.Append(text.lines[0]);
         foreach (LineBuffer line in text.lines[1..])
         {
+            AppendLine();
             Append(line);
         }
         return this;
