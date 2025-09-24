@@ -65,12 +65,12 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// <summary>
     /// An empty <see cref="TextBuffer"/>.
     /// </summary>
-    public static TextBuffer Empty { get; } = new();
+    public static readonly TextBuffer Empty = new();
 
     /// <summary>
     /// Indicates whether this <see cref="TextBuffer"/> is empty.
     /// </summary>
-    public bool IsEmpty => lines[0].IsEmpty && lines.Count == 1;
+    public bool IsEmpty => lines.Count == 0 || (lines.Count == 1 && lines[0].IsEmpty);
 
     /// <summary>
     /// Number of lines in the <see cref="TextBuffer"/>.
@@ -97,7 +97,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>
-    /// This method mutates the current line. No terminal output occurs until <see cref="Write()"/> is called.
+    /// This method mutates the current line.
     /// </remarks>
     public TextBuffer Append(char ch, Color foreground = default, Color background = default)
     {
@@ -145,7 +145,6 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// to the current line. After writing each subsequent segment (beyond the first), a new line is started
     /// to separate segments.
     /// </para>
-    /// <para>No terminal output occurs until <see cref="Write()"/> is called.</para>
     /// </remarks>
     public TextBuffer Append(
         ReadOnlySpan<char> str,
@@ -171,7 +170,6 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// <param name="foreground">The foreground color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <returns>This <see cref="TextBuffer"/> instance</returns>
-    /// <remarks>No terminal output occurs until <see cref="Write()"/> is called.</remarks>
     public TextBuffer AppendLine(
         ReadOnlySpan<char> str,
         Color foreground = default,
@@ -184,7 +182,6 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// <returns>This <see cref="TextBuffer"/> instance</returns>
     /// <remarks>
     /// Trims the capacity of the current line before creating the next line to minimize memory usage.
-    /// No terminal output occurs until <see cref="Write()"/> is called.
     /// </remarks>
     public TextBuffer AppendLine()
     {
@@ -398,8 +395,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     public static implicit operator TextBuffer(string str) => new(str);
 
     public static bool Equals(TextBuffer? left, TextBuffer? right) =>
-        ReferenceEquals(left, right)
-        || left?.Equals(right, StringComparison.OrdinalIgnoreCase) == true;
+        ReferenceEquals(left, right) || left?.Equals(right, StringComparison.Ordinal) == true;
 
     public static bool operator ==(TextBuffer? left, TextBuffer? right) => Equals(left, right);
 

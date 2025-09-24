@@ -117,12 +117,14 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
         // Append subsequent style changes with adjusted positions
         for (int i = 0; i < srcStyles.Count; i++)
         {
-            int newPos = Math.Clamp(destStart + srcStyles[i].pos, 0, buf.Count);
+            int newPos = destStart + srcStyles[i].pos;
             CharStyle newStyle = srcStyles[i].charStyle;
-            if (CurrentStyle != newStyle)
-            {
+            // If the current style is at the same position as the new style, update it
+            if (styles.Count > 0 && styles[^1].pos == newPos)
+                styles[^1] = (newPos, newStyle);
+            // If the current style is different from the new style, add it
+            else if (styles.Count == 0 || styles[^1].charStyle != newStyle)
                 styles.Add((newPos, newStyle));
-            }
         }
     }
 
@@ -304,11 +306,10 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     /// </summary>
     /// <param name="other">The string to compare with this <see cref="LineBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="LineBuffer"/>.</returns>
-    public bool TextEquals(string other, StringComparison? comparisonType = null) =>
+    public bool TextEquals(ReadOnlySpan<char> other, StringComparison? comparisonType = null) =>
         Equals(other, [], comparisonType, false);
 
-    public override bool Equals(object? obj) =>
-        obj is LineBuffer other && Equals(other) || obj is string otherStr && TextEquals(otherStr);
+    public override bool Equals(object? obj) => obj is LineBuffer other && Equals(other);
 
     internal bool Equals(
         ReadOnlySpan<char> otherStr,
@@ -316,9 +317,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
         StringComparison? comparisonType,
         bool compareStyles
     ) =>
-        CollectionsMarshal
-            .AsSpan([.. buf])
-            .Equals(otherStr, comparisonType ?? StringComparison.Ordinal)
+        CollectionsMarshal.AsSpan(buf).Equals(otherStr, comparisonType ?? StringComparison.Ordinal)
         && (!compareStyles || styles.SequenceEqual(otherStyles));
 
     public override int GetHashCode()
