@@ -139,7 +139,7 @@ public class FilePickerControl
             items.Add(
                 new TextItem<FileSystemInfo>
                 {
-                    Text = new($"📁{subDir.Name}/", DirectoryColor),
+                    Text = new($"📁 {subDir.Name}/", DirectoryColor),
                     Description = GetPathDescriptor(startRoot, subDir.FullName),
                     Value = subDir
                 }
