@@ -15,11 +15,6 @@ namespace Nterm.Core.Buffer;
 /// or <see cref="AppendLine(ReadOnlySpan{char}, Color, Color)"/> is appended to the current line, and
 /// <see cref="AppendLine()"/> starts a new one.
 /// </para>
-/// <para>
-/// Calling <see cref="Write()"/> renders the accumulated content to the terminal, delegating styling
-/// application to the underlying line buffers. Writing does not clear the buffer; it may be written out
-/// multiple times if desired.
-/// <para>
 /// If post-processing is needed (e.g. prefixing lines with line numbers), iterate over <see cref="Lines"/> property instead and write each line individually.
 /// </para>
 /// </para>
@@ -49,7 +44,11 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// This constructor is equivalent to creating an empty buffer and then calling
     /// <see cref="Append(ReadOnlySpan{char}, Color, Color)"/> with the same arguments.
     /// </remarks>
-    public TextBuffer(string str, Color foreground = default, Color background = default)
+    public TextBuffer(
+        ReadOnlySpan<char> str,
+        Color foreground = default,
+        Color background = default
+    )
         : base() => Append(str, foreground, background);
 
     private TextBuffer(TextBuffer other)
@@ -416,7 +415,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
     /// </summary>
     /// <param name="other">The string to compare with this <see cref="TextBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="TextBuffer"/>.</returns>
-    public bool TextEquals(string other) => throw new NotImplementedException();
+    public bool TextEquals(ReadOnlySpan<char> other) => Equals(new TextBuffer(other), null, false);
 
     public override bool Equals(object? obj) => obj is TextBuffer other && Equals(other);
 

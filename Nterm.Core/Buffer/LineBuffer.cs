@@ -321,7 +321,18 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
             .Equals(otherStr, comparisonType ?? StringComparison.Ordinal)
         && (!compareStyles || styles.SequenceEqual(otherStyles));
 
-    public override int GetHashCode() => HashCode.Combine(buf.GetHashCode(), styles.GetHashCode());
+    public override int GetHashCode()
+    {
+        HashCode hc = new();
+        foreach (char ch in CollectionsMarshal.AsSpan(buf))
+            hc.Add(ch);
+        foreach ((int pos, CharStyle charStyle) in styles)
+        {
+            hc.Add(pos);
+            hc.Add(charStyle);
+        }
+        return hc.ToHashCode();
+    }
 
     internal void SetColor(Color foreground = default, Color background = default)
     {
