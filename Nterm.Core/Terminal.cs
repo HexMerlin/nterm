@@ -72,6 +72,11 @@ public static class Terminal
 
     public static bool CursorVisible
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Interoperability",
+            "CA1416:Validate platform compatibility",
+            Justification = "The SupportedOSPlatform attribute is used to ensure that the property is only used on supported platforms."
+        )]
         [SupportedOSPlatform("windows")]
         get => Console.CursorVisible;
         [UnsupportedOSPlatform("android")]
