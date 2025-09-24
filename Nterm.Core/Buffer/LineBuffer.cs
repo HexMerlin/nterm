@@ -93,8 +93,10 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     {
         if (line is null)
             return;
-        (List<char> srcBuf, List<(int pos, CharStyle charStyle)> srcStyles) =
-            line.GetInternalData();
+        // Clone the source buffer and styles to avoid mutations in the original object during the operation
+        List<char> srcBuf = [..line.buf];
+        List<(int pos, CharStyle charStyle)> srcStyles = [.. line.styles];
+
         if (srcBuf.Count == 0)
             return;
 
