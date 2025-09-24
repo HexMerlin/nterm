@@ -10,8 +10,6 @@ namespace Nterm.Core.Buffer;
 /// <remarks>
 /// <para>
 /// A <see cref="LineBuffer"/> records characters and the positions at which a new <see cref="CharStyle"/> is applied.
-/// When <see cref="Write"/> is called, the content is emitted to the terminal as contiguous segments with the
-/// appropriate colors.
 /// </para>
 /// <para>
 /// Newline characters are not permitted in a <see cref="LineBuffer"/>. For multi-line output, use <see cref="TextBuffer"/>.
@@ -59,7 +57,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     public int Length => buf.Count;
 
     /// <summary>
-    /// Idicates whether this <see cref="LineBuffer"/> is empty.
+    /// True if this <see cref="LineBuffer"/> is empty.
     /// </summary>
     internal bool IsEmpty => buf.Count == 0;
 
@@ -78,7 +76,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     /// Thrown when <paramref name="ch"/> is a newline character. Use <see cref="TextBuffer"/> for multi-line text.
     /// </exception>
     /// <remarks>
-    /// This method only mutates the buffer; no terminal output occurs until <see cref="Write"/> is called.
+    /// This method only mutates the buffer;
     /// </remarks>
     internal void Append(char ch, Color foreground = default, Color background = default)
     {
@@ -135,7 +133,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     /// <param name="foreground">The foreground color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <param name="background">The background color to apply. Defaults to <see cref="Color.Transparent"/>.</param>
     /// <remarks>
-    /// This method only mutates the buffer; no terminal output occurs until <see cref="Write"/> is called.
+    /// This method only mutates the buffer.
     /// Callers should ensure that <paramref name="str"/> does not contain newline characters.
     /// </remarks>
     internal void Append(
@@ -323,7 +321,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     public override int GetHashCode()
     {
         HashCode hc = new();
-        foreach (char ch in CollectionsMarshal.AsSpan(buf))
+        foreach (char ch in buf)
             hc.Add(ch);
         foreach ((int pos, CharStyle charStyle) in styles)
         {
