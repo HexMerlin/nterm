@@ -1,5 +1,6 @@
 using System.Globalization;
 using Nterm.Core;
+using Nterm.Core.Buffer;
 using Nterm.Core.Controls;
 using AutosuggestOptions = Nterm.Core.Controls.AutosuggestOptions<string>;
 using AutosuggestResult = Nterm.Core.Controls.AutosuggestResult<string>;
@@ -14,7 +15,9 @@ Terminal.WriteLine();
 
 // Test the Select control with cursor position functionality
 Terminal.WriteLine("Testing Select Control - Cursor Position");
-Terminal.WriteLine("=======================================");
+Terminal.WriteLine(
+    "================================ very long text that is longer than the terminal width what will happen to the text now? ===================================="
+);
 Terminal.WriteLine();
 
 Terminal.Write("Type something here: ");
@@ -103,7 +106,7 @@ AutosuggestResult result = Autosuggest.Read(
     {
         GetNextSuggestion = (current, previous) =>
         {
-            string previousText = previous?.Text ?? string.Empty;
+            string previousText = previous?.Text.ToString() ?? string.Empty;
             string text =
                 candidates
                     .Except([previousText])
@@ -113,13 +116,13 @@ AutosuggestResult result = Autosuggest.Read(
         },
         GetPreviousSuggestion = (current, previous) =>
         {
-            string previousText = previous?.Text ?? string.Empty;
+            string previousText = previous?.Text.ToString() ?? string.Empty;
             string text =
                 candidates
                     .Except([previousText])
                     .FirstOrDefault(c => c.Contains(current, StringComparison.OrdinalIgnoreCase))
                 ?? string.Empty;
-            return new TextItem<string> { Text = text, Value = text };
+            return new TextItem<string> { Text = text, Value = text.ToString() };
         },
     }
 );

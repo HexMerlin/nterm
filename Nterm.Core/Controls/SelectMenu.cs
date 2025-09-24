@@ -1,3 +1,5 @@
+using Nterm.Core.Buffer;
+
 namespace Nterm.Core.Controls;
 
 public static class SelectMenu
@@ -54,36 +56,12 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
     }
 
     /// <summary>
-    /// Renders the current selection state.
-    /// </summary>
-    /// <param name="items">The list of items.</param>
-    /// <param name="currentIndex">The currently selected index.</param>
-    /// <param name="startColumn">The column position to start displaying.</param>
-    /// <param name="startRow">The row position to display.</param>
-
-    /// <summary>
-    /// Truncates text to fit within the specified maximum width.
-    /// </summary>
-    /// <param name="text">The text to truncate.</param>
-    /// <param name="maxWidth">The maximum width allowed.</param>
-    /// <returns>The truncated text.</returns>
-    private static string TruncateText(string text, int maxWidth)
-    {
-        if (string.IsNullOrEmpty(text) || text.Length <= maxWidth)
-            return text;
-
-        // Account for multi-byte characters by using Substring
-        return text[..Math.Min(maxWidth, text.Length)];
-    }
-
-    /// <summary>
     /// Clears any previously rendered dropdown lines and shows only the selected item.
     /// Ensures cursor ends after the selected text.
     /// </summary>
     private static void RenderFinalSelection(TextItem<T> selectedItem)
     {
-        string displayText = TruncateText(
-            selectedItem.Text,
+        TextBuffer displayText = selectedItem.Text.TruncateWidth(
             Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft)
         );
         Terminal.Write(displayText);

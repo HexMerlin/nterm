@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Nterm.Core.Buffer;
 
 namespace Nterm.Core.Controls;
 
@@ -70,7 +71,7 @@ public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
                     {
                         TextInputState accepted = e.ProposedState with
                         {
-                            Text = suggestion.Text,
+                            Text = suggestion.Text.ToString(),
                             CaretIndex = suggestion.Text.Length
                         };
                         e.ProposedState = accepted;
@@ -82,7 +83,7 @@ public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
                     {
                         TextInputState accepted = e.ProposedState with
                         {
-                            Text = suggestion.Text,
+                            Text = suggestion.Text.ToString(),
                             CaretIndex = suggestion.Text.Length
                         };
                         e.ProposedState = accepted;
@@ -134,21 +135,21 @@ public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
 
     // Terminal preparation and input buffer clearing is handled by TextInputController
 
-    private void Render(string typedText, string? suggestion, int caretIndex)
+    private void Render(string typedText, TextBuffer suggestion, int caretIndex)
     {
         Terminal.SetCursorPosition(_anchorLeft, _anchorTop);
         TerminalEx.ClearLineFrom(_anchorLeft, _anchorTop);
 
-        string display = ComputeDisplayText(typedText, suggestion);
+        TextBuffer display = ComputeDisplayText(typedText, suggestion);
         (int matchStart, int matchLength) = FindFirstMatch(display, typedText);
 
         WriteColored(display, matchStart, matchLength);
         PlaceCursor(matchStart, Math.Min(caretIndex, matchLength));
     }
 
-    private string ComputeDisplayText(string typedText, string? suggestion)
+    private TextBuffer ComputeDisplayText(string typedText, TextBuffer suggestion)
     {
-        if (string.IsNullOrEmpty(suggestion))
+        if (suggestion.IsEmpty)
             return typedText;
 
         // If typed text is contained in suggestion, display the whole suggestion
@@ -162,7 +163,7 @@ public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
     }
 
     private static (int matchStart, int matchLength) FindFirstMatch(
-        string display,
+        TextBuffer display,
         string typedText
     )
     {
@@ -174,23 +175,14 @@ public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
         return (idx, Math.Min(typedText.Length, Math.Max(0, display.Length - idx)));
     }
 
-    private void WriteColored(string display, int matchStart, int matchLength)
+    private void WriteColored(TextBuffer display, int matchStart, int matchLength)
     {
         int safeMatchStart = Math.Clamp(matchStart, 0, display.Length);
         int safeMatchEnd = Math.Clamp(matchStart + matchLength, safeMatchStart, display.Length);
 
-        string left = display[..safeMatchStart];
-        string mid = display[safeMatchStart..safeMatchEnd];
-        string right = display[safeMatchEnd..];
-
-        Terminal.ForegroundColor = _options.SuggestionColor;
-        Terminal.Write(left);
-
-        Terminal.ForegroundColor = _options.TypedColor;
-        Terminal.Write(mid);
-
-        Terminal.ForegroundColor = _options.SuggestionColor;
-        Terminal.Write(right);
+        display.SetColor(_options.SuggestionColor);
+        display.SetColor(safeMatchStart, safeMatchEnd, _options.TypedColor);
+        Terminal.Write(display);
     }
 
     private void PlaceCursor(int matchStart, int caretWithinMatch)
@@ -205,13 +197,15 @@ public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
         Terminal.SetCursorPosition(caretColumn, _anchorTop);
     }
 
-    private static int IndexOfIgnoreCase(string source, string value) =>
-        string.IsNullOrEmpty(value) ? 0 : source.IndexOf(value, StringComparison.OrdinalIgnoreCase);
+    private static int IndexOfIgnoreCase(TextBuffer source, string value) =>
+        string.IsNullOrEmpty(value)
+            ? 0
+            : source.ToString().IndexOf(value, StringComparison.OrdinalIgnoreCase);
 
-    private static string TruncateToWidth(string text, int startColumn)
+    private static TextBuffer TruncateToWidth(TextBuffer text, int startColumn)
     {
         int maxWidth = Math.Max(0, Terminal.BufferWidth - startColumn);
-        return text.Length <= maxWidth ? text : text[..Math.Min(maxWidth, text.Length)];
+        return text.TruncateWidth(maxWidth);
     }
 
     private static TextItem<TValue> GetSuggestionSafe(

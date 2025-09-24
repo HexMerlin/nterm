@@ -1,3 +1,5 @@
+using Nterm.Core.Buffer;
+
 namespace Nterm.Core.Controls;
 
 /// <summary>
@@ -8,7 +10,7 @@ public class TextItem<TValue>
     /// <summary>
     /// The text representation of the item.
     /// </summary>
-    public required string Text { get; init; }
+    public required TextBuffer Text { get; init; }
 
     /// <summary>
     /// The value of the item.
@@ -18,14 +20,14 @@ public class TextItem<TValue>
     /// <summary>
     /// Optional description of the item.
     /// </summary>
-    public string Description { get; init; } = string.Empty;
+    public TextBuffer Description { get; init; } = string.Empty;
 
-    public bool IsEmpty() => string.IsNullOrEmpty(Text);
+    public bool IsEmpty() => Text.IsEmpty;
 }
 
 // Non-generic factory for "empty" items
 public static class TextItem
 {
     public static TextItem<TValue> Empty<TValue>() =>
-        new() { Text = string.Empty, Value = default! };
+        new() { Text = new TextBuffer(), Value = default! };
 }

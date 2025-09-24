@@ -1,4 +1,14 @@
+using Nterm.Core.Buffer;
+
 namespace Nterm.Core.Controls;
+
+public static class FilePicker
+{
+    public static TextItem<FileSystemInfo> Show(
+        string? startDirectory = null,
+        int numberOfVisibleItems = 4
+    ) => new FilePickerControl().Show(startDirectory, numberOfVisibleItems);
+}
 
 /// <summary>
 /// Interactive file/directory picker built on top of the select dropdown view.
@@ -7,8 +17,10 @@ namespace Nterm.Core.Controls;
 /// - The directory header appears at the top; selecting it returns the directory itself
 /// - Selecting a file writes its name to the terminal and returns the file item
 /// </summary>
-public static class FilePicker
+public class FilePickerControl
 {
+    public Color DirectoryColor { get; init; } = Color.Beige;
+
     private const string CurrentDir = ".";
     private const string ParentDir = "..";
 
@@ -18,7 +30,7 @@ public static class FilePicker
     /// <param name="startDirectory">Directory to start from; defaults to Environment.CurrentDirectory.</param>
     /// <param name="numberOfVisibleItems">Maximum number of items to render below the anchor.</param>
     /// <returns>The selected item, whose value is a <see cref="FileSystemInfo"/>.</returns>
-    public static TextItem<FileSystemInfo> Show(
+    public TextItem<FileSystemInfo> Show(
         string? startDirectory = null,
         int numberOfVisibleItems = 4
     )
@@ -57,7 +69,7 @@ public static class FilePicker
 
                 if (selected.Text == CurrentDir)
                 {
-                    RenderFinalSelection(selected.Text, selected.Description);
+                    RenderFinalSelection(dirInfo.Name, selected.Description);
                     return selected;
                 }
 
@@ -89,19 +101,12 @@ public static class FilePicker
         }
     }
 
-    private static bool IsDirectoryHeader(TextItem<FileSystemInfo> selected, DirectoryInfo dir)
-    {
-        // Directory header text equals the directory name (not full path), consistent with BuildDirectoryItems
-        string expected = dir.Name.Length == 0 ? dir.FullName : dir.Name;
-        return string.Equals(selected.Text, expected, StringComparison.Ordinal);
-    }
-
-    private static List<TextItem<FileSystemInfo>> BuildDirectoryItems(
+    private List<TextItem<FileSystemInfo>> BuildDirectoryItems(
         string startRoot,
         string directoryPath
     )
     {
-        List<TextItem<FileSystemInfo>> items = new();
+        List<TextItem<FileSystemInfo>> items = [];
 
         DirectoryInfo dirInfo = new(directoryPath);
 
@@ -122,7 +127,7 @@ public static class FilePicker
                 new TextItem<FileSystemInfo>
                 {
                     Text = ParentDir,
-                    Description = GetRelativeDescriptor(startRoot, dirInfo.Parent.FullName),
+                    Description = GetPathDescriptor(startRoot, dirInfo.Parent.FullName),
                     Value = dirInfo.Parent
                 }
             );
@@ -134,8 +139,8 @@ public static class FilePicker
             items.Add(
                 new TextItem<FileSystemInfo>
                 {
-                    Text = $"{subDir.Name}/",
-                    Description = GetRelativeDescriptor(startRoot, subDir.FullName),
+                    Text = new($"📁 {subDir.Name}/", DirectoryColor),
+                    Description = GetPathDescriptor(startRoot, subDir.FullName),
                     Value = subDir
                 }
             );
@@ -148,7 +153,7 @@ public static class FilePicker
                 new TextItem<FileSystemInfo>
                 {
                     Text = file.Name,
-                    Description = GetRelativeDescriptor(
+                    Description = GetPathDescriptor(
                         startRoot,
                         file.Directory?.FullName ?? dirInfo.FullName
                     ),
@@ -160,15 +165,20 @@ public static class FilePicker
         return items;
     }
 
-    private static string GetRelativeDescriptor(string root, string path)
+    private static string GetPathDescriptor(string root, string path)
     {
         try
         {
             string rel = Path.GetRelativePath(root, path);
-            if (string.IsNullOrEmpty(rel))
-                return CurrentDir;
-            if (rel == CurrentDir)
-                return CurrentDir;
+            if (
+                string.IsNullOrEmpty(rel)
+                || rel == CurrentDir
+                || rel.StartsWith(ParentDir, StringComparison.Ordinal)
+            )
+            {
+                return path;
+            }
+
             return rel;
         }
         catch
@@ -181,13 +191,14 @@ public static class FilePicker
     {
         try
         {
-            return dir.EnumerateDirectories()
-                .OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return
+            [
+                .. dir.EnumerateDirectories().OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
+            ];
         }
         catch
         {
-            return Array.Empty<DirectoryInfo>();
+            return [];
         }
     }
 
@@ -195,33 +206,21 @@ public static class FilePicker
     {
         try
         {
-            return dir.EnumerateFiles()
-                .OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            return [.. dir.EnumerateFiles().OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
         }
         catch
         {
-            return Array.Empty<FileInfo>();
+            return [];
         }
     }
 
-    private static void RenderFinalSelection(string text, string description)
+    private static void RenderFinalSelection(TextBuffer text, TextBuffer description)
     {
         if (text == CurrentDir)
         {
             text = description;
         }
-        string displayText = TruncateText(
-            text,
-            Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft)
-        );
-        Terminal.Write(displayText);
-    }
-
-    private static string TruncateText(string text, int maxWidth)
-    {
-        if (string.IsNullOrEmpty(text) || text.Length <= maxWidth)
-            return text;
-        return text[..Math.Min(maxWidth, text.Length)];
+        text.TruncateWidth(Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft));
+        Terminal.Write(text);
     }
 }

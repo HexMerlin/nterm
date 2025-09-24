@@ -1,12 +1,13 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Nterm.Core.Buffer;
 
 namespace Nterm.Core.Controls;
 
 internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 {
     public Color ForegroundColor { get; init; } = Color.White;
-    public Color MenuColor { get; init; } = Color.Yellow;
+    public Color SelectedColor { get; init; } = Color.Yellow;
     public Color FilterColor { get; init; } = Color.Gray;
     public Color NoItemsColor { get; init; } = Color.Gray;
 
@@ -212,12 +213,12 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     {
         if (numberOfVisibleItems == 1)
         {
-            string singleItemText = items.Count > 0 ? items[selectedIndex].Text : FilterText;
+            TextBuffer singleItemText = items.Count > 0 ? items[selectedIndex].Text : FilterText;
             DisplayAnchorItem(singleItemText, FilterText, AnchorColumn, AnchorRow);
             return 1;
         }
 
-        string anchorText = items.Count > 0 ? items[selectedIndex].Text : FilterText;
+        TextBuffer anchorText = items.Count > 0 ? items[selectedIndex].Text : FilterText;
         // Render selected item at anchor line (underlined to distinguish from list below)
         DisplayAnchorItem(anchorText, FilterText, AnchorColumn, AnchorRow);
 
@@ -323,18 +324,21 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         }
     }
 
-    private void DisplayAnchorItem(string text, string filterText, int startColumn, int startRow)
+    private void DisplayAnchorItem(
+        TextBuffer text,
+        string filterText,
+        int startColumn,
+        int startRow
+    )
     {
         Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
-        string displayText = TruncateText(
-            text ?? string.Empty,
+        TextBuffer displayText = text.TruncateWidth(
             Math.Max(0, Terminal.BufferWidth - startColumn)
         );
 
-        string[] textParts = Regex.Split(
-            displayText,
+        TextBuffer[] textParts = displayText.Split(
             $"({Regex.Escape(filterText)})",
             RegexOptions.IgnoreCase
         );
@@ -342,17 +346,17 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         bool isFilterFound = false;
 
         Terminal.Write(Constants.Underline);
-        foreach (string part in textParts)
+        foreach (TextBuffer part in textParts)
         {
             if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
             {
-                Terminal.ForegroundColor = ForegroundColor;
+                part.SetColor(ForegroundColor);
                 // Only color the first occurrence of the filter text
                 isFilterFound = true;
             }
             else
             {
-                Terminal.ForegroundColor = FilterText.Length > 0 ? FilterColor : MenuColor;
+                part.SetColor(FilterText.Length > 0 ? FilterColor : SelectedColor);
             }
             Terminal.Write(part);
         }
@@ -370,37 +374,33 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
 
     private void DisplayListItem(TextItem<T> item, bool isSelected, int startColumn, int startRow)
     {
-        string prefix = isSelected ? "• " : "  ";
+        TextBuffer text =
+            new(isSelected ? "• " : "  ", isSelected ? SelectedColor : ForegroundColor);
         Terminal.SetCursorPosition(startColumn, startRow);
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
-        int maxWidth = Math.Max(0, Terminal.BufferWidth - startColumn);
-        string mainRaw = (prefix ?? string.Empty) + (item.Text ?? string.Empty);
-        string mainTruncated = TruncateText(mainRaw, maxWidth);
+        TextBuffer itemText = item.Text.Clone();
+        itemText.SetColor(isSelected ? SelectedColor : default);
+        text.Append(itemText);
 
-        Terminal.ForegroundColor = isSelected ? MenuColor : ForegroundColor;
-        Terminal.Write(mainTruncated);
-
-        int remaining = maxWidth - mainTruncated.Length;
-        if (!string.IsNullOrWhiteSpace(item.Description) && remaining > 1)
+        if (!item.Description.IsEmpty)
         {
-            Terminal.ForegroundColor = Color.Gray;
-            Terminal.Write(" ");
-            string descTruncated = TruncateText(item.Description, remaining - 1);
-            Terminal.Write(descTruncated);
+            TextBuffer description = new(" ", Color.Gray);
+            description.Append(item.Description.Clone());
+            description.SetColor(Color.Gray);
+            text.Append(description);
         }
-    }
 
-    private static string TruncateText(string text, int maxWidth) =>
-        string.IsNullOrEmpty(text) || text.Length <= maxWidth
-            ? text
-            : text[..Math.Min(maxWidth, text.Length)];
+        int maxWidth = Math.Max(0, Terminal.BufferWidth - startColumn);
+        text.TruncateWidth(maxWidth);
+        Terminal.Write(text);
+    }
 
     private static IReadOnlyList<TextItem<T>> ApplyFilter(
         IReadOnlyList<TextItem<T>> items,
         string query
     ) => string.IsNullOrWhiteSpace(query) ? items : [.. items.Where(i => IsMatch(i.Text, query))];
 
-    private static bool IsMatch(string? source, string query) =>
-        !string.IsNullOrEmpty(source) && source.Contains(query, StringComparison.OrdinalIgnoreCase);
+    private static bool IsMatch(TextBuffer source, string query) =>
+        !source.IsEmpty && source.ToString().Contains(query, StringComparison.OrdinalIgnoreCase);
 }
