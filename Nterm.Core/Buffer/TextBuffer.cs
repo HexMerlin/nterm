@@ -27,7 +27,7 @@ namespace Nterm.Core.Buffer;
 /// </remarks>
 /// <seealso cref="LineBuffer"/>
 /// <seealso cref="Color"/>
-public class TextBuffer : IEquatable<TextBuffer>
+public sealed class TextBuffer : IEquatable<TextBuffer>
 {
     /// <summary>
     /// Backing store for logical lines contained in this buffer.
@@ -66,12 +66,12 @@ public class TextBuffer : IEquatable<TextBuffer>
     /// <summary>
     /// An empty <see cref="TextBuffer"/>.
     /// </summary>
-    public static TextBuffer Empty => new();
+    public static TextBuffer Empty { get; } = new();
 
     /// <summary>
     /// Indicates whether this <see cref="TextBuffer"/> is empty.
     /// </summary>
-    public bool IsEmpty => lines[0].IsEmpty;
+    public bool IsEmpty => lines[0].IsEmpty && lines.Count == 1;
 
     /// <summary>
     /// Number of lines in the <see cref="TextBuffer"/>.
@@ -238,136 +238,145 @@ public class TextBuffer : IEquatable<TextBuffer>
         foreach (Match m in matches)
         {
             // Preceding non-matching text
-            AddSegment(cursor, m.Index - cursor);
+            AddSegment(cursor, m.Index - cursor, lineCount, lineStarts, lineLengths, results);
 
             // Include captured groups like Regex.Split does when the pattern contains captures
             for (int g = 1; g < m.Groups.Count; g++)
             {
                 Group grp = m.Groups[g];
                 if (grp.Success && grp.Length > 0)
-                    AddSegment(grp.Index, grp.Length);
+                    AddSegment(grp.Index, grp.Length, lineCount, lineStarts, lineLengths, results);
             }
 
             cursor = m.Index + m.Length;
         }
 
         // Trailing remainder
-        AddSegment(cursor, global.Length - cursor);
+        AddSegment(cursor, global.Length - cursor, lineCount, lineStarts, lineLengths, results);
 
         return [.. results];
+    }
 
-        void AddSegment(int globalStart, int length)
+    private static void AppendSliceWithStyles(
+        TextBuffer target,
+        LineBuffer sourceLine,
+        int startLocal,
+        int endLocal,
+        bool firstSlice
+    )
+    {
+        if (!firstSlice)
+            _ = target.AppendLine();
+
+        (List<char> buf, List<(int pos, CharStyle charStyle)> styles) data =
+            sourceLine.GetInternalData();
+        List<char> buf = data.buf;
+        List<(int pos, CharStyle charStyle)> styles = data.styles;
+
+        // Walk style runs and intersect with [startLocal, endLocal)
+        for (int i = -1; i < styles.Count; i++)
         {
-            if (length <= 0)
-                return;
+            int runStart = i >= 0 ? styles[i].pos : 0;
+            int runEnd = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
+            CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
 
-            int globalEnd = globalStart + length;
+            int s = Math.Max(runStart, startLocal);
+            int e = Math.Min(runEnd, endLocal);
+            if (s >= e)
+                continue;
 
-            // Find starting line index
-            int lineIndex = FindLineIndex(globalStart);
-            int localStart = globalStart - lineStarts[lineIndex];
-            if (localStart == lineLengths[lineIndex] && lineIndex < lineCount - 1)
+            _ = target.Append(
+                CollectionsMarshal.AsSpan(buf[s..e]),
+                charStyle.Color,
+                charStyle.BackColor
+            );
+        }
+    }
+
+    private static int FindLineIndex(
+        int globalPos,
+        int lineCount,
+        int[] lineStarts,
+        int[] lineLengths
+    )
+    {
+        // Linear search is acceptable for small line counts; can be optimized to binary search if needed
+        for (int i = 0; i < lineCount; i++)
+        {
+            int start = lineStarts[i];
+            int endExclusive = start + lineLengths[i] + (i < lineCount - 1 ? 1 : 0); // include '\n' slot
+            if (globalPos < endExclusive)
+                return i;
+        }
+        return Math.Max(0, lineCount - 1);
+    }
+
+    private void AddSegment(
+        int globalStart,
+        int length,
+        int lineCount,
+        int[] lineStarts,
+        int[] lineLengths,
+        List<TextBuffer> results
+    )
+    {
+        if (length <= 0)
+            return;
+
+        int globalEnd = globalStart + length;
+
+        // Find starting line index
+        int lineIndex = FindLineIndex(globalStart, lineCount, lineStarts, lineLengths);
+        int localStart = globalStart - lineStarts[lineIndex];
+        if (localStart == lineLengths[lineIndex] && lineIndex < lineCount - 1)
+        {
+            // Start is exactly on a '\n' separator, move to next line
+            lineIndex++;
+            localStart = 0;
+        }
+
+        TextBuffer segment = new();
+        bool firstSlice = true;
+
+        while (lineIndex < lineCount)
+        {
+            int thisLineStartGlobal = lineStarts[lineIndex];
+            int thisLineEndGlobalExclusive = thisLineStartGlobal + lineLengths[lineIndex];
+
+            if (globalStart >= thisLineEndGlobalExclusive && lineIndex < lineCount - 1)
             {
-                // Start is exactly on a '\n' separator, move to next line
+                // Starting beyond this line, skip
                 lineIndex++;
                 localStart = 0;
+                continue;
             }
 
-            TextBuffer segment = new();
-            bool firstSlice = true;
-
-            while (lineIndex < lineCount)
+            int sliceStartLocal = localStart;
+            int sliceEndLocal = Math.Min(lineLengths[lineIndex], globalEnd - thisLineStartGlobal);
+            if (sliceEndLocal <= sliceStartLocal)
             {
-                int thisLineStartGlobal = lineStarts[lineIndex];
-                int thisLineEndGlobalExclusive = thisLineStartGlobal + lineLengths[lineIndex];
-
-                if (globalStart >= thisLineEndGlobalExclusive && lineIndex < lineCount - 1)
-                {
-                    // Starting beyond this line, skip
-                    lineIndex++;
-                    localStart = 0;
-                    continue;
-                }
-
-                int sliceStartLocal = localStart;
-                int sliceEndLocal = Math.Min(
-                    lineLengths[lineIndex],
-                    globalEnd - thisLineStartGlobal
-                );
-                if (sliceEndLocal <= sliceStartLocal)
-                {
-                    // No more coverage on this line
-                    break;
-                }
-
-                AppendSliceWithStyles(
-                    segment,
-                    Lines[lineIndex],
-                    sliceStartLocal,
-                    sliceEndLocal,
-                    firstSlice
-                );
-                firstSlice = false;
-
-                if (globalEnd <= thisLineEndGlobalExclusive)
-                    break; // Completed within this line
-
-                // Continue into next line
-                lineIndex++;
-                localStart = 0;
+                // No more coverage on this line
+                break;
             }
 
-            results.Add(segment);
+            AppendSliceWithStyles(
+                segment,
+                Lines[lineIndex],
+                sliceStartLocal,
+                sliceEndLocal,
+                firstSlice
+            );
+            firstSlice = false;
+
+            if (globalEnd <= thisLineEndGlobalExclusive)
+                break; // Completed within this line
+
+            // Continue into next line
+            lineIndex++;
+            localStart = 0;
         }
 
-        int FindLineIndex(int globalPos)
-        {
-            // Linear search is acceptable for small line counts; can be optimized to binary search if needed
-            for (int i = 0; i < lineCount; i++)
-            {
-                int start = lineStarts[i];
-                int endExclusive = start + lineLengths[i] + (i < lineCount - 1 ? 1 : 0); // include '\n' slot
-                if (globalPos < endExclusive)
-                    return i;
-            }
-            return Math.Max(0, lineCount - 1);
-        }
-
-        static void AppendSliceWithStyles(
-            TextBuffer target,
-            LineBuffer sourceLine,
-            int startLocal,
-            int endLocal,
-            bool firstSlice
-        )
-        {
-            if (!firstSlice)
-                _ = target.AppendLine();
-
-            (List<char> buf, List<(int pos, CharStyle charStyle)> styles) data =
-                sourceLine.GetInternalData();
-            List<char> buf = data.buf;
-            List<(int pos, CharStyle charStyle)> styles = data.styles;
-
-            // Walk style runs and intersect with [startLocal, endLocal)
-            for (int i = -1; i < styles.Count; i++)
-            {
-                int runStart = i >= 0 ? styles[i].pos : 0;
-                int runEnd = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
-                CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
-
-                int s = Math.Max(runStart, startLocal);
-                int e = Math.Min(runEnd, endLocal);
-                if (s >= e)
-                    continue;
-
-                _ = target.Append(
-                    CollectionsMarshal.AsSpan(buf[s..e]),
-                    charStyle.Color,
-                    charStyle.BackColor
-                );
-            }
-        }
+        results.Add(segment);
     }
 
     /// <summary>
@@ -397,24 +406,37 @@ public class TextBuffer : IEquatable<TextBuffer>
 
     public static bool operator !=(TextBuffer? left, TextBuffer? right) => !Equals(left, right);
 
-    public bool Equals(TextBuffer? other) =>
-        other != null && Lines.All(l => other.Lines.Any(l2 => l.Equals(l2, null)));
+    public bool Equals(TextBuffer? other) => Equals(other, null, true);
 
     public bool Equals(TextBuffer? other, StringComparison? comparisonType) =>
-        other != null && Lines.All(l => other.Lines.Any(l2 => l.Equals(l2, comparisonType)));
+        Equals(other, comparisonType, true);
 
     /// <summary>
     /// Indicates whether this <see cref="TextBuffer"/> is equal to the specified string. Does not consider styles.
     /// </summary>
     /// <param name="other">The string to compare with this <see cref="TextBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="TextBuffer"/>.</returns>
-    public bool Equals(string other) =>
-        Equals(new TextBuffer(other), StringComparison.OrdinalIgnoreCase);
+    public bool Equals(string other) => Equals(new TextBuffer(other), null, false);
 
-    public override bool Equals(object? obj) =>
-        obj is TextBuffer other && Equals(other, StringComparison.OrdinalIgnoreCase);
+    public override bool Equals(object? obj) => obj is TextBuffer other && Equals(other);
 
-    public override int GetHashCode() => HashCode.Combine(Lines);
+    private bool Equals(TextBuffer? other, StringComparison? comparisonType, bool compareStyles) =>
+        other != null
+        && Lines.All(l => other.Lines.Any(l2 => l.Equals(l2, comparisonType, compareStyles)));
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            int res = 0x2D2816FE;
+            foreach (LineBuffer line in Lines)
+            {
+                res = res * 31 + line.GetHashCode();
+            }
+
+            return res;
+        }
+    }
 
     private int GetGlobalLength() => Length + Math.Max(0, LineCount - 1);
 
