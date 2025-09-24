@@ -1,8 +1,8 @@
-﻿using Nterm.Core.Buffer;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
+using Nterm.Core.Buffer;
 
 namespace Nterm.Core;
 
@@ -59,8 +59,16 @@ public static class Terminal
     public static int WindowHeight => Console.WindowHeight;
     public static int BufferWidth => Console.BufferWidth;
     public static int BufferHeight => Console.BufferHeight;
-    public static int CursorLeft { get => Console.CursorLeft; set => Console.CursorLeft = value; }
-    public static int CursorTop { get => Console.CursorTop; set => Console.CursorTop = value; }
+    public static int CursorLeft
+    {
+        get => Console.CursorLeft;
+        set => Console.CursorLeft = value;
+    }
+    public static int CursorTop
+    {
+        get => Console.CursorTop;
+        set => Console.CursorTop = value;
+    }
 
     public static bool CursorVisible
     {
@@ -217,7 +225,8 @@ public static class Terminal
     {
         for (int i = 0; i < textBuffer.LineCount; i++)
         {
-            if (i > 0) WriteLine(); // write newline between lines
+            if (i > 0)
+                WriteLine(); // write newline between lines
             Write(textBuffer.Lines[i]);
         }
     }
@@ -236,8 +245,8 @@ public static class Terminal
     /// </summary>
     public static void Write(LineBuffer lineBuffer)
     {
-        lineBuffer.TrimCapacity(); //Since we are writing it out, we are not in a in-memory building hotpath - Do a fast trim of excess capacity.
-        (List<char> buf, List<(int pos, CharStyle charStyle)> styles) = lineBuffer.GetInternalData();
+        (List<char> buf, List<(int pos, CharStyle charStyle)> styles) =
+            lineBuffer.GetInternalData();
         Span<char> span = CollectionsMarshal.AsSpan(buf);
 
         for (int i = -1; i < styles.Count; i++)
