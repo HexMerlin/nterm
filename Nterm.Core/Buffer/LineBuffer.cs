@@ -21,7 +21,7 @@ namespace Nterm.Core.Buffer;
 /// <seealso cref="TextBuffer"/>
 /// <seealso cref="CharStyle"/>
 /// <seealso cref="Color"/>
-public class LineBuffer : IEquatable<LineBuffer>
+public sealed class LineBuffer : IEquatable<LineBuffer>
 {
     private readonly List<char> buf = [];
     private readonly List<(int pos, CharStyle charStyle)> styles = [];
@@ -107,41 +107,22 @@ public class LineBuffer : IEquatable<LineBuffer>
 
         CharStyle destCurrent = CurrentStyle;
 
-        if (srcStyles.Count == 0)
+        if (srcStyles.Count == 0 || srcStyles[0].pos > 0)
         {
-            // Entire source line is default style. Ensure we switch back to default if needed.
+            // If the first style change does not start at 0, the initial run is default style
             if (destCurrent != default)
                 styles.Add((destStart, default));
-            return;
-        }
-
-        // If the first style change does not start at 0, the initial run is default style
-        if (srcStyles[0].pos > 0)
-        {
-            if (destCurrent != default)
-                styles.Add((destStart, default));
-        }
-        else
-        {
-            // First entry begins at 0 with explicit style
-            CharStyle firstStyle = srcStyles[0].charStyle;
-            if (destCurrent != firstStyle)
-                styles.Add((destStart, firstStyle));
         }
 
         // Append subsequent style changes with adjusted positions
         for (int i = 0; i < srcStyles.Count; i++)
         {
-            int newPos = destStart + srcStyles[i].pos;
+            int newPos = Math.Clamp(destStart + srcStyles[i].pos, 0, buf.Count);
             CharStyle newStyle = srcStyles[i].charStyle;
-            if (newPos == destStart && styles.Count > 0 && styles[^1].pos == destStart)
+            if (CurrentStyle != newStyle)
             {
-                // Already emitted a style at destStart; ensure no duplicate with same style
-                if (styles[^1].charStyle != newStyle)
-                    styles[^1] = (destStart, newStyle);
-                continue;
+                styles.Add((newPos, newStyle));
             }
-            styles.Add((newPos, newStyle));
         }
     }
 
@@ -314,12 +295,7 @@ public class LineBuffer : IEquatable<LineBuffer>
         !Equals(left, right, null);
 
     public bool Equals(LineBuffer? other, StringComparison? comparisonType) =>
-        other != null
-        && new string([.. buf]).Equals(
-            new string([.. other.buf]),
-            comparisonType ?? StringComparison.CurrentCulture
-        )
-        && styles.SequenceEqual(other.styles);
+        Equals(other, comparisonType, true);
 
     /// <summary>
     /// Indicates whether this <see cref="LineBuffer"/> is equal to the specified string. Does not consider styles.
@@ -327,12 +303,22 @@ public class LineBuffer : IEquatable<LineBuffer>
     /// <param name="other">The string to compare with this <see cref="LineBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="LineBuffer"/>.</returns>
     public bool Equals(string other, StringComparison? comparisonType) =>
-        Equals(new LineBuffer(other), comparisonType);
+        Equals(new LineBuffer(other), comparisonType, false);
 
     public override bool Equals(object? obj) =>
         obj is LineBuffer other && Equals(other) || obj is string otherStr && Equals(otherStr);
 
-    public override int GetHashCode() => HashCode.Combine(buf, styles);
+    internal bool Equals(LineBuffer? other, StringComparison? comparisonType, bool compareStyles) =>
+        other != null
+        && CollectionsMarshal
+            .AsSpan([.. buf])
+            .Equals(
+                CollectionsMarshal.AsSpan([.. other.buf]),
+                comparisonType ?? StringComparison.Ordinal
+            )
+        && (!compareStyles || styles.SequenceEqual(other.styles));
+
+    public override int GetHashCode() => HashCode.Combine(buf.GetHashCode(), styles.GetHashCode());
 
     internal void SetColor(Color foreground = default, Color background = default)
     {
