@@ -6,8 +6,8 @@ public record struct ValueInterval<T>(int Start, int End, T Value);
 
 /// <summary>
 /// A position-keyed, generic list optimized for interval lookups (start and end for associated value),
-/// append-most workloads, and ordered iteration by position. Positions are integers
-/// in [0, MaxPosition) (exclusive upper bound) and entries are unique by position.
+/// append-most workloads, and ordered iteration by position. Valid positions are in
+/// [MinPosition, MaxPosition) (exclusive upper bound) and entries are unique by position.
 /// </summary>
 /// <typeparam name="T">Stored type. Must have a default constructor.</typeparam>
 public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
@@ -200,8 +200,8 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void InsertAndReplace(int start, int end, T value)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(start);
-        ArgumentOutOfRangeException.ThrowIfNegative(end);
+        ArgumentOutOfRangeException.ThrowIfLessThan(start, MinPosition);
+        ArgumentOutOfRangeException.ThrowIfLessThan(end, MinPosition);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(start, end, nameof(start));
         ArgumentOutOfRangeException.ThrowIfGreaterThan(end, MaxPosition, nameof(end));
         if (start == end)
@@ -275,7 +275,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
             return true;
         if (other is null)
             return false;
-        if (MaxPosition != other.MaxPosition)
+        if (MinPosition != other.MinPosition || MaxPosition != other.MaxPosition)
             return false;
         if (positions.Count != other.positions.Count)
             return false;
@@ -296,6 +296,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     public override int GetHashCode()
     {
         HashCode hc = new();
+        hc.Add(MinPosition);
         hc.Add(MaxPosition);
         for (int i = 0; i < positions.Count; i++)
         {
