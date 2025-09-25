@@ -6,8 +6,8 @@ public record struct ValueInterval<T>(int Start, int End, T Value);
 
 /// <summary>
 /// A position-keyed, generic list optimized for interval lookups (start and end for associated value),
-/// append-most workloads, and ordered iteration by position. Positions are integers in [0, MaxPosition],
-/// and entries are unique by position.
+/// append-most workloads, and ordered iteration by position. Positions are integers
+/// in [0, MaxPosition) (exclusive upper bound) and entries are unique by position.
 /// </summary>
 /// <typeparam name="T">Stored type. Must have a default constructor.</typeparam>
 public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
@@ -65,7 +65,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void AddOrReplace(int position, T value)
     {
-        if ((uint)position > (uint)MaxPosition)
+        if ((uint)position >= (uint)MaxPosition)
             throw new ArgumentOutOfRangeException(nameof(position));
 
         int idx = positions.BinarySearch(position);
@@ -87,7 +87,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void AddOrReplace(int position, T value, Func<T, T, T> merge)
     {
-        if ((uint)position > (uint)MaxPosition)
+        if ((uint)position >= (uint)MaxPosition)
             throw new ArgumentOutOfRangeException(nameof(position));
 
         int predIndex = FindIndexOfPredecessor(position);
@@ -105,7 +105,13 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
             return new ValueInterval<T>(0, MaxPosition, new T());
 
         int idx = FindIndexOfPredecessor(position);
-        int start = idx >= 0 ? positions[idx] : 0;
+        if (idx < 0)
+        {
+            int firstEnd = positions.Count > 0 ? positions[0] : MaxPosition;
+            return new ValueInterval<T>(0, firstEnd, new T());
+        }
+
+        int start = positions[idx];
         int end = idx + 1 < positions.Count ? positions[idx + 1] : MaxPosition;
         return new ValueInterval<T>(start, end, values[idx]);
     }
