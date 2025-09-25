@@ -17,12 +17,18 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     private readonly List<T> values = [];
 
     /// <summary>
-    /// Creates a positioned list with a maximum valid position (exclusive upper bound).
+    /// Creates a positioned list with range [0, maxPosition).
     /// </summary>
-    /// <param name="maxPosition">Exclusive upper bound for positions. Must be >= 0.</param>
     public ValueIntervalList(int maxPosition)
+        : this(0, maxPosition) { }
+
+    /// <summary>
+    /// Creates a positioned list with range [minPosition, maxPosition).
+    /// </summary>
+    public ValueIntervalList(int minPosition, int maxPosition)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(maxPosition);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(minPosition, maxPosition);
+        MinPosition = minPosition;
         MaxPosition = maxPosition;
     }
 
@@ -32,7 +38,12 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     public int Count => positions.Count;
 
     /// <summary>
-    /// Exclusive upper bound for valid positions. Valid positions are 0..MaxPosition-1.
+    /// Inclusive lower bound for valid positions.
+    /// </summary>
+    public int MinPosition { get; private set; }
+
+    /// <summary>
+    /// Exclusive upper bound for valid positions. Valid positions are MinPosition..MaxPosition-1.
     /// </summary>
     public int MaxPosition { get; private set; }
 
@@ -44,7 +55,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     {
         get
         {
-            if ((uint)position >= (uint)MaxPosition)
+            if ((uint)(position - MinPosition) >= (uint)(MaxPosition - MinPosition))
                 throw new ArgumentOutOfRangeException(nameof(position));
             int idx = FindIndexOfPredecessor(position);
             return idx >= 0 ? values[idx] : new T();
@@ -57,7 +68,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     public ValueInterval<T> Last =>
         positions.Count > 0
             ? new ValueInterval<T>(positions[^1], MaxPosition, values[^1])
-            : new ValueInterval<T>(0, MaxPosition, new T());
+            : new ValueInterval<T>(MinPosition, MaxPosition, new T());
 
     /// <summary>
     /// Adds or replaces the value at the specified position. If an entry at the exact position exists,
@@ -65,7 +76,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void AddOrReplace(int position, T value)
     {
-        if ((uint)position >= (uint)MaxPosition)
+        if ((uint)(position - MinPosition) >= (uint)(MaxPosition - MinPosition))
             throw new ArgumentOutOfRangeException(nameof(position));
 
         int idx = positions.BinarySearch(position);
@@ -87,7 +98,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void AddOrReplace(int position, T value, Func<T, T, T> merge)
     {
-        if ((uint)position >= (uint)MaxPosition)
+        if ((uint)(position - MinPosition) >= (uint)(MaxPosition - MinPosition))
             throw new ArgumentOutOfRangeException(nameof(position));
 
         int predIndex = FindIndexOfPredecessor(position);
@@ -102,13 +113,13 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     public ValueInterval<T> GetAtOrBefore(int position)
     {
         if (positions.Count == 0)
-            return new ValueInterval<T>(0, MaxPosition, new T());
+            return new ValueInterval<T>(MinPosition, MaxPosition, new T());
 
         int idx = FindIndexOfPredecessor(position);
         if (idx < 0)
         {
             int firstEnd = positions.Count > 0 ? positions[0] : MaxPosition;
-            return new ValueInterval<T>(0, firstEnd, new T());
+            return new ValueInterval<T>(MinPosition, firstEnd, new T());
         }
 
         int start = positions[idx];
@@ -146,7 +157,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void Resize(int newMaxPosition)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(newMaxPosition);
+        ArgumentOutOfRangeException.ThrowIfLessThan(newMaxPosition, MinPosition);
         if (newMaxPosition == MaxPosition)
             return;
 
@@ -168,18 +179,18 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
 
     /// <summary>
     /// Appends another positioned list at the end of this list, offsetting all positions of
-    /// <paramref name="other"/> by this list's current MaxPosition. The resulting MaxPosition
-    /// becomes the sum of both lists' MaxPosition values.
+    /// <paramref name="other"/> by (this.MaxPosition - other.MinPosition). The resulting MaxPosition
+    /// increases by the length of the other list (other.MaxPosition - other.MinPosition).
     /// </summary>
     public void Append(ValueIntervalList<T> other)
     {
         ArgumentNullException.ThrowIfNull(other);
-        int offset = MaxPosition;
+        int offset = MaxPosition - other.MinPosition;
         foreach ((int start, _, T val) in other)
         {
             AddOrReplace(offset + start, val);
         }
-        MaxPosition = checked(MaxPosition + other.MaxPosition);
+        MaxPosition = checked(MaxPosition + (other.MaxPosition - other.MinPosition));
     }
 
     /// <summary>
@@ -231,15 +242,15 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     }
 
     /// <summary>
-    /// Iterates over contiguous ranges [start, end) covering [0, MaxPosition), where each range
+    /// Iterates over contiguous ranges [start, end) covering [MinPosition, MaxPosition), where each range
     /// carries the value active at its start.
     /// </summary>
     public IEnumerable<ValueInterval<T>> GetRanges()
     {
-        if (MaxPosition == 0)
+        if (MaxPosition == MinPosition)
             yield break;
 
-        int start = 0;
+        int start = MinPosition;
         T current = new();
         for (int i = 0; i < positions.Count; i++)
         {
