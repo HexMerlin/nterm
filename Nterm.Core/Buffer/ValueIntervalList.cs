@@ -2,13 +2,16 @@ using System.Collections;
 
 namespace Nterm.Core.Buffer;
 
+public record struct ValueInterval<T>(int Start, int End, T Value);
+
 /// <summary>
-/// A position-keyed, generic list optimized for predecessor lookups (nearest previous position),
+/// A position-keyed, generic list optimized for interval lookups (start and end for associated value),
 /// append-most workloads, and ordered iteration by position. Positions are integers in [0, MaxPosition],
 /// and entries are unique by position.
 /// </summary>
-/// <typeparam name="T">Stored value type.</typeparam>
-public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
+/// <typeparam name="T">Stored type. Must have a default constructor.</typeparam>
+public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
+    where T : new()
 {
     private readonly List<int> positions = [];
     private readonly List<T> values = [];
@@ -17,7 +20,7 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
     /// Creates a positioned list with a maximum valid position (exclusive upper bound).
     /// </summary>
     /// <param name="maxPosition">Exclusive upper bound for positions. Must be >= 0.</param>
-    public PositionedList(int maxPosition)
+    public ValueIntervalList(int maxPosition)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(maxPosition);
         MaxPosition = maxPosition;
@@ -35,7 +38,7 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
 
     /// <summary>
     /// Returns the value active at the specified position. If there is no entry at or before
-    /// the position, returns default(T).
+    /// the position, returns new T.
     /// </summary>
     public T this[int position]
     {
@@ -44,15 +47,17 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
             if ((uint)position >= (uint)MaxPosition)
                 throw new ArgumentOutOfRangeException(nameof(position));
             int idx = FindIndexOfPredecessor(position);
-            return idx >= 0 ? values[idx] : default!;
+            return idx >= 0 ? values[idx] : new T();
         }
     }
 
     /// <summary>
     /// Gets the last (highest-position) item if any.
     /// </summary>
-    public (int position, T value)? Last =>
-        positions.Count > 0 ? (positions[^1], values[^1]) : null;
+    public ValueInterval<T> Last =>
+        positions.Count > 0
+            ? new ValueInterval<T>(positions[^1], MaxPosition, values[^1])
+            : new ValueInterval<T>(0, MaxPosition, new T());
 
     /// <summary>
     /// Adds or replaces the value at the specified position. If an entry at the exact position exists,
@@ -77,7 +82,7 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
 
     /// <summary>
     /// Adds or replaces using a merge strategy with the value active at or before <paramref name="position"/>.
-    /// If no predecessor exists, the left operand for <paramref name="merge"/> will be default(T).
+    /// If no predecessor exists, the left operand for <paramref name="merge"/> will be new T.
     /// The merged value is then inserted/replaced at <paramref name="position"/>.
     /// </summary>
     public void AddOrReplace(int position, T value, Func<T, T, T> merge)
@@ -86,46 +91,31 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
             throw new ArgumentOutOfRangeException(nameof(position));
 
         int predIndex = FindIndexOfPredecessor(position);
-        T? baseValue = predIndex >= 0 ? values[predIndex] : default!;
+        T? baseValue = predIndex >= 0 ? values[predIndex] : new T();
         T? merged = merge(baseValue, value);
         AddOrReplace(position, merged);
     }
 
     /// <summary>
-    /// Attempts to get the exact stored value at the specified position.
+    /// Gets the value active at or before the specified position. Returns a new T if no predecessor exists.
     /// </summary>
-    public bool TryGetExact(int position, out T value)
+    public ValueInterval<T> GetAtOrBefore(int position)
     {
-        int idx = positions.BinarySearch(position);
-        if (idx >= 0)
-        {
-            value = values[idx];
-            return true;
-        }
-        value = default!;
-        return false;
-    }
+        if (positions.Count == 0)
+            return new ValueInterval<T>(0, MaxPosition, new T());
 
-    /// <summary>
-    /// Attempts to get the value active at or before the specified position.
-    /// </summary>
-    public bool TryGetAtOrBefore(int position, out T value)
-    {
         int idx = FindIndexOfPredecessor(position);
-        if (idx >= 0)
-        {
-            value = values[idx];
-            return true;
-        }
-        value = default!;
-        return false;
+        int start = idx >= 0 ? positions[idx] : 0;
+        int end = idx + 1 < positions.Count ? positions[idx + 1] : MaxPosition;
+        return new ValueInterval<T>(start, end, values[idx]);
     }
 
-    public IEnumerator<(int position, T value)> GetEnumerator()
+    public IEnumerator<ValueInterval<T>> GetEnumerator()
     {
         for (int i = 0; i < positions.Count; i++)
         {
-            yield return (positions[i], values[i]);
+            int end = i + 1 < positions.Count ? positions[i + 1] : MaxPosition;
+            yield return new ValueInterval<T>(positions[i], end, values[i]);
         }
     }
 
@@ -150,8 +140,7 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
     /// </summary>
     public void Resize(int newMaxPosition)
     {
-        if (newMaxPosition < 0)
-            throw new ArgumentOutOfRangeException(nameof(newMaxPosition));
+        ArgumentOutOfRangeException.ThrowIfNegative(newMaxPosition);
         if (newMaxPosition == MaxPosition)
             return;
 
@@ -176,14 +165,13 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
     /// <paramref name="other"/> by this list's current MaxPosition. The resulting MaxPosition
     /// becomes the sum of both lists' MaxPosition values.
     /// </summary>
-    public void Append(PositionedList<T> other)
+    public void Append(ValueIntervalList<T> other)
     {
-        if (other is null)
-            throw new ArgumentNullException(nameof(other));
+        ArgumentNullException.ThrowIfNull(other);
         int offset = MaxPosition;
-        foreach ((int pos, T val) in other)
+        foreach ((int start, _, T val) in other)
         {
-            AddOrReplace(offset + pos, val);
+            AddOrReplace(offset + start, val);
         }
         MaxPosition = checked(MaxPosition + other.MaxPosition);
     }
@@ -192,19 +180,19 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
     /// Iterates over contiguous ranges [start, end) covering [0, MaxPosition), where each range
     /// carries the value active at its start.
     /// </summary>
-    public IEnumerable<(int start, int end, T value)> GetRanges()
+    public IEnumerable<ValueInterval<T>> GetRanges()
     {
         if (MaxPosition == 0)
             yield break;
 
         int start = 0;
-        T? current = default(T)!;
+        T current = new();
         for (int i = 0; i < positions.Count; i++)
         {
             int end = positions[i];
             if (end > start)
             {
-                yield return (start, end, current);
+                yield return new ValueInterval<T>(start, end, current);
             }
             current = values[i];
             start = end;
@@ -212,11 +200,11 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
 
         if (start < MaxPosition)
         {
-            yield return (start, MaxPosition, current);
+            yield return new ValueInterval<T>(start, MaxPosition, current);
         }
     }
 
-    public bool Equals(PositionedList<T>? other)
+    public bool Equals(ValueIntervalList<T>? other)
     {
         if (ReferenceEquals(this, other))
             return true;
@@ -238,11 +226,11 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
         return true;
     }
 
-    public override bool Equals(object? obj) => obj is PositionedList<T> pl && Equals(pl);
+    public override bool Equals(object? obj) => obj is ValueIntervalList<T> pl && Equals(pl);
 
     public override int GetHashCode()
     {
-        HashCode hc = new HashCode();
+        HashCode hc = new();
         hc.Add(MaxPosition);
         for (int i = 0; i < positions.Count; i++)
         {
@@ -252,9 +240,9 @@ public sealed class PositionedList<T> : IEnumerable<(int position, T value)>
         return hc.ToHashCode();
     }
 
-    public static bool operator ==(PositionedList<T>? left, PositionedList<T>? right) =>
+    public static bool operator ==(ValueIntervalList<T>? left, ValueIntervalList<T>? right) =>
         ReferenceEquals(left, right) || (left is not null && left.Equals(right));
 
-    public static bool operator !=(PositionedList<T>? left, PositionedList<T>? right) =>
+    public static bool operator !=(ValueIntervalList<T>? left, ValueIntervalList<T>? right) =>
         !(left == right);
 }
