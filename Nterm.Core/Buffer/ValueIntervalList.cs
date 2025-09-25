@@ -177,6 +177,54 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     }
 
     /// <summary>
+    /// Replaces the interval [start, end) with the specified value. Removes any change points
+    /// inside the range, inserts a change at <paramref name="start"/> if needed, and restores
+    /// the prior value at <paramref name="end"/> if it differs from <paramref name="value"/>.
+    /// </summary>
+    public void InsertAndReplace(int start, int end, T value)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(start);
+        ArgumentOutOfRangeException.ThrowIfNegative(end);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(start, end, nameof(start));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(end, MaxPosition, nameof(end));
+        if (start == end)
+            return; // no-op
+
+        EqualityComparer<T> cmp = EqualityComparer<T>.Default;
+
+        // Capture values before mutation
+        T beforeValue = this[start];
+        bool hasAfter = end < MaxPosition;
+        T afterValue = hasAfter ? this[end] : new T();
+
+        // Remove all change points in [start, end)
+        int left = positions.BinarySearch(start);
+        if (left < 0)
+            left = ~left;
+        int right = positions.BinarySearch(end);
+        if (right < 0)
+            right = ~right; // first index with position >= end
+        int removeCount = right - left;
+        if (removeCount > 0)
+        {
+            positions.RemoveRange(left, removeCount);
+            values.RemoveRange(left, removeCount);
+        }
+
+        // Ensure start has the new value if it differs from the active value at start
+        if (!cmp.Equals(beforeValue, value))
+        {
+            AddOrReplace(start, value);
+        }
+
+        // Restore the value at end if needed
+        if (hasAfter && !cmp.Equals(afterValue, value))
+        {
+            AddOrReplace(end, afterValue);
+        }
+    }
+
+    /// <summary>
     /// Iterates over contiguous ranges [start, end) covering [0, MaxPosition), where each range
     /// carries the value active at its start.
     /// </summary>
