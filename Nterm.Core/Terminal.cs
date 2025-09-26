@@ -250,15 +250,14 @@ public static class Terminal
     /// </summary>
     public static void Write(LineBuffer lineBuffer)
     {
-        (List<char> buf, List<(int pos, CharStyle charStyle)> styles) =
-            lineBuffer.GetInternalData();
+        (List<char> buf, ValueIntervalList<CharStyle> styles) = lineBuffer.GetInternalData();
         Span<char> span = CollectionsMarshal.AsSpan(buf);
 
-        for (int i = -1; i < styles.Count; i++)
+        foreach (ValueInterval<CharStyle> interval in styles.GetRanges())
         {
-            int start = i >= 0 ? styles[i].pos : 0;
-            int end = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
-            CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
+            int start = interval.Start;
+            int end = interval.End;
+            CharStyle charStyle = interval.Value;
             Write(span[start..end], charStyle.Color, charStyle.BackColor);
         }
     }

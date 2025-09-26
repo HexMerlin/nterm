@@ -263,17 +263,14 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
         if (!firstSlice)
             _ = target.AppendLine();
 
-        (List<char> buf, List<(int pos, CharStyle charStyle)> styles) data =
-            sourceLine.GetInternalData();
-        List<char> buf = data.buf;
-        List<(int pos, CharStyle charStyle)> styles = data.styles;
+        (List<char> buf, ValueIntervalList<CharStyle> styles) = sourceLine.GetInternalData();
 
-        // Walk style runs and intersect with [startLocal, endLocal)
-        for (int i = -1; i < styles.Count; i++)
+        // Walk style intervals and intersect with [startLocal, endLocal)
+        foreach (ValueInterval<CharStyle> interval in styles.GetRanges())
         {
-            int runStart = i >= 0 ? styles[i].pos : 0;
-            int runEnd = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
-            CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
+            int runStart = interval.Start;
+            int runEnd = interval.End;
+            CharStyle charStyle = interval.Value;
 
             int s = Math.Max(runStart, startLocal);
             int e = Math.Min(runEnd, endLocal);
@@ -424,19 +421,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
 
         for (int i = 0; i < Lines.Count; i++)
         {
-            (List<char> otherStr, List<(int, CharStyle)> otherStyles) = other
-                .Lines[i]
-                .GetInternalData();
-
-            if (
-                !Lines[i]
-                    .Equals(
-                        CollectionsMarshal.AsSpan(otherStr),
-                        otherStyles,
-                        comparisonType,
-                        compareStyles
-                    )
-            )
+            if (!Lines[i].Equals(other.Lines[i], comparisonType, compareStyles))
             {
                 return false;
             }
@@ -501,7 +486,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
 
             int localStart = segStart - ls;
             int localEnd = segEnd - ls;
-            lines[i].SetColor(localStart, localEnd, foreground, background);
+            lines[i].SetStyle(localStart, localEnd, new CharStyle(foreground, background));
         }
     }
 }

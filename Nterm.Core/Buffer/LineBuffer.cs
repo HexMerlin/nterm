@@ -22,7 +22,7 @@ namespace Nterm.Core.Buffer;
 public sealed class LineBuffer : IEquatable<LineBuffer>
 {
     private readonly List<char> buf = [];
-    private readonly List<(int pos, CharStyle charStyle)> styles = [];
+    private readonly ValueIntervalList<CharStyle> styleIntervals = new(0);
 
     /// <summary>
     /// Initializes a new, empty <see cref="LineBuffer"/>.
@@ -48,7 +48,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     private LineBuffer(LineBuffer other)
     {
         buf = [.. other.buf];
-        styles = [.. other.styles];
+        styleIntervals = other.styleIntervals.Clone();
     }
 
     /// <summary>
@@ -60,11 +60,6 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     /// True if this <see cref="LineBuffer"/> is empty.
     /// </summary>
     internal bool IsEmpty => buf.Count == 0;
-
-    /// <summary>
-    /// Gets the current active style derived from the last entry in the style list.
-    /// </summary>
-    private CharStyle CurrentStyle => styles.Count > 0 ? styles[^1].charStyle : default;
 
     /// <summary>
     /// Appends a single character to the buffer with the specified colors.
@@ -85,7 +80,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
                 $"Newline characters are not allowed in {nameof(LineBuffer)}. Use {nameof(TextBuffer)} for multi-line text.",
                 nameof(ch)
             );
-        AddCharStyle(foreground, background);
+        styleIntervals.AddOrReplace(buf.Count, new CharStyle(foreground, background));
         buf.Add(ch);
     }
 
@@ -94,38 +89,14 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
         if (line is null)
             return;
         // Clone the source buffer and styles to avoid mutations in the original object during the operation
-        List<char> srcBuf = [..line.buf];
-        List<(int pos, CharStyle charStyle)> srcStyles = [.. line.styles];
+        List<char> srcBuf = [.. line.buf];
 
         if (srcBuf.Count == 0)
             return;
 
-        int destStart = buf.Count;
-
-        // Append characters
         buf.AddRange(srcBuf);
-
-        CharStyle destCurrent = CurrentStyle;
-
-        if (srcStyles.Count == 0 || srcStyles[0].pos > 0)
-        {
-            // If the first style change does not start at 0, the initial run is default style
-            if (destCurrent != default)
-                styles.Add((destStart, default));
-        }
-
-        // Append subsequent style changes with adjusted positions
-        for (int i = 0; i < srcStyles.Count; i++)
-        {
-            int newPos = destStart + srcStyles[i].pos;
-            CharStyle newStyle = srcStyles[i].charStyle;
-            // If the current style is at the same position as the new style, update it
-            if (styles.Count > 0 && styles[^1].pos == newPos)
-                styles[^1] = (newPos, newStyle);
-            // If the current style is different from the new style, add it
-            else if (styles.Count == 0 || styles[^1].charStyle != newStyle)
-                styles.Add((newPos, newStyle));
-        }
+        styleIntervals.Append(line.styleIntervals);
+        styleIntervals.Resize(buf.Count);
     }
 
     /// <summary>
@@ -144,8 +115,9 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
         Color background = default
     )
     {
-        AddCharStyle(foreground, background);
+        styleIntervals.AddOrReplace(buf.Count, new CharStyle(foreground, background));
         buf.AddRange(str);
+        styleIntervals.Resize(buf.Count);
     }
 
     /// <summary>
@@ -163,13 +135,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
 
         // Remove extra characters beyond the limit
         buf.RemoveRange(maxCharacters, buf.Count - maxCharacters);
-
-        // Drop any style changes that start at or beyond the new length
-        for (int i = styles.Count - 1; i >= 0; i--)
-        {
-            if (styles[i].pos >= maxCharacters)
-                styles.RemoveAt(i);
-        }
+        styleIntervals.Resize(maxCharacters);
 
         return this;
     }
@@ -225,18 +191,16 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
             int end = start + length;
             LineBuffer segment = new();
 
-            // Walk style runs and intersect with [start, end)
-            for (int i = -1; i < styles.Count; i++)
+            // Walk style runs via ValueIntervalList and intersect with [start, end)
+            foreach (ValueInterval<CharStyle> interval in styleIntervals.GetRanges())
             {
-                int runStart = i >= 0 ? styles[i].pos : 0;
-                int runEnd = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
-                CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
-
+                int runStart = interval.Start;
+                int runEnd = interval.End;
+                CharStyle charStyle = interval.Value;
                 int s = Math.Max(runStart, start);
                 int e = Math.Min(runEnd, end);
                 if (s >= e)
                     continue;
-
                 segment.Append(
                     CollectionsMarshal.AsSpan(buf[s..e]),
                     charStyle.Color,
@@ -256,26 +220,11 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     internal void TrimCapacity()
     {
         buf.Capacity = buf.Count;
-        styles.Capacity = styles.Count;
+        // styleIntervals manages its own storage
     }
 
-    /// <summary>
-    /// Records a style change at the current buffer position if it differs from the active style.
-    /// </summary>
-    /// <param name="foreground">The desired foreground color.</param>
-    /// <param name="background">The desired background color.</param>
-    /// <remarks>
-    /// If the requested style equals the <see cref="CurrentStyle"/>, no entry is added, avoiding redundant segments.
-    /// </remarks>
-    private void AddCharStyle(Color foreground, Color background)
-    {
-        CharStyle charStyle = new(foreground, background);
-        if (charStyle != CurrentStyle)
-            styles.Add((buf.Count, charStyle));
-    }
-
-    internal (List<char> buf, List<(int pos, CharStyle charStyle)> styles) GetInternalData() =>
-        (buf, styles);
+    internal (List<char> buf, ValueIntervalList<CharStyle> styles) GetInternalData() =>
+        (buf, styleIntervals);
 
     /// <summary>
     /// Returns the plain text contained in the buffer without styling.
@@ -283,6 +232,15 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     public override string ToString() => new(CollectionsMarshal.AsSpan(buf));
 
     public bool Equals(LineBuffer? other) => Equals(other, null);
+
+    public bool Equals(LineBuffer? other, StringComparison? comparisonType, bool compareStyles) =>
+        other is not null
+        && Equals(
+            CollectionsMarshal.AsSpan(other.buf),
+            other.styleIntervals,
+            comparisonType,
+            compareStyles
+        );
 
     public static bool Equals(
         LineBuffer? left,
@@ -299,7 +257,12 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     public bool Equals(LineBuffer? other, StringComparison? comparisonType) =>
         ReferenceEquals(this, other)
         || other != null
-            && Equals(CollectionsMarshal.AsSpan(other.buf), other.styles, comparisonType, true);
+            && Equals(
+                CollectionsMarshal.AsSpan(other.buf),
+                other.styleIntervals,
+                comparisonType,
+                true
+            );
 
     /// <summary>
     /// Indicates whether this <see cref="LineBuffer"/> is equal to the specified string. Does not consider styles.
@@ -307,105 +270,36 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     /// <param name="other">The string to compare with this <see cref="LineBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="LineBuffer"/>.</returns>
     public bool TextEquals(ReadOnlySpan<char> other, StringComparison? comparisonType = null) =>
-        Equals(other, [], comparisonType, false);
+        Equals(other, new ValueIntervalList<CharStyle>(0), comparisonType, false);
 
     public override bool Equals(object? obj) => obj is LineBuffer other && Equals(other);
 
     internal bool Equals(
         ReadOnlySpan<char> otherStr,
-        List<(int pos, CharStyle charStyle)> otherStyles,
+        ValueIntervalList<CharStyle> otherStyles,
         StringComparison? comparisonType,
         bool compareStyles
     ) =>
         CollectionsMarshal.AsSpan(buf).Equals(otherStr, comparisonType ?? StringComparison.Ordinal)
-        && (!compareStyles || styles.SequenceEqual(otherStyles));
+        && (!compareStyles || styleIntervals.Equals(otherStyles));
 
     public override int GetHashCode()
     {
         HashCode hc = new();
         foreach (char ch in buf)
             hc.Add(ch);
-        foreach ((int pos, CharStyle charStyle) in styles)
-        {
-            hc.Add(pos);
-            hc.Add(charStyle);
-        }
+
+        hc.Add(styleIntervals);
         return hc.ToHashCode();
     }
 
-    internal void SetColor(Color foreground = default, Color background = default)
+    internal void SetStyle(CharStyle style)
     {
-        SetColor(0, Length, foreground, background);
+        SetStyle(0, Length, style);
     }
 
-    internal void SetColor(int start, int end, Color foreground, Color background)
+    internal void SetStyle(int start, int end, CharStyle style)
     {
-        // Normalize range
-        start = Math.Clamp(start, 0, Length);
-        end = Math.Clamp(end, 0, Length);
-        if (end <= start)
-            return;
-        if (foreground == default && background == default)
-            return; // nothing to change
-
-        // Build breakpoints: 0, existing style positions, start, end
-        SortedSet<int> breakpoints = [0, start, end];
-        foreach ((int pos, _) in styles)
-            _ = breakpoints.Add(pos);
-
-        // Rebuild styles across segments
-        List<(int pos, CharStyle charStyle)> newStyles = [];
-        CharStyle lastStyle = default;
-        bool hasLast = false;
-
-        // Helper: current index into existing styles while walking segments
-        int styleIndex = -1;
-
-        int previousBreakpoint = -1;
-        foreach (int bp in breakpoints)
-        {
-            if (previousBreakpoint == -1)
-            {
-                previousBreakpoint = bp;
-                continue;
-            }
-
-            int segmentStart = previousBreakpoint;
-            int segmentEnd = bp;
-            if (segmentStart >= segmentEnd)
-            {
-                previousBreakpoint = bp;
-                continue;
-            }
-
-            // Determine base style at segmentStart
-            while (styleIndex + 1 < styles.Count && styles[styleIndex + 1].pos <= segmentStart)
-                styleIndex++;
-            CharStyle baseStyle = styleIndex >= 0 ? styles[styleIndex].charStyle : default;
-
-            // Overlay within [start,end)
-            bool inRange = segmentStart < end && segmentEnd > start;
-            CharStyle newStyle = baseStyle;
-            if (inRange)
-            {
-                Color fg = foreground != default ? foreground : baseStyle.Color;
-                Color bg = background != default ? background : baseStyle.BackColor;
-                newStyle = new CharStyle(fg, bg);
-            }
-
-            // Emit change if different from lastStyle
-            if (!hasLast || newStyle != lastStyle)
-            {
-                if (!(newStyle == default && newStyles.Count == 0))
-                    newStyles.Add((segmentStart, newStyle));
-                lastStyle = newStyle;
-                hasLast = true;
-            }
-
-            previousBreakpoint = bp;
-        }
-
-        styles.Clear();
-        styles.AddRange(newStyles);
+        styleIntervals.InsertAndReplace(start, end, style);
     }
 }

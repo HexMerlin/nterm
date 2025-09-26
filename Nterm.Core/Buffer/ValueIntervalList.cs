@@ -76,19 +76,8 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void AddOrReplace(int position, T value)
     {
-        if ((uint)(position - MinPosition) >= (uint)(MaxPosition - MinPosition))
-            throw new ArgumentOutOfRangeException(nameof(position));
-
-        int idx = positions.BinarySearch(position);
-        if (idx >= 0)
-        {
-            values[idx] = value;
-            return;
-        }
-
-        int insertIndex = ~idx; // index of first element larger than position
-        positions.Insert(insertIndex, position);
-        values.Insert(insertIndex, value);
+        // Delegate to merge overload to centralize coalescing logic
+        AddOrReplace(position, value, static (baseValue, newValue) => newValue);
     }
 
     /// <summary>
@@ -98,13 +87,30 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void AddOrReplace(int position, T value, Func<T, T, T> merge)
     {
+        if (position == MaxPosition)
+            Resize(MaxPosition + 1);
+
         if ((uint)(position - MinPosition) >= (uint)(MaxPosition - MinPosition))
             throw new ArgumentOutOfRangeException(nameof(position));
 
-        int predIndex = FindIndexOfPredecessor(position);
-        T? baseValue = predIndex >= 0 ? values[predIndex] : new T();
-        T? merged = merge(baseValue, value);
-        AddOrReplace(position, merged);
+        int idxExact = positions.BinarySearch(position);
+        int predIndex = idxExact >= 0 ? idxExact : FindIndexOfPredecessor(position);
+        T baseValue = predIndex >= 0 ? values[predIndex] : new T();
+        T merged = merge(baseValue, value);
+
+        // If merged does not change the active value at position, do nothing
+        if (EqualityComparer<T>.Default.Equals(merged, baseValue))
+            return;
+
+        if (idxExact >= 0)
+        {
+            values[idxExact] = merged;
+            return;
+        }
+
+        int insertIndex = ~idxExact; // first element larger than position
+        positions.Insert(insertIndex, position);
+        values.Insert(insertIndex, merged);
     }
 
     /// <summary>
@@ -178,20 +184,35 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     }
 
     /// <summary>
-    /// Appends another positioned list at the end of this list, offsetting all positions of
-    /// <paramref name="other"/> by (this.MaxPosition - other.MinPosition). The resulting MaxPosition
-    /// increases by the length of the other list (other.MaxPosition - other.MinPosition).
+    /// Appends another positioned list at the end of this list. The first interval's value is
+    /// computed by merging the current predecessor value and the other's value at its start using
+    /// <paramref name="mergeFirstValue"/>. Remaining change points from <paramref name="other"/>
+    /// are appended (shifted) as-is, skipping the start position.
     /// </summary>
-    public void Append(ValueIntervalList<T> other)
+    public void Append(ValueIntervalList<T> other, Func<T, T, T> mergeFirstValue)
     {
-        ArgumentNullException.ThrowIfNull(other);
         int offset = MaxPosition - other.MinPosition;
-        foreach ((int start, _, T val) in other)
+        T otherStart = other[other.MinPosition];
+        T mergedStart = mergeFirstValue(Last.Value, otherStart);
+
+        Resize(MaxPosition + other.MaxPosition - other.MinPosition);
+        AddOrReplace(offset, mergedStart);
+
+        foreach (ValueInterval<T> interval in other)
         {
-            AddOrReplace(offset + start, val);
+            if (interval.Start == other.MinPosition)
+                continue;
+            AddOrReplace(offset + interval.Start, interval.Value);
         }
+
         MaxPosition = checked(MaxPosition + (other.MaxPosition - other.MinPosition));
     }
+
+    /// <summary>
+    /// Appends another positioned list at the end using a default-first merge that always yields new T().
+    /// </summary>
+    public void Append(ValueIntervalList<T> other) =>
+        Append(other, static (pred, first) => new T());
 
     /// <summary>
     /// Replaces the interval [start, end) with the specified value. Removes any change points
@@ -267,6 +288,17 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
         {
             yield return new ValueInterval<T>(start, MaxPosition, current);
         }
+    }
+
+    /// <summary>
+    /// Creates a deep clone of this list, including bounds and all change points.
+    /// </summary>
+    public ValueIntervalList<T> Clone()
+    {
+        ValueIntervalList<T> clone = new(MinPosition, MaxPosition);
+        clone.positions.AddRange(positions);
+        clone.values.AddRange(values);
+        return clone;
     }
 
     public bool Equals(ValueIntervalList<T>? other)
