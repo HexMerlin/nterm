@@ -27,7 +27,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public ValueIntervalList(int minPosition, int maxPosition)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(minPosition, maxPosition);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(minPosition, maxPosition);
         MinPosition = minPosition;
         MaxPosition = maxPosition;
     }
@@ -211,8 +211,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// <summary>
     /// Appends another positioned list at the end using a default-first merge that always yields new T().
     /// </summary>
-    public void Append(ValueIntervalList<T> other) =>
-        Append(other, static (pred, first) => new T());
+    public void Append(ValueIntervalList<T> other) => Append(other, static (pred, first) => first);
 
     /// <summary>
     /// Replaces the interval [start, end) with the specified value. Removes any change points
@@ -222,7 +221,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     public void InsertAndReplace(int start, int end, T value)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(start, MinPosition);
-        ArgumentOutOfRangeException.ThrowIfLessThan(end, MinPosition);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(end, MinPosition);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(start, end, nameof(start));
         ArgumentOutOfRangeException.ThrowIfGreaterThan(end, MaxPosition, nameof(end));
         if (start == end)
@@ -230,9 +229,8 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
 
         EqualityComparer<T> cmp = EqualityComparer<T>.Default;
 
-        // Capture values before mutation
-        T beforeValue = this[start];
         bool hasAfter = end < MaxPosition;
+        // If there is a position at or before end, we need to restore its value after the inserted range
         T afterValue = hasAfter ? this[end] : new T();
 
         // Remove all change points in [start, end)
@@ -249,11 +247,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
             values.RemoveRange(left, removeCount);
         }
 
-        // Ensure start has the new value if it differs from the active value at start
-        if (!cmp.Equals(beforeValue, value))
-        {
-            AddOrReplace(start, value);
-        }
+        AddOrReplace(start, value);
 
         // Restore the value at end if needed
         if (hasAfter && !cmp.Equals(afterValue, value))

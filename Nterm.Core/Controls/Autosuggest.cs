@@ -180,8 +180,8 @@ public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
         int safeMatchStart = Math.Clamp(matchStart, 0, display.Length);
         int safeMatchEnd = Math.Clamp(matchStart + matchLength, safeMatchStart, display.Length);
 
-        display.SetColor(_options.SuggestionColor);
-        display.SetColor(safeMatchStart, safeMatchEnd, _options.TypedColor);
+        display.SetStyle(new CharStyle(_options.SuggestionColor, default));
+        display.SetStyle(safeMatchStart, safeMatchEnd, new CharStyle(_options.TypedColor, default));
         Terminal.Write(display);
     }
 

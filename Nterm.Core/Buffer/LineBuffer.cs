@@ -22,7 +22,7 @@ namespace Nterm.Core.Buffer;
 public sealed class LineBuffer : IEquatable<LineBuffer>
 {
     private readonly List<char> buf = [];
-    private readonly ValueIntervalList<CharStyle> styleIntervals = new(0);
+    private readonly ValueIntervalList<CharStyle> styleIntervals = new(1);
 
     /// <summary>
     /// Initializes a new, empty <see cref="LineBuffer"/>.
@@ -270,7 +270,7 @@ public sealed class LineBuffer : IEquatable<LineBuffer>
     /// <param name="other">The string to compare with this <see cref="LineBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="LineBuffer"/>.</returns>
     public bool TextEquals(ReadOnlySpan<char> other, StringComparison? comparisonType = null) =>
-        Equals(other, new ValueIntervalList<CharStyle>(0), comparisonType, false);
+        Equals(other, new ValueIntervalList<CharStyle>(1), comparisonType, false);
 
     public override bool Equals(object? obj) => obj is LineBuffer other && Equals(other);
 
