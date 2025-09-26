@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
@@ -20,6 +21,7 @@ namespace Nterm.Core.Buffer;
 /// </remarks>
 /// <seealso cref="LineBuffer"/>
 /// <seealso cref="Color"/>
+[DebuggerDisplay("String={ToString(),nq}")]
 public sealed class TextBuffer : IEquatable<TextBuffer>
 {
     /// <summary>
@@ -151,6 +153,9 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
         Color background = default
     )
     {
+        if (str.IsEmpty)
+            return this;
+
         int lineCount = 0;
         foreach (ReadOnlySpan<char> line in str.EnumerateLines())
         {
@@ -263,17 +268,14 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
         if (!firstSlice)
             _ = target.AppendLine();
 
-        (List<char> buf, List<(int pos, CharStyle charStyle)> styles) data =
-            sourceLine.GetInternalData();
-        List<char> buf = data.buf;
-        List<(int pos, CharStyle charStyle)> styles = data.styles;
+        (List<char> buf, ValueIntervalList<CharStyle> styles) = sourceLine.GetInternalData();
 
-        // Walk style runs and intersect with [startLocal, endLocal)
-        for (int i = -1; i < styles.Count; i++)
+        // Walk style intervals and intersect with [startLocal, endLocal)
+        foreach (ValueInterval<CharStyle> interval in styles.GetRanges())
         {
-            int runStart = i >= 0 ? styles[i].pos : 0;
-            int runEnd = i < styles.Count - 1 ? styles[i + 1].pos : buf.Count;
-            CharStyle charStyle = i >= 0 ? styles[i].charStyle : default;
+            int runStart = interval.Start;
+            int runEnd = interval.End;
+            CharStyle charStyle = interval.Value;
 
             int s = Math.Max(runStart, startLocal);
             int e = Math.Min(runEnd, endLocal);
@@ -424,19 +426,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
 
         for (int i = 0; i < Lines.Count; i++)
         {
-            (List<char> otherStr, List<(int, CharStyle)> otherStyles) = other
-                .Lines[i]
-                .GetInternalData();
-
-            if (
-                !Lines[i]
-                    .Equals(
-                        CollectionsMarshal.AsSpan(otherStr),
-                        otherStyles,
-                        comparisonType,
-                        compareStyles
-                    )
-            )
+            if (!Lines[i].Equals(other.Lines[i], comparisonType, compareStyles))
             {
                 return false;
             }
@@ -460,25 +450,25 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
 
     private int GetGlobalLength() => Length + Math.Max(0, LineCount - 1);
 
-    internal void SetColor(Color foreground) => SetColor(0, GetGlobalLength(), foreground, default);
+    internal void SetStyle(CharStyle style) => SetStyle(0, GetGlobalLength(), style);
 
-    internal void SetColor(int start, int end, Color foreground, Color background = default)
+    internal void SetStyle(int start, int end, CharStyle style)
     {
-        int lc = LineCount;
-        if (lc == 0)
+        int lineCount = LineCount;
+        if (lineCount == 0)
             return;
 
         // Build global mapping
-        int[] lineStarts = new int[lc];
-        int[] lineLengths = new int[lc];
+        int[] lineStarts = new int[lineCount];
+        int[] lineLengths = new int[lineCount];
         int cumulative = 0;
-        for (int i = 0; i < lc; i++)
+        for (int i = 0; i < lineCount; i++)
         {
             lineStarts[i] = cumulative;
             int len = Lines[i].Length;
             lineLengths[i] = len;
             cumulative += len;
-            if (i < lc - 1)
+            if (i < lineCount - 1)
                 cumulative += 1; // '\n' separator
         }
 
@@ -487,10 +477,8 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
         end = Math.Clamp(end, 0, totalLength);
         if (end <= start)
             return;
-        if (foreground == default && background == default)
-            return;
 
-        for (int i = 0; i < lc; i++)
+        for (int i = 0; i < lineCount; i++)
         {
             int ls = lineStarts[i];
             int le = ls + lineLengths[i];
@@ -501,7 +489,7 @@ public sealed class TextBuffer : IEquatable<TextBuffer>
 
             int localStart = segStart - ls;
             int localEnd = segEnd - ls;
-            lines[i].SetColor(localStart, localEnd, foreground, background);
+            lines[i].SetStyle(localStart, localEnd, style);
         }
     }
 }

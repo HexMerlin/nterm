@@ -338,10 +338,9 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
             Math.Max(0, Terminal.BufferWidth - startColumn)
         );
 
-        TextBuffer[] textParts = displayText.Split(
-            $"({Regex.Escape(filterText)})",
-            RegexOptions.IgnoreCase
-        );
+        TextBuffer[] textParts = string.IsNullOrEmpty(filterText)
+            ? [displayText.Clone()]
+            : displayText.Split($"({Regex.Escape(filterText)})", RegexOptions.IgnoreCase);
 
         bool isFilterFound = false;
 
@@ -350,13 +349,17 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         {
             if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
             {
-                part.SetColor(ForegroundColor);
+                part.SetStyle(new CharStyle(ForegroundColor, default));
                 // Only color the first occurrence of the filter text
                 isFilterFound = true;
             }
             else
             {
-                part.SetColor(FilterText.Length > 0 ? FilterColor : SelectedColor);
+                part.SetStyle(
+                    FilterText.Length > 0
+                        ? new CharStyle(FilterColor, default)
+                        : new CharStyle(SelectedColor, default)
+                );
             }
             Terminal.Write(part);
         }
@@ -380,14 +383,15 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
         TextBuffer itemText = item.Text.Clone();
-        itemText.SetColor(isSelected ? SelectedColor : default);
+        if (isSelected)
+            itemText.SetStyle(new CharStyle(SelectedColor, default));
         text.Append(itemText);
 
         if (!item.Description.IsEmpty)
         {
             TextBuffer description = new(" ", Color.Gray);
             description.Append(item.Description.Clone());
-            description.SetColor(Color.Gray);
+            description.SetStyle(new CharStyle(Color.Gray, default));
             text.Append(description);
         }
 
