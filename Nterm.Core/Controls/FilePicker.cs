@@ -69,7 +69,6 @@ public class FilePickerControl
 
                 if (selected.Text == CurrentDir)
                 {
-                    RenderFinalSelection(dirInfo.Name, selected.Description);
                     return selected;
                 }
 
@@ -78,8 +77,7 @@ public class FilePickerControl
                 continue;
             }
 
-            // File selected: print and return
-            RenderFinalSelection(selected.Text, selected.Description);
+            // File selected: return
             return selected;
         }
     }
