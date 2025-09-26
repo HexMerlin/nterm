@@ -383,11 +383,8 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         TerminalEx.ClearLineFrom(startColumn, startRow);
 
         TextBuffer itemText = item.Text.Clone();
-        itemText.SetStyle(
-            isSelected
-                ? new CharStyle(SelectedColor, default)
-                : new CharStyle(ForegroundColor, default)
-        );
+        if (isSelected)
+            itemText.SetStyle(new CharStyle(SelectedColor, default));
         text.Append(itemText);
 
         if (!item.Description.IsEmpty)

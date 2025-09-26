@@ -114,7 +114,7 @@ public class FilePickerControl
         items.Add(
             new TextItem<FileSystemInfo>
             {
-                Text = CurrentDir,
+                Text = new TextBuffer($"📁 {CurrentDir}", DirectoryColor),
                 Description = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name,
                 Value = dirInfo
             }
@@ -126,7 +126,7 @@ public class FilePickerControl
             items.Add(
                 new TextItem<FileSystemInfo>
                 {
-                    Text = ParentDir,
+                    Text = new TextBuffer($"📁 {ParentDir}", DirectoryColor),
                     Description = GetPathDescriptor(startRoot, dirInfo.Parent.FullName),
                     Value = dirInfo.Parent
                 }
