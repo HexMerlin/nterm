@@ -10,6 +10,18 @@ public record struct ValueInterval<T>(int Start, int End, T Value);
 /// [MinPosition, MaxPosition) (exclusive upper bound) and entries are unique by position.
 /// </summary>
 /// <typeparam name="T">Stored type. Must have a default constructor.</typeparam>
+/// <remarks>
+/// <para>This class is not thread-safe.</para>
+/// <para>
+///
+/// This is the structure of the list where a single value is associated with a range of positions.
+/// <code language="text">
+/// 1111111111122222233344444444444444444444
+/// |--------->|---->|->|----------------->|
+/// </code>
+/// </para>
+///
+/// </remarks>
 public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     where T : new()
 {
