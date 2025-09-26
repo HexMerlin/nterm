@@ -22,7 +22,7 @@ namespace Nterm.Core.Buffer;
 /// <seealso cref="LineBuffer"/>
 /// <seealso cref="Color"/>
 [DebuggerDisplay("String={ToString(),nq}")]
-public sealed class TextBuffer : IEquatable<TextBuffer>
+public class TextBuffer : IEquatable<TextBuffer>
 {
     /// <summary>
     /// Backing store for logical lines contained in this buffer.
