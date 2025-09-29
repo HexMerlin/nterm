@@ -207,11 +207,12 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
         if (other.Count == 0)
             return;
 
-        int offset = MaxPosition - other.MinPosition;
+        int thisMax = MaxPosition;
+        int offset = thisMax - other.MinPosition;
         T mergedStart = mergeFirstValue(Last.Value, other[other.MinPosition]);
 
-        Resize(MaxPosition + other.MaxPosition - other.MinPosition);
-        AddOrReplace(MaxPosition, mergedStart);
+        Resize(thisMax + other.MaxPosition - other.MinPosition);
+        AddOrReplace(thisMax, mergedStart);
 
         foreach (ValueInterval<T> interval in other)
         {

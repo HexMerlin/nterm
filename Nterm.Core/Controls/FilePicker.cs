@@ -2,12 +2,27 @@ using Nterm.Core.Buffer;
 
 namespace Nterm.Core.Controls;
 
+public record FilePickerOptions
+{
+    public Color DirectoryColor { get; init; } = Color.Beige;
+    public int NumberOfVisibleItems { get; init; } = 4;
+    public string[] FileExtensions { get; init; } = [];
+}
+
 public static class FilePicker
 {
     public static TextItem<FileSystemInfo> Show(
         string? startDirectory = null,
-        int numberOfVisibleItems = 4
-    ) => new FilePickerControl().Show(startDirectory, numberOfVisibleItems);
+        FilePickerOptions? options = default
+    )
+    {
+        options ??= new FilePickerOptions();
+        return new FilePickerControl()
+        {
+            DirectoryColor = options.DirectoryColor,
+            FileExtensions = options.FileExtensions
+        }.Show(startDirectory, options.NumberOfVisibleItems);
+    }
 }
 
 /// <summary>
@@ -20,6 +35,8 @@ public static class FilePicker
 public class FilePickerControl
 {
     public Color DirectoryColor { get; init; } = Color.Beige;
+
+    public string[] FileExtensions { get; init; } = [];
 
     private const string CurrentDir = ".";
     private const string ParentDir = "..";
@@ -44,13 +61,13 @@ public class FilePickerControl
 
         while (true)
         {
-            List<TextItem<FileSystemInfo>> items = BuildDirectoryItems(
+            IEnumerable<TextItem<FileSystemInfo>> items = BuildDirectoryItems(
                 startRoot,
                 currentDirectoryPath
             );
 
             TextItem<FileSystemInfo> selected = view.Show(
-                items,
+                [.. items],
                 numberOfVisibleItems,
                 enableFilter: true
             );
@@ -99,68 +116,56 @@ public class FilePickerControl
         }
     }
 
-    private List<TextItem<FileSystemInfo>> BuildDirectoryItems(
+    private IEnumerable<TextItem<FileSystemInfo>> BuildDirectoryItems(
         string startRoot,
         string directoryPath
     )
     {
-        List<TextItem<FileSystemInfo>> items = [];
-
         DirectoryInfo dirInfo = new(directoryPath);
 
         // Header item: selecting it returns the directory itself
-        items.Add(
-            new TextItem<FileSystemInfo>
-            {
-                Text = new TextBuffer($"📁 {CurrentDir}", DirectoryColor),
-                Description = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name,
-                Value = dirInfo
-            }
-        );
+        yield return new TextItem<FileSystemInfo>
+        {
+            Text = new TextBuffer($"📁 {CurrentDir}", DirectoryColor),
+            Description = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name,
+            Value = dirInfo
+        };
 
         // Parent directory item: selecting it navigates up
         if (dirInfo.Parent is not null)
         {
-            items.Add(
-                new TextItem<FileSystemInfo>
-                {
-                    Text = new TextBuffer($"📁 {ParentDir}", DirectoryColor),
-                    Description = GetPathDescriptor(startRoot, dirInfo.Parent.FullName),
-                    Value = dirInfo.Parent
-                }
-            );
+            yield return new TextItem<FileSystemInfo>
+            {
+                Text = new TextBuffer($"📁 {ParentDir}", DirectoryColor),
+                Description = GetPathDescriptor(startRoot, dirInfo.Parent.FullName),
+                Value = dirInfo.Parent
+            };
         }
 
         // Directories first
         foreach (DirectoryInfo subDir in SafeEnumerateDirectories(dirInfo))
         {
-            items.Add(
-                new TextItem<FileSystemInfo>
-                {
-                    Text = new($"📁 {subDir.Name}/", DirectoryColor),
-                    Description = GetPathDescriptor(startRoot, subDir.FullName),
-                    Value = subDir
-                }
-            );
+            yield return new TextItem<FileSystemInfo>
+            {
+                Text = new($"📁 {subDir.Name}/", DirectoryColor),
+                Description = GetPathDescriptor(startRoot, subDir.FullName),
+                Value = subDir
+            };
         }
 
         // Then files
         foreach (FileInfo file in SafeEnumerateFiles(dirInfo))
         {
-            items.Add(
-                new TextItem<FileSystemInfo>
-                {
-                    Text = file.Name,
-                    Description = GetPathDescriptor(
-                        startRoot,
-                        file.Directory?.FullName ?? dirInfo.FullName
-                    ),
-                    Value = file
-                }
-            );
+            yield return new TextItem<FileSystemInfo>
+            {
+                Text = file.Name,
+                Description = GetPathDescriptor(
+                    startRoot,
+                    file.Directory?.FullName ?? dirInfo.FullName
+                ),
+                Value = file
+            };
         }
-
-        return items;
     }
 
     private static string GetPathDescriptor(string root, string path)
@@ -200,11 +205,16 @@ public class FilePickerControl
         }
     }
 
-    private static FileInfo[] SafeEnumerateFiles(DirectoryInfo dir)
+    private FileInfo[] SafeEnumerateFiles(DirectoryInfo dir)
     {
         try
         {
-            return [.. dir.EnumerateFiles().OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
+            IEnumerable<FileInfo> files = dir.EnumerateFiles();
+            if (FileExtensions.Length > 0)
+            {
+                files = files.Where(f => FileExtensions.Contains(f.Extension));
+            }
+            return [.. files.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
         }
         catch
         {

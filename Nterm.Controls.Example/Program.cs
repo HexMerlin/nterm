@@ -131,7 +131,9 @@ Terminal.WriteLine();
 Terminal.WriteLine($"Selected suggestion: {result.LastSuggestion?.Value}");
 Terminal.WriteLine($"Typed text: {result.TypedText}");
 
-TextItem<FileSystemInfo> picked = FilePicker.Show(); // or FilePicker.Show("/path", numberOfVisibleItems: 8)
+TextItem<FileSystemInfo> picked = FilePicker.Show(
+    options: new() { FileExtensions = [".cs", ".csproj"] }
+);
 if (!picked.IsEmpty())
 {
     FileSystemInfo fs = picked.Value; // FileInfo or DirectoryInfo
