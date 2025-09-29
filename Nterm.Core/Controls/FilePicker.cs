@@ -7,9 +7,10 @@ public record FilePickerOptions
     public Color DirectoryColor { get; init; } = Color.Beige;
     public int NumberOfVisibleItems { get; init; } = 4;
     public string[] FileExtensions { get; init; } = [];
+    public bool ShowOnlyFiles { get; init; }
     public bool ShowOnlyDirectories { get; init; }
-    public bool ShowHiddenFilesAndDirectories { get; init; }
 
+    public bool ShowHiddenFilesAndDirectories { get; init; }
     public bool AllowNavigationAboveStartDirectory { get; init; }
 }
 
@@ -25,6 +26,7 @@ public static class FilePicker
         {
             DirectoryColor = options.DirectoryColor,
             FileExtensions = options.FileExtensions,
+            ShowOnlyFiles = options.ShowOnlyFiles,
             ShowOnlyDirectories = options.ShowOnlyDirectories,
             ShowHiddenFilesAndDirectories = options.ShowHiddenFilesAndDirectories,
             AllowNavigationAboveStartDirectory = options.AllowNavigationAboveStartDirectory
@@ -44,6 +46,8 @@ public class FilePickerControl
     public Color DirectoryColor { get; init; } = Color.Beige;
 
     public string[] FileExtensions { get; init; } = [];
+
+    public bool ShowOnlyFiles { get; init; }
 
     public bool ShowOnlyDirectories { get; init; }
 
@@ -127,39 +131,46 @@ public class FilePickerControl
     {
         DirectoryInfo dirInfo = new(directoryPath);
 
-        // Header item: selecting it returns the directory itself
-        yield return new TextItem<FileSystemInfo>
+        if (!ShowOnlyFiles)
         {
-            Text = new TextBuffer($"📁 {CurrentDir}", DirectoryColor),
-            Description = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name,
-            Value = dirInfo
-        };
-
-        // Parent directory item: selecting it navigates up
-        if (
-            dirInfo.Parent is not null
-            && (AllowNavigationAboveStartDirectory || dirInfo.FullName != startRoot)
-        )
-        {
+            // Header item: selecting it returns the directory itself
             yield return new TextItem<FileSystemInfo>
             {
-                Text = new TextBuffer($"📁 {ParentDir}", DirectoryColor),
-                Description = GetPathDescriptor(startRoot, dirInfo.Parent.FullName),
-                Value = dirInfo.Parent
+                Text = new TextBuffer($"📁 {CurrentDir}", DirectoryColor),
+                Description = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name,
+                Value = dirInfo
             };
-        }
 
-        // Directories first
-        foreach (
-            DirectoryInfo subDir in SafeEnumerateDirectories(dirInfo, ShowHiddenFilesAndDirectories)
-        )
-        {
-            yield return new TextItem<FileSystemInfo>
+            // Parent directory item: selecting it navigates up
+            if (
+                dirInfo.Parent is not null
+                && (AllowNavigationAboveStartDirectory || dirInfo.FullName != startRoot)
+            )
             {
-                Text = new($"📁 {subDir.Name}/", DirectoryColor),
-                Description = GetPathDescriptor(startRoot, subDir.FullName),
-                Value = subDir
-            };
+                yield return new TextItem<FileSystemInfo>
+                {
+                    Text = new TextBuffer($"📁 {ParentDir}", DirectoryColor),
+                    Description = GetPathDescriptor(startRoot, dirInfo.Parent.FullName),
+                    Value = dirInfo.Parent
+                };
+            }
+
+            // Directories first
+
+            foreach (
+                DirectoryInfo subDir in SafeEnumerateDirectories(
+                    dirInfo,
+                    ShowHiddenFilesAndDirectories
+                )
+            )
+            {
+                yield return new TextItem<FileSystemInfo>
+                {
+                    Text = new($"📁 {subDir.Name}/", DirectoryColor),
+                    Description = GetPathDescriptor(startRoot, subDir.FullName),
+                    Value = subDir
+                };
+            }
         }
 
         // Then files

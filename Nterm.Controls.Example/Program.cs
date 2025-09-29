@@ -134,6 +134,7 @@ TextItem<FileSystemInfo> picked = FilePicker.Show(
     options: new()
     {
         FileExtensions = [],
+        ShowOnlyFiles = true,
         ShowOnlyDirectories = false,
         ShowHiddenFilesAndDirectories = true,
         AllowNavigationAboveStartDirectory = false
