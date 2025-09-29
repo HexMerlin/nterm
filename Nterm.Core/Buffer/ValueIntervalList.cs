@@ -26,6 +26,9 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     private readonly List<int> positions = [];
     private readonly List<T> values = [];
 
+    public ValueIntervalList()
+        : this(0, 0) { }
+
     /// <summary>
     /// Creates a positioned list with range [0, maxPosition).
     /// </summary>
@@ -37,7 +40,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public ValueIntervalList(int minPosition, int maxPosition)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(minPosition, maxPosition);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(minPosition, maxPosition);
         MinPosition = minPosition;
         MaxPosition = maxPosition;
     }
@@ -201,12 +204,14 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     /// </summary>
     public void Append(ValueIntervalList<T> other, Func<T, T, T> mergeFirstValue)
     {
+        if (other.Count == 0)
+            return;
+
         int offset = MaxPosition - other.MinPosition;
-        T otherStart = other[other.MinPosition];
-        T mergedStart = mergeFirstValue(Last.Value, otherStart);
+        T mergedStart = mergeFirstValue(Last.Value, other[other.MinPosition]);
 
         Resize(MaxPosition + other.MaxPosition - other.MinPosition);
-        AddOrReplace(offset, mergedStart);
+        AddOrReplace(MaxPosition, mergedStart);
 
         foreach (ValueInterval<T> interval in other)
         {
@@ -214,8 +219,6 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
                 continue;
             AddOrReplace(offset + interval.Start, interval.Value);
         }
-
-        MaxPosition = checked(MaxPosition + (other.MaxPosition - other.MinPosition));
     }
 
     /// <summary>
@@ -231,7 +234,7 @@ public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     public void InsertAndReplace(int start, int end, T value)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(start, MinPosition);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(end, MinPosition);
+        ArgumentOutOfRangeException.ThrowIfLessThan(end, MinPosition);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(start, end, nameof(start));
         ArgumentOutOfRangeException.ThrowIfGreaterThan(end, MaxPosition, nameof(end));
         if (start == end)
