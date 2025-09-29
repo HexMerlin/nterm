@@ -1,6 +1,5 @@
 using System.Globalization;
 using Nterm.Core;
-using Nterm.Core.Buffer;
 using Nterm.Core.Controls;
 using AutosuggestOptions = Nterm.Core.Controls.AutosuggestOptions<string>;
 using AutosuggestResult = Nterm.Core.Controls.AutosuggestResult<string>;
@@ -136,7 +135,8 @@ TextItem<FileSystemInfo> picked = FilePicker.Show(
     {
         FileExtensions = [],
         ShowOnlyDirectories = false,
-        ShowHiddenFilesAndDirectories = true
+        ShowHiddenFilesAndDirectories = true,
+        AllowNavigationAboveStartDirectory = false
     }
 );
 if (!picked.IsEmpty())

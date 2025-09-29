@@ -9,6 +9,8 @@ public record FilePickerOptions
     public string[] FileExtensions { get; init; } = [];
     public bool ShowOnlyDirectories { get; init; }
     public bool ShowHiddenFilesAndDirectories { get; init; }
+
+    public bool AllowNavigationAboveStartDirectory { get; init; }
 }
 
 public static class FilePicker
@@ -24,7 +26,8 @@ public static class FilePicker
             DirectoryColor = options.DirectoryColor,
             FileExtensions = options.FileExtensions,
             ShowOnlyDirectories = options.ShowOnlyDirectories,
-            ShowHiddenFilesAndDirectories = options.ShowHiddenFilesAndDirectories
+            ShowHiddenFilesAndDirectories = options.ShowHiddenFilesAndDirectories,
+            AllowNavigationAboveStartDirectory = options.AllowNavigationAboveStartDirectory
         }.Show(startDirectory, options.NumberOfVisibleItems);
     }
 }
@@ -45,6 +48,8 @@ public class FilePickerControl
     public bool ShowOnlyDirectories { get; init; }
 
     public bool ShowHiddenFilesAndDirectories { get; init; }
+
+    public bool AllowNavigationAboveStartDirectory { get; init; }
 
     private const string CurrentDir = ".";
     private const string ParentDir = "..";
@@ -112,16 +117,7 @@ public class FilePickerControl
         if (string.IsNullOrWhiteSpace(startDirectory))
             return Environment.CurrentDirectory;
 
-        try
-        {
-            return Directory.Exists(startDirectory)
-                ? Path.GetFullPath(startDirectory)
-                : Environment.CurrentDirectory;
-        }
-        catch
-        {
-            return Environment.CurrentDirectory;
-        }
+        return Path.GetFullPath(startDirectory);
     }
 
     private IEnumerable<TextItem<FileSystemInfo>> BuildDirectoryItems(
@@ -140,7 +136,10 @@ public class FilePickerControl
         };
 
         // Parent directory item: selecting it navigates up
-        if (dirInfo.Parent is not null)
+        if (
+            dirInfo.Parent is not null
+            && (AllowNavigationAboveStartDirectory || dirInfo.FullName != startRoot)
+        )
         {
             yield return new TextItem<FileSystemInfo>
             {
