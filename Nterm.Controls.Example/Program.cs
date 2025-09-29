@@ -135,7 +135,6 @@ TextItem<FileSystemInfo> picked = FilePicker.Show(); // or FilePicker.Show("/pat
 if (!picked.IsEmpty())
 {
     FileSystemInfo fs = picked.Value; // FileInfo or DirectoryInfo
-    Terminal.WriteLine();
     Terminal.WriteLine($"Picked: {fs.FullName}");
     // handle result
 }
