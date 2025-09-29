@@ -7,7 +7,8 @@ public record FilePickerOptions
     public Color DirectoryColor { get; init; } = Color.Beige;
     public int NumberOfVisibleItems { get; init; } = 4;
     public string[] FileExtensions { get; init; } = [];
-    public bool ShowOnlyDirectories { get; init; } = false;
+    public bool ShowOnlyDirectories { get; init; }
+    public bool ShowHiddenFilesAndDirectories { get; init; }
 }
 
 public static class FilePicker
@@ -22,7 +23,8 @@ public static class FilePicker
         {
             DirectoryColor = options.DirectoryColor,
             FileExtensions = options.FileExtensions,
-            ShowOnlyDirectories = options.ShowOnlyDirectories
+            ShowOnlyDirectories = options.ShowOnlyDirectories,
+            ShowHiddenFilesAndDirectories = options.ShowHiddenFilesAndDirectories
         }.Show(startDirectory, options.NumberOfVisibleItems);
     }
 }
@@ -41,6 +43,8 @@ public class FilePickerControl
     public string[] FileExtensions { get; init; } = [];
 
     public bool ShowOnlyDirectories { get; init; }
+
+    public bool ShowHiddenFilesAndDirectories { get; init; }
 
     private const string CurrentDir = ".";
     private const string ParentDir = "..";
@@ -147,7 +151,9 @@ public class FilePickerControl
         }
 
         // Directories first
-        foreach (DirectoryInfo subDir in SafeEnumerateDirectories(dirInfo))
+        foreach (
+            DirectoryInfo subDir in SafeEnumerateDirectories(dirInfo, ShowHiddenFilesAndDirectories)
+        )
         {
             yield return new TextItem<FileSystemInfo>
             {
@@ -160,7 +166,7 @@ public class FilePickerControl
         // Then files
         if (!ShowOnlyDirectories)
         {
-            foreach (FileInfo file in SafeEnumerateFiles(dirInfo))
+            foreach (FileInfo file in SafeEnumerateFiles(dirInfo, ShowHiddenFilesAndDirectories))
             {
                 yield return new TextItem<FileSystemInfo>
                 {
@@ -197,14 +203,19 @@ public class FilePickerControl
         }
     }
 
-    private static DirectoryInfo[] SafeEnumerateDirectories(DirectoryInfo dir)
+    private static DirectoryInfo[] SafeEnumerateDirectories(
+        DirectoryInfo dir,
+        bool showHiddenDirectories
+    )
     {
         try
         {
-            return
-            [
-                .. dir.EnumerateDirectories().OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
-            ];
+            IEnumerable<DirectoryInfo> directories = dir.EnumerateDirectories();
+            if (!showHiddenDirectories)
+            {
+                directories = directories.Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden));
+            }
+            return [.. directories.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)];
         }
         catch
         {
@@ -212,7 +223,7 @@ public class FilePickerControl
         }
     }
 
-    private FileInfo[] SafeEnumerateFiles(DirectoryInfo dir)
+    private FileInfo[] SafeEnumerateFiles(DirectoryInfo dir, bool showHiddenFiles)
     {
         try
         {
@@ -220,6 +231,10 @@ public class FilePickerControl
             if (FileExtensions.Length > 0)
             {
                 files = files.Where(f => FileExtensions.Contains(f.Extension));
+            }
+            if (!showHiddenFiles)
+            {
+                files = files.Where(f => !f.Attributes.HasFlag(FileAttributes.Hidden));
             }
             return [.. files.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
         }

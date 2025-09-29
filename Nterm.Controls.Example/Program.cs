@@ -132,7 +132,12 @@ Terminal.WriteLine($"Selected suggestion: {result.LastSuggestion?.Value}");
 Terminal.WriteLine($"Typed text: {result.TypedText}");
 
 TextItem<FileSystemInfo> picked = FilePicker.Show(
-    options: new() { FileExtensions = [".cs", ".csproj"], ShowOnlyDirectories = false }
+    options: new()
+    {
+        FileExtensions = [],
+        ShowOnlyDirectories = false,
+        ShowHiddenFilesAndDirectories = true
+    }
 );
 if (!picked.IsEmpty())
 {
