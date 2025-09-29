@@ -67,7 +67,7 @@ public class FilePickerControl
                 // We detect header by comparing Text to the display name for the directory and by position 0.
                 // Since SelectDropdownView returns the selected item, we can consider header by matching text.
 
-                if (selected.Text == CurrentDir)
+                if (dirInfo.FullName == currentDirectoryPath)
                 {
                     return selected;
                 }
@@ -210,15 +210,5 @@ public class FilePickerControl
         {
             return [];
         }
-    }
-
-    private static void RenderFinalSelection(TextBuffer text, TextBuffer description)
-    {
-        if (text == CurrentDir)
-        {
-            text = description;
-        }
-        text.TruncateWidth(Math.Max(0, Terminal.BufferWidth - Terminal.CursorLeft));
-        Terminal.Write(text);
     }
 }
