@@ -7,6 +7,7 @@ public record FilePickerOptions
     public Color DirectoryColor { get; init; } = Color.Beige;
     public int NumberOfVisibleItems { get; init; } = 4;
     public string[] FileExtensions { get; init; } = [];
+    public bool ShowOnlyDirectories { get; init; } = false;
 }
 
 public static class FilePicker
@@ -20,7 +21,8 @@ public static class FilePicker
         return new FilePickerControl()
         {
             DirectoryColor = options.DirectoryColor,
-            FileExtensions = options.FileExtensions
+            FileExtensions = options.FileExtensions,
+            ShowOnlyDirectories = options.ShowOnlyDirectories
         }.Show(startDirectory, options.NumberOfVisibleItems);
     }
 }
@@ -37,6 +39,8 @@ public class FilePickerControl
     public Color DirectoryColor { get; init; } = Color.Beige;
 
     public string[] FileExtensions { get; init; } = [];
+
+    public bool ShowOnlyDirectories { get; init; }
 
     private const string CurrentDir = ".";
     private const string ParentDir = "..";
@@ -154,17 +158,20 @@ public class FilePickerControl
         }
 
         // Then files
-        foreach (FileInfo file in SafeEnumerateFiles(dirInfo))
+        if (!ShowOnlyDirectories)
         {
-            yield return new TextItem<FileSystemInfo>
+            foreach (FileInfo file in SafeEnumerateFiles(dirInfo))
             {
-                Text = file.Name,
-                Description = GetPathDescriptor(
-                    startRoot,
-                    file.Directory?.FullName ?? dirInfo.FullName
-                ),
-                Value = file
-            };
+                yield return new TextItem<FileSystemInfo>
+                {
+                    Text = file.Name,
+                    Description = GetPathDescriptor(
+                        startRoot,
+                        file.Directory?.FullName ?? dirInfo.FullName
+                    ),
+                    Value = file
+                };
+            }
         }
     }
 
