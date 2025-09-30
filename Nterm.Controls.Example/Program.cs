@@ -138,7 +138,8 @@ TextItem<FileSystemInfo> picked = FilePicker.Show(
         ShowOnlyDirectories = false,
         ShowHiddenFilesAndDirectories = false,
         AllowNavigationAboveStartDirectory = false,
-        FlattenDirectories = false
+        FlattenDirectories = true,
+        FilterOnDescription = true
     }
 );
 if (!picked.IsEmpty())

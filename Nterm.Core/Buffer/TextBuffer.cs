@@ -412,7 +412,8 @@ public class TextBuffer : IEquatable<TextBuffer>
     /// </summary>
     /// <param name="other">The string to compare with this <see cref="TextBuffer"/>.</param>
     /// <returns><see langword="true"/> <b>iff</b> the specified string is equal to this <see cref="TextBuffer"/>.</returns>
-    public bool TextEquals(ReadOnlySpan<char> other) => Equals(new TextBuffer(other), null, false);
+    public bool TextEquals(ReadOnlySpan<char> other, StringComparison? comparisonType = null) =>
+        Equals(new TextBuffer(other), comparisonType, false);
 
     public override bool Equals(object? obj) => obj is TextBuffer other && Equals(other);
 

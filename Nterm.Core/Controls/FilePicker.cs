@@ -16,6 +16,8 @@ public record FilePickerOptions
     public bool ShowHiddenFilesAndDirectories { get; init; }
 
     public bool FlattenDirectories { get; init; }
+
+    public bool FilterOnDescription { get; init; } = true;
 }
 
 public static class FilePicker
@@ -34,7 +36,8 @@ public static class FilePicker
             ShowOnlyDirectories = options.ShowOnlyDirectories,
             ShowHiddenFilesAndDirectories = options.ShowHiddenFilesAndDirectories,
             AllowNavigationAboveStartDirectory = options.AllowNavigationAboveStartDirectory,
-            FlattenDirectories = options.FlattenDirectories
+            FlattenDirectories = options.FlattenDirectories,
+            FilterOnDescription = options.FilterOnDescription
         }.Show(startDirectory, options.NumberOfVisibleItems);
     }
 }
@@ -49,6 +52,8 @@ public static class FilePicker
 public class FilePickerControl
 {
     public Color DirectoryColor { get; init; } = Color.Beige;
+
+    public bool FilterOnDescription { get; init; } = true;
 
     public string[] FileExtensions { get; init; } = [];
 
@@ -102,9 +107,6 @@ public class FilePickerControl
         }
     }
 
-    private const string CurrentDir = ".";
-    private const string ParentDir = "..";
-
     /// <summary>
     /// Shows a file/directory picker rooted at <paramref name="startDirectory"/> or the current directory.
     /// </summary>
@@ -121,7 +123,10 @@ public class FilePickerControl
         string startRoot = ResolveStartDirectory(startDirectory);
         string currentDirectoryPath = startRoot;
         SelectDropdownView<FileSystemInfo> view =
-            new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop);
+            new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop)
+            {
+                FilterOnDescription = FilterOnDescription
+            };
 
         while (true)
         {
@@ -130,11 +135,7 @@ public class FilePickerControl
                 currentDirectoryPath
             );
 
-            TextItem<FileSystemInfo> selected = view.Show(
-                [.. items],
-                numberOfVisibleItems,
-                enableFilter: true
-            );
+            TextItem<FileSystemInfo> selected = view.Show([.. items], numberOfVisibleItems);
 
             if (selected.IsEmpty())
             {

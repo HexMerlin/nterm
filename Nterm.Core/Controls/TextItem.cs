@@ -18,12 +18,12 @@ public class TextItem<TValue>
     public required TValue Value { get; init; }
 
     /// <summary>
-    /// Prefix to be displayed before the text. Can be used to display an emoji icon.
+    /// Prefix to be displayed before the text. Can be used to display an emoji icon. It will not be filtered.
     /// </summary>
     public TextBuffer Prefix { get; init; } = string.Empty;
 
     /// <summary>
-    /// Optional description of the item.
+    /// Optional description of the item. It can be used for filtering.
     /// </summary>
     public TextBuffer Description { get; init; } = string.Empty;
 

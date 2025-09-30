@@ -35,9 +35,12 @@ public class SelectControl<T>(bool enableFilter = true) : ISelectControl<T>
         }
 
         SelectDropdownView<T> view =
-            new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop);
+            new(terminalState.OriginalCursorLeft, terminalState.OriginalCursorTop)
+            {
+                FilterEnabled = enableFilter
+            };
 
-        TextItem<T> selectedItem = view.Show(itemList, numberOfVisibleItems, enableFilter);
+        TextItem<T> selectedItem = view.Show(itemList, numberOfVisibleItems);
 
         RenderFinalSelection(selectedItem);
         return selectedItem;

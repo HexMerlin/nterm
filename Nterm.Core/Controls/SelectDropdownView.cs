@@ -11,27 +11,25 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
     public Color FilterColor { get; init; } = Color.Gray;
     public Color NoItemsColor { get; init; } = Color.Gray;
 
+    public bool FilterEnabled { get; init; } = true;
+
+    public bool FilterOnDescription { get; init; }
+
     private int AnchorColumn { get; set; } = anchorColumn;
     private int AnchorRow { get; set; } = anchorRow;
     private int LastRenderedLineCount { get; set; }
     private int ScrollOffset { get; set; }
     private int PreviousBufferHeight { get; set; } = Terminal.BufferHeight;
     private int PreviousCursorTop { get; set; } = Terminal.CursorTop;
-    private bool FilterEnabled { get; set; }
     private string FilterText { get; set; } = string.Empty;
 
-    public TextItem<T> Show(
-        IReadOnlyList<TextItem<T>> items,
-        int numberOfVisibleItems = 4,
-        bool enableFilter = true
-    )
+    public TextItem<T> Show(IReadOnlyList<TextItem<T>> items, int numberOfVisibleItems = 4)
     {
         using TerminalState state = new();
 
         PrepareTerminalForSelection();
         TerminalEx.ClearInputBuffer();
 
-        FilterEnabled = enableFilter;
         FilterText = string.Empty;
 
         IReadOnlyList<TextItem<T>> viewItems = items;
@@ -347,7 +345,7 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         Terminal.Write(Constants.Underline);
         foreach (TextBuffer part in textParts)
         {
-            if (part.Equals(filterText, StringComparison.OrdinalIgnoreCase) && !isFilterFound)
+            if (!isFilterFound && part.TextEquals(filterText, StringComparison.OrdinalIgnoreCase))
             {
                 part.SetStyle(new CharStyle(ForegroundColor, default));
                 // Only color the first occurrence of the filter text
@@ -405,10 +403,16 @@ internal sealed class SelectDropdownView<T>(int anchorColumn, int anchorRow)
         Terminal.Write(text);
     }
 
-    private static IReadOnlyList<TextItem<T>> ApplyFilter(
+    private IReadOnlyList<TextItem<T>> ApplyFilter(
         IReadOnlyList<TextItem<T>> items,
         string query
-    ) => string.IsNullOrWhiteSpace(query) ? items : [.. items.Where(i => IsMatch(i.Text, query))];
+    ) =>
+        string.IsNullOrWhiteSpace(query)
+            ? items
+            :
+            [
+                .. items.Where(i => IsMatch(i.Text, query) || FilterOnDescription && IsMatch(i.Description, query))
+            ];
 
     private static bool IsMatch(TextBuffer source, string query) =>
         !source.IsEmpty && source.ToString().Contains(query, StringComparison.OrdinalIgnoreCase);
