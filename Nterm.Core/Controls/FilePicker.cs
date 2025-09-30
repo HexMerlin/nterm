@@ -7,11 +7,15 @@ public record FilePickerOptions
     public Color DirectoryColor { get; init; } = Color.Beige;
     public int NumberOfVisibleItems { get; init; } = 4;
     public string[] FileExtensions { get; init; } = [];
+
+    public bool AllowNavigationAboveStartDirectory { get; init; }
+
     public bool ShowOnlyFiles { get; init; }
     public bool ShowOnlyDirectories { get; init; }
 
     public bool ShowHiddenFilesAndDirectories { get; init; }
-    public bool AllowNavigationAboveStartDirectory { get; init; }
+
+    public bool FlattenDirectories { get; init; }
 }
 
 public static class FilePicker
@@ -29,7 +33,8 @@ public static class FilePicker
             ShowOnlyFiles = options.ShowOnlyFiles,
             ShowOnlyDirectories = options.ShowOnlyDirectories,
             ShowHiddenFilesAndDirectories = options.ShowHiddenFilesAndDirectories,
-            AllowNavigationAboveStartDirectory = options.AllowNavigationAboveStartDirectory
+            AllowNavigationAboveStartDirectory = options.AllowNavigationAboveStartDirectory,
+            FlattenDirectories = options.FlattenDirectories
         }.Show(startDirectory, options.NumberOfVisibleItems);
     }
 }
@@ -53,7 +58,49 @@ public class FilePickerControl
 
     public bool ShowHiddenFilesAndDirectories { get; init; }
 
-    public bool AllowNavigationAboveStartDirectory { get; init; }
+    /// <summary>
+    /// If true, the user can navigate above the start directory.
+    /// </summary>
+    /// <remarks>
+    /// Cannot be true if <see cref="FlattenDirectories"/> is true.
+    /// </remarks>
+    public bool AllowNavigationAboveStartDirectory
+    {
+        get;
+        init
+        {
+            if (FlattenDirectories)
+            {
+                throw new InvalidOperationException(
+                    "AllowNavigationAboveStartDirectory and FlattenDirectories cannot be true at the same time."
+                );
+            }
+
+            field = value;
+        }
+    }
+
+    /// <summary>
+    /// If true, the user can flatten directories and display them as files.
+    /// </summary>
+    /// <remarks>
+    /// Cannot be true if <see cref="AllowNavigationAboveStartDirectory"/> is true.
+    /// </remarks>
+    public bool FlattenDirectories
+    {
+        get;
+        init
+        {
+            if (AllowNavigationAboveStartDirectory)
+            {
+                throw new InvalidOperationException(
+                    "FlattenDirectories and AllowNavigationAboveStartDirectory cannot be true at the same time."
+                );
+            }
+
+            field = value;
+        }
+    }
 
     private const string CurrentDir = ".";
     private const string ParentDir = "..";
@@ -97,11 +144,9 @@ public class FilePickerControl
 
             if (selected.Value is DirectoryInfo dirInfo)
             {
-                // If user selected the directory header (first item), return it and write its name.
-                // We detect header by comparing Text to the display name for the directory and by position 0.
-                // Since SelectDropdownView returns the selected item, we can consider header by matching text.
-
-                if (dirInfo.FullName == currentDirectoryPath)
+                // If the file picker is flattened or
+                // the user selected the directory root (first item) return the selected item
+                if (FlattenDirectories || dirInfo.FullName == currentDirectoryPath)
                 {
                     return selected;
                 }
@@ -124,133 +169,35 @@ public class FilePickerControl
         return Path.GetFullPath(startDirectory);
     }
 
-    private IEnumerable<TextItem<FileSystemInfo>> BuildDirectoryItems(
-        string startRoot,
-        string directoryPath
-    )
+    private List<DirectoryItem> BuildDirectoryItems(string startRoot, string directoryPath)
     {
-        DirectoryInfo dirInfo = new(directoryPath);
-
-        if (!ShowOnlyFiles)
+        if (FlattenDirectories)
         {
-            // Header item: selecting it returns the directory itself
-            yield return new TextItem<FileSystemInfo>
-            {
-                Text = new TextBuffer($"📁 {CurrentDir}", DirectoryColor),
-                Description = dirInfo.Name.Length == 0 ? dirInfo.FullName : dirInfo.Name,
-                Value = dirInfo
-            };
-
-            // Parent directory item: selecting it navigates up
-            if (
-                dirInfo.Parent is not null
-                && (AllowNavigationAboveStartDirectory || dirInfo.FullName != startRoot)
-            )
-            {
-                yield return new TextItem<FileSystemInfo>
+            return DirectoryItem.ListDeep(
+                directoryPath,
+                new()
                 {
-                    Text = new TextBuffer($"📁 {ParentDir}", DirectoryColor),
-                    Description = GetPathDescriptor(startRoot, dirInfo.Parent.FullName),
-                    Value = dirInfo.Parent
-                };
-            }
+                    ShowOnlyFiles = ShowOnlyFiles,
+                    ShowOnlyDirectories = ShowOnlyDirectories,
+                    ShowHiddenFilesAndDirectories = ShowHiddenFilesAndDirectories,
+                    DirectoryColor = DirectoryColor,
+                    IncludeParentDirectoryAtStart =
+                        AllowNavigationAboveStartDirectory || directoryPath != startRoot
+                }
+            );
+        }
 
-            // Directories first
-
-            foreach (
-                DirectoryInfo subDir in SafeEnumerateDirectories(
-                    dirInfo,
-                    ShowHiddenFilesAndDirectories
-                )
-            )
+        return DirectoryItem.ListShallow(
+            directoryPath,
+            new()
             {
-                yield return new TextItem<FileSystemInfo>
-                {
-                    Text = new($"📁 {subDir.Name}/", DirectoryColor),
-                    Description = GetPathDescriptor(startRoot, subDir.FullName),
-                    Value = subDir
-                };
+                ShowOnlyFiles = ShowOnlyFiles,
+                ShowOnlyDirectories = ShowOnlyDirectories,
+                ShowHiddenFilesAndDirectories = ShowHiddenFilesAndDirectories,
+                DirectoryColor = DirectoryColor,
+                IncludeParentDirectoryAtStart =
+                    AllowNavigationAboveStartDirectory || directoryPath != startRoot
             }
-        }
-
-        // Then files
-        if (!ShowOnlyDirectories)
-        {
-            foreach (FileInfo file in SafeEnumerateFiles(dirInfo, ShowHiddenFilesAndDirectories))
-            {
-                yield return new TextItem<FileSystemInfo>
-                {
-                    Text = file.Name,
-                    Description = GetPathDescriptor(
-                        startRoot,
-                        file.Directory?.FullName ?? dirInfo.FullName
-                    ),
-                    Value = file
-                };
-            }
-        }
-    }
-
-    private static string GetPathDescriptor(string root, string path)
-    {
-        try
-        {
-            string rel = Path.GetRelativePath(root, path);
-            if (
-                string.IsNullOrEmpty(rel)
-                || rel == CurrentDir
-                || rel.StartsWith(ParentDir, StringComparison.Ordinal)
-            )
-            {
-                return path;
-            }
-
-            return rel;
-        }
-        catch
-        {
-            return path;
-        }
-    }
-
-    private static DirectoryInfo[] SafeEnumerateDirectories(
-        DirectoryInfo dir,
-        bool showHiddenDirectories
-    )
-    {
-        try
-        {
-            IEnumerable<DirectoryInfo> directories = dir.EnumerateDirectories();
-            if (!showHiddenDirectories)
-            {
-                directories = directories.Where(d => !d.Attributes.HasFlag(FileAttributes.Hidden));
-            }
-            return [.. directories.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)];
-        }
-        catch
-        {
-            return [];
-        }
-    }
-
-    private FileInfo[] SafeEnumerateFiles(DirectoryInfo dir, bool showHiddenFiles)
-    {
-        try
-        {
-            IEnumerable<FileInfo> files = dir.EnumerateFiles();
-            if (FileExtensions.Length > 0)
-            {
-                files = files.Where(f => FileExtensions.Contains(f.Extension));
-            }
-            if (!showHiddenFiles)
-            {
-                files = files.Where(f => !f.Attributes.HasFlag(FileAttributes.Hidden));
-            }
-            return [.. files.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
-        }
-        catch
-        {
-            return [];
-        }
+        );
     }
 }

@@ -18,6 +18,11 @@ public class TextItem<TValue>
     public required TValue Value { get; init; }
 
     /// <summary>
+    /// Prefix to be displayed before the text. Can be used to display an emoji icon.
+    /// </summary>
+    public TextBuffer Prefix { get; init; } = string.Empty;
+
+    /// <summary>
     /// Optional description of the item.
     /// </summary>
     public TextBuffer Description { get; init; } = string.Empty;

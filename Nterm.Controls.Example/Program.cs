@@ -134,10 +134,11 @@ TextItem<FileSystemInfo> picked = FilePicker.Show(
     options: new()
     {
         FileExtensions = [],
-        ShowOnlyFiles = true,
+        ShowOnlyFiles = false,
         ShowOnlyDirectories = false,
-        ShowHiddenFilesAndDirectories = true,
-        AllowNavigationAboveStartDirectory = false
+        ShowHiddenFilesAndDirectories = false,
+        AllowNavigationAboveStartDirectory = false,
+        FlattenDirectories = false
     }
 );
 if (!picked.IsEmpty())
