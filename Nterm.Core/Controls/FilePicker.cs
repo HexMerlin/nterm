@@ -74,7 +74,7 @@ public class FilePickerControl
         get;
         init
         {
-            if (FlattenDirectories)
+            if (value && FlattenDirectories)
             {
                 throw new InvalidOperationException(
                     "AllowNavigationAboveStartDirectory and FlattenDirectories cannot be true at the same time."
@@ -96,7 +96,7 @@ public class FilePickerControl
         get;
         init
         {
-            if (AllowNavigationAboveStartDirectory)
+            if (value && AllowNavigationAboveStartDirectory)
             {
                 throw new InvalidOperationException(
                     "FlattenDirectories and AllowNavigationAboveStartDirectory cannot be true at the same time."
