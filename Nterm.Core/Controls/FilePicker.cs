@@ -178,6 +178,7 @@ public class FilePickerControl
                 directoryPath,
                 new()
                 {
+                    FileExtensions = FileExtensions,
                     ShowOnlyFiles = ShowOnlyFiles,
                     ShowOnlyDirectories = ShowOnlyDirectories,
                     ShowHiddenFilesAndDirectories = ShowHiddenFilesAndDirectories,
@@ -192,6 +193,7 @@ public class FilePickerControl
             directoryPath,
             new()
             {
+                FileExtensions = FileExtensions,
                 ShowOnlyFiles = ShowOnlyFiles,
                 ShowOnlyDirectories = ShowOnlyDirectories,
                 ShowHiddenFilesAndDirectories = ShowHiddenFilesAndDirectories,

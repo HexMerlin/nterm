@@ -4,6 +4,7 @@ namespace Nterm.Core.Controls;
 
 public record DirectoryOptions
 {
+    public string[] FileExtensions { get; init; } = [];
     public bool IncludeParentDirectoryAtStart { get; init; }
     public bool ShowOnlyFiles { get; init; }
     public bool ShowOnlyDirectories { get; init; }
@@ -75,7 +76,13 @@ public class DirectoryItem : TextItem<FileSystemInfo>
 
         if (!options.ShowOnlyDirectories)
         {
-            foreach (FileInfo f in EnumerateFiles(dir, options.ShowHiddenFilesAndDirectories))
+            foreach (
+                FileInfo f in EnumerateFiles(
+                    dir,
+                    options.ShowHiddenFilesAndDirectories,
+                    options.FileExtensions
+                )
+            )
             {
                 yield return ToFileItem(root, f, dir);
             }
@@ -104,7 +111,13 @@ public class DirectoryItem : TextItem<FileSystemInfo>
 
         if (!options.ShowOnlyDirectories)
         {
-            foreach (FileInfo f in EnumerateFiles(dir, options.ShowHiddenFilesAndDirectories))
+            foreach (
+                FileInfo f in EnumerateFiles(
+                    dir,
+                    options.ShowHiddenFilesAndDirectories,
+                    options.FileExtensions
+                )
+            )
             {
                 yield return ToFileItem(root, f, dir);
             }
@@ -158,12 +171,20 @@ public class DirectoryItem : TextItem<FileSystemInfo>
         return directories.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static IEnumerable<FileInfo> EnumerateFiles(DirectoryInfo dir, bool showHiddenFiles)
+    private static IEnumerable<FileInfo> EnumerateFiles(
+        DirectoryInfo dir,
+        bool showHiddenFiles,
+        string[] fileExtensions
+    )
     {
         IEnumerable<FileInfo> files = dir.EnumerateFiles();
         if (!showHiddenFiles)
         {
             files = files.Where(f => !f.Attributes.HasFlag(FileAttributes.Hidden));
+        }
+        if (fileExtensions.Length > 0)
+        {
+            files = files.Where(f => fileExtensions.Contains(f.Extension));
         }
         return files.OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase);
     }
