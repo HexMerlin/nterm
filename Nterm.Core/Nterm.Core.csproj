@@ -4,4 +4,8 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="Wcwidth" Version="3.0.0" />
+	</ItemGroup>
+
 </Project>

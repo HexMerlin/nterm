@@ -30,6 +30,7 @@ public class Constants
     //// Screen control
     public const string EraseFromCursor = "[0J";
     public const string EraseDisplayAll = "[2J";
+    public const string EraseEntireScrollback = "[3J"; 
 
     //public const string EraseScrollback = "[3J";
 

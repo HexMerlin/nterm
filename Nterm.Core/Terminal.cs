@@ -119,13 +119,14 @@ public static class Terminal
     /// </remarks>
     public static void Clear(Color backgroundColor = default)
     {
-        Console.Clear();
         lock (writeLock)
         {
             if (backgroundColor != default)
+            {
                 BackgroundColor = backgroundColor;
-
-            WriteBg(BackgroundColor);
+            }
+            WriteBg(backgroundColor);
+            WriteInternal($"{Constants.ESC}{Constants.EraseEntireScrollback}");
             WriteInternal($"{Constants.ESC}{Constants.EraseDisplayAll}");
             WriteInternal($"{Constants.ESC}{Constants.CursorHome}");
         }
