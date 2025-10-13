@@ -47,6 +47,8 @@ public sealed class TextInputKeyEventArgs(ConsoleKeyInfo keyInfo, TextInputState
     public bool Handled { get; set; }
 }
 
+public delegate void TextInputRenderer(TextInputState state, int anchorTop);
+
 /// <summary>
 /// A controller for reading text input from the console with basic editing capabilities.
 /// </summary>
@@ -72,9 +74,9 @@ public sealed class TextInputKeyEventArgs(ConsoleKeyInfo keyInfo, TextInputState
 /// - Right Arrow: Moves the caret right.
 /// - Printable characters: Inserts the character at the caret position.
 /// </remarks>
-public sealed class TextInputController(Action<TextInputState>? customRenderer = null)
+public sealed class TextInputController(TextInputRenderer? customRenderer = null)
 {
-    private readonly Action<TextInputState>? _customRenderer = customRenderer;
+    private readonly TextInputRenderer? _customRenderer = customRenderer;
 
     public event EventHandler<TextInputKeyEventArgs>? KeyUp;
 
@@ -83,8 +85,7 @@ public sealed class TextInputController(Action<TextInputState>? customRenderer =
         PrepareTerminal();
         TerminalEx.ClearInputBuffer();
 
-        Action<TextInputState> renderer =
-            _customRenderer ?? CreateDefaultRenderer(Terminal.CursorLeft, Terminal.CursorTop);
+        TextInputRenderer renderer = _customRenderer ?? CreateDefaultRenderer(Terminal.CursorLeft);
 
         TextInputState state = new(string.Empty, 0, false, false);
 
@@ -104,7 +105,7 @@ public sealed class TextInputController(Action<TextInputState>? customRenderer =
                 || next.CaretIndex != state.CaretIndex
             )
             {
-                renderer(next);
+                renderer(next, Terminal.CursorTop);
             }
 
             state = next;
@@ -113,12 +114,11 @@ public sealed class TextInputController(Action<TextInputState>? customRenderer =
         return state;
     }
 
-    public static Action<TextInputState> CreateDefaultRenderer(int anchorLeft, int anchorTop)
+    public static TextInputRenderer CreateDefaultRenderer(int anchorLeft)
     {
         int lastRowCount = 1;
-        int currentAnchorTop = anchorTop;
 
-        return state =>
+        return (state, currentAnchorTop) =>
         {
             int bufferWidth = Math.Max(1, Terminal.BufferWidth);
             int firstLineCapacity = Math.Max(0, bufferWidth - anchorLeft);

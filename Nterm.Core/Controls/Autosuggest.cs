@@ -54,12 +54,14 @@ public sealed class AutosuggestControl<TValue> : IAutosuggest<TValue>
         TextItem<TValue> suggestion = GetSuggestionSafe(suggest, string.Empty, null);
         Render(string.Empty, suggestion.Text, 0);
         TextInputController controller =
-            new(state =>
-            {
-                // Default render path (text changed): recompute suggestion from text and render
-                suggestion = GetSuggestionSafe(suggest, state.Text, null);
-                Render(state.Text, suggestion.Text, state.CaretIndex);
-            });
+            new(
+                (state, anchorTop) =>
+                {
+                    // Default render path (text changed): recompute suggestion from text and render
+                    suggestion = GetSuggestionSafe(suggest, state.Text, null);
+                    Render(state.Text, suggestion.Text, state.CaretIndex);
+                }
+            );
 
         controller.KeyUp += (sender, e) =>
         {
