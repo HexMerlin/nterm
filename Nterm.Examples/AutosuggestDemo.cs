@@ -9,6 +9,8 @@ public class AutosuggestDemo
 {
     public static void Run()
     {
+        Terminal.WriteLine("======AutosuggestDemo========");
+        Terminal.WriteLine();
         Terminal.Write("Type \"Console\": ");
         string[] candidates = ["Console.WriteLine", "Console.ReadKey", "Console.ReadLine"];
         AutosuggestResult result = Autosuggest.Read(

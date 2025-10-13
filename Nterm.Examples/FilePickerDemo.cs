@@ -6,6 +6,9 @@ public class FilePickerDemo
 {
     public static void Run()
     {
+        Terminal.WriteLine("======FilePickerDemo========");
+        Terminal.WriteLine();
+        Terminal.Write("Pick a file: ");
         TextItem<FileSystemInfo> picked = FilePicker.Show(
             options: new()
             {

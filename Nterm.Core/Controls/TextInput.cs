@@ -58,6 +58,8 @@ public sealed class TextInputController(Action<TextInputState> render)
     {
         switch (keyInfo.Key)
         {
+            case ConsoleKey.Enter:
+                return state with { Done = true };
             case ConsoleKey.Backspace:
                 if (state.CaretIndex > 0 && state.Text.Length > 0)
                 {

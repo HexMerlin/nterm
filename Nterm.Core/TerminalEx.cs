@@ -1,6 +1,6 @@
 namespace Nterm.Core;
 
-internal static class TerminalEx
+public static class TerminalEx
 {
     public static void ClearInputBuffer()
     {

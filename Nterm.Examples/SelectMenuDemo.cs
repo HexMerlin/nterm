@@ -6,6 +6,8 @@ public class SelectMenuDemo
 {
     public static void Run()
     {
+        Terminal.WriteLine("======SelectMenuDemo========");
+        Terminal.WriteLine();
         Terminal.Write("Select an option: ");
         List<TextItem<Action>> items =
         [

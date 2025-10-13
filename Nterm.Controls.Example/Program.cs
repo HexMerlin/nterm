@@ -22,6 +22,7 @@ _ = Terminal.ReadLine();
 SelectMenuDemo.Run();
 AutosuggestDemo.Run();
 FilePickerDemo.Run();
+TextInputDemo.Run();
 
 Terminal.WriteLine("\nPress any key to exit...");
 ConsoleKeyInfo key = Terminal.ReadKey();
