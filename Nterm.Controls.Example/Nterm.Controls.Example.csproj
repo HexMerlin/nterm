@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nterm.Core\Nterm.Core.csproj" />
+    <ProjectReference Include="..\Nterm.Examples\Nterm.Examples.csproj" />
   </ItemGroup>
 
 </Project>
