@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace Nterm.Core.Buffer;
@@ -27,6 +28,7 @@ public class TextBuffer : IEquatable<TextBuffer>
     /// <summary>
     /// Backing store for logical lines contained in this buffer.
     /// </summary>
+    [JsonInclude]
     private readonly List<LineBuffer> lines = [new LineBuffer()];
 
     /// <summary>

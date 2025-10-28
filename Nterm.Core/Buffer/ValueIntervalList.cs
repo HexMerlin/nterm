@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Text.Json.Serialization;
 
 namespace Nterm.Core.Buffer;
 
@@ -23,7 +24,9 @@ public record struct ValueInterval<T>(int Start, int End, T Value);
 public sealed class ValueIntervalList<T> : IEnumerable<ValueInterval<T>>
     where T : new()
 {
+    [JsonInclude]
     private readonly List<int> positions = [];
+    [JsonInclude]
     private readonly List<T> values = [];
 
     public ValueIntervalList()

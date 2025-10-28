@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace Nterm.Core.Buffer;
@@ -21,7 +22,9 @@ namespace Nterm.Core.Buffer;
 /// <seealso cref="Color"/>
 public sealed class LineBuffer : IEquatable<LineBuffer>
 {
+    [JsonInclude]
     private readonly List<char> buf = [];
+    [JsonInclude]
     private readonly ValueIntervalList<CharStyle> styleIntervals = new();
 
     /// <summary>
