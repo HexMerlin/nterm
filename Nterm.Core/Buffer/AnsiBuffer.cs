@@ -177,6 +177,24 @@ public sealed class AnsiBuffer
         return this;
     }
 
+    /// <summary>
+    /// Appends SIXEL-encoded terminal image to the buffer.
+    /// </summary>
+    /// <param name="terminalImage">Terminal image with pre-encoded SIXEL data.</param>
+    /// <remarks>
+    /// <para>
+    /// Directly appends the image's <see cref="TerminalImage.EncodedData"/> (complete SIXEL sequence
+    /// or fallback text) to the buffer without emitting color sequences.
+    /// </para>
+    /// <para>
+    /// SIXEL data is self-contained with embedded color palette and pixel data. No additional
+    /// ANSI sequences are required or emitted.
+    /// </para>
+    /// <para>
+    /// <c>iff</c> the terminal supports SIXEL graphics, the image renders inline at cursor position.
+    /// Otherwise, the fallback text (typically an emoji or placeholder) is displayed.
+    /// </para>
+    /// </remarks>
     public void Append(TerminalImage terminalImage) => buffer.Append(terminalImage.EncodedData);
 
     /// <summary>
