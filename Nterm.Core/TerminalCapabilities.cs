@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
+using Nterm.Common;
 
 namespace Nterm.Core;
 

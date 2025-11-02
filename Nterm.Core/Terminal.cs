@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using Nterm.Core.Buffer;
+using Nterm.Common;
 
 namespace Nterm.Core;
 

@@ -1,5 +1,6 @@
 using Nterm.Core;
 using Nterm.Examples;
+using Nterm.Common;
 
 Terminal.ForegroundColor = Color.White;
 

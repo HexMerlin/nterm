@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Nterm.Common;
 
 namespace Nterm.Core.Buffer;
 

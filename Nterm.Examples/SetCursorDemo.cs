@@ -1,4 +1,4 @@
-using Nterm.Core;
+using Nterm.Common;
 
 namespace Nterm.Examples;
 

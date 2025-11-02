@@ -1,3 +1,5 @@
+using Nterm.Common;
+
 namespace Nterm.Core;
 
 /// <summary>

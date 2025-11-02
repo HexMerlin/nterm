@@ -4,7 +4,7 @@ using System.Numerics;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Constants = Nterm.Core.Constants;
+using Nterm.Common;
 
 namespace Nterm.Sixel;
 
@@ -68,7 +68,7 @@ public static class SixelDecode
 #if IMAGESHARP4 // ImageSharp v4.0
         Image<Rgba32> image = new(new Configuration(), canvasWidth, canvasHeight, Nterm.Core.Color.Transparent.ToRgba32());
 #else
-        Image<Rgba32> image = new(canvasWidth, canvasHeight, Nterm.Core.Color.Transparent.ToRgba32());
+        Image<Rgba32> image = new(canvasWidth, canvasHeight, Common.Color.Transparent.ToRgba32());
 #endif
 
         currentChar = stream.ReadByte();
@@ -135,10 +135,10 @@ public static class SixelDecode
                         switch (cSys)
                         {
                             case 1: // HLS
-                                _colorMap.Add(Nterm.Core.Color.FromHLS(c1, c2, c3).ToRgba32());
+                                _colorMap.Add(Nterm.Common.Color.FromHLS(c1, c2, c3).ToRgba32());
                                 break;
                             case 2: // RGB (values are in 0-100 range in Sixel format)
-                                _colorMap.Add(new Nterm.Core.Color(
+                                _colorMap.Add(new Common.Color(
                                     (byte)Math.Round(c1 * 255.0 / 100.0),
                                     (byte)Math.Round(c2 * 255.0 / 100.0),
                                     (byte)Math.Round(c3 * 255.0 / 100.0)).ToRgba32());

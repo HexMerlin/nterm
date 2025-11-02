@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Nterm.Core.Buffer;
+using Nterm.Common;
 
 namespace Nterm.Core.Controls;
 

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Nterm.Core.Buffer;
+using Nterm.Common;
 
 namespace Nterm.Core.Controls;
 

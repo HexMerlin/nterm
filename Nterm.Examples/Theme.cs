@@ -1,7 +1,8 @@
 
 using Microsoft.CodeAnalysis.Classification;
 using Nterm.Document;
-using C = Nterm.Core.Color;
+using Nterm.Common;
+using C = Nterm.Common.Color;
 
 namespace Nterm.Examples;
 

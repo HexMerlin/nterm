@@ -1,6 +1,7 @@
 ﻿using Nterm.Core;
 using Nterm.Sixel;
 
+using Nterm.Common;
 namespace Nterm.Examples;
 
 /// <summary>

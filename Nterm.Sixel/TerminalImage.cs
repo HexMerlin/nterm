@@ -2,7 +2,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Size = Nterm.Core.Size;
+using Size = Nterm.Common.Size;
 
 namespace Nterm.Sixel;
 

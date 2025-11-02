@@ -8,7 +8,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nterm.Core\Nterm.Core.csproj" />
+    <ProjectReference Include="..\NTerm.Common\NTerm.Common.csproj" />
   </ItemGroup>
 
 </Project>

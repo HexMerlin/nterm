@@ -1,4 +1,4 @@
-using Nterm.Core;
+using Nterm.Common;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace Nterm.Sixel;

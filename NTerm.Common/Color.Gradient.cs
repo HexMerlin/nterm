@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace Nterm.Core;
+namespace Nterm.Common;
 
 public readonly partial struct Color
 {

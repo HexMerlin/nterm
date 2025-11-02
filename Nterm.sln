@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nterm.Sixel", "Nterm.Sixel\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nterm.Controls.Example", "Nterm.Controls.Example\Nterm.Controls.Example.csproj", "{A4897D71-F178-64A2-A604-C9B711981B24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTerm.Common", "NTerm.Common\NTerm.Common.csproj", "{95632A2C-1243-4796-B280-B31DCCED8D14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,18 @@ Global
 		{A4897D71-F178-64A2-A604-C9B711981B24}.Release|x64.Build.0 = Release|Any CPU
 		{A4897D71-F178-64A2-A604-C9B711981B24}.Release|x86.ActiveCfg = Release|Any CPU
 		{A4897D71-F178-64A2-A604-C9B711981B24}.Release|x86.Build.0 = Release|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Debug|x64.Build.0 = Debug|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Debug|x86.Build.0 = Debug|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Release|x64.ActiveCfg = Release|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Release|x64.Build.0 = Release|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Release|x86.ActiveCfg = Release|Any CPU
+		{95632A2C-1243-4796-B280-B31DCCED8D14}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

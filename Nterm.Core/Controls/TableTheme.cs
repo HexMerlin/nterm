@@ -1,4 +1,6 @@
-﻿namespace Nterm.Core.Controls;
+﻿using Nterm.Common;
+
+namespace Nterm.Core.Controls;
 
 /// <summary>
 /// Theme describing border style and colors used when rendering a <see cref="Table"/>.

@@ -3,9 +3,9 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
-using Color = Nterm.Core.Color;
-using Constants = Nterm.Core.Constants;
-using Size = Nterm.Core.Size;
+using Color = Nterm.Common.Color;
+using Constants = Nterm.Common.Constants;
+using Size = Nterm.Common.Size;
 
 namespace Nterm.Sixel;
 

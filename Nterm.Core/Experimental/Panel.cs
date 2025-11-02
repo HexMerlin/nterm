@@ -1,7 +1,5 @@
-﻿using Nterm.Core.Buffer;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Nterm.Common;
+using Nterm.Core.Buffer;
 using static Nterm.Core.Experimental.VtPanels;
 
 namespace Nterm.Core.Experimental;

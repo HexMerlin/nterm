@@ -1,10 +1,10 @@
-using Nterm.Core;
+using Nterm.Common;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using Size = Nterm.Core.Size;
+using Size = Nterm.Common.Size;
 
 namespace Nterm.Sixel.Encoder;
 
@@ -67,7 +67,7 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
     /// Create the color palette for the <paramref name="frame"/>
     /// </summary>
     /// <param name="frame"></param>
-    protected virtual ReadOnlySpan<Core.Color> GetColorPalette(ImageFrame<Rgba32> frame)
+    protected virtual ReadOnlySpan<Common.Color> GetColorPalette(ImageFrame<Rgba32> frame)
     {
         if (!Quantized)
             _ = Quantize();
@@ -288,11 +288,11 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
 
         int lines = (int)Math.Ceiling((double)Image.Height / cellSize.Height);
         // Allocate rows for the image height
-        Terminal.Write(new string('\n', lines));
+        Console.Write(new string('\n', lines));
         // Move up cursor the rows
-        Terminal.Write($"{Constants.ESC}{string.Format(Constants.CursorUp, lines)}");
+        Console.Write($"{Constants.ESC}{string.Format(Constants.CursorUp, lines)}");
         // Save the cursor position
-        Terminal.Write($"{Constants.ESC}{Constants.CursorSave}");
+        Console.Write($"{Constants.ESC}{Constants.CursorSave}");
         string beginSync = "",
             endSync = "";
         if (syncSupported)
@@ -314,13 +314,13 @@ public class SixelEncoder(Image<Rgba32> img, string? format) : IDisposable
                 if (isOpaque)
                 {
                     // Restore the cursor position and then output sixel string
-                    Terminal.Write($"{Constants.ESC}{Constants.CursorRestore}{sixelString}");
+                    Console.Write($"{Constants.ESC}{Constants.CursorRestore}{sixelString}");
                 }
                 else
                 {
                     // Restore the cursor position and erase from cursor until end of screen,
                     // and then output sixel string; do the erase and draw in one batch update if possible
-                    Terminal.Write(
+                    Console.Write(
                         $"{beginSync}{Constants.ESC}{Constants.CursorRestore}{Constants.ESC}{Constants.EraseFromCursor}{sixelString}{endSync}"
                     );
                 }

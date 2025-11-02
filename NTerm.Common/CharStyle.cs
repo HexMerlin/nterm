@@ -1,5 +1,5 @@
 
-namespace Nterm.Core.Buffer;
+namespace Nterm.Common;
 
 /// <summary>
 /// Descriptor for visual properties for rendering text.

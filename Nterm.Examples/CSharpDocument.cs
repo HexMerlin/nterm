@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Nterm.Document;
 using System.Collections.Immutable;
+using Nterm.Common;
 
 namespace Nterm.Examples;
 

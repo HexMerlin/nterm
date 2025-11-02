@@ -1,4 +1,4 @@
-﻿namespace Nterm.Core;
+﻿namespace Nterm.Common;
 
 public class Constants
 {

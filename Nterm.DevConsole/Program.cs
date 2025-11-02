@@ -1,7 +1,10 @@
 ﻿using System.Globalization;
+using System.Reflection;
 using Nterm.Core;
 using Nterm.Core.Buffer;
 using Nterm.Examples;
+using Nterm.Sixel;
+using Nterm.Common;
 
 namespace Nterm.DevConsole;
 
@@ -14,42 +17,51 @@ internal static class Program
 
     private static async Task Main()
     {
-        // Reset terminal to known default colors: Red text on Gray background
-        Console.Write(AnsiBuffer.Reset(foreground: Color.Red, background: Color.Gray));
-        
-        //the terminal I run this from (windows terminal) have WHITE text on BLUE background as default colors
-        //but after Reset() above, we should have RED text on GRAY background as new defaults
+     
+        // Create a TerminalImage from embedded resource (using Examples assembly)
+        Assembly examplesAssembly = typeof(ConsoleImageDemo).Assembly;
+        TerminalImage userImage = TerminalImage.FromEmbeddedResource(
+            ConsoleImageDemo.ImageUser,
+            examplesAssembly,
+            "[👤]",
+            Transparency.Default
+        );
+
+        // Demonstrate AnsiBuffer with text AND images
         AnsiBuffer buffer = new AnsiBuffer();
-        buffer.AppendLine("This should be RED (new default) text on GRAY bg (new default)");
-        buffer.AppendLine("This is GREEN on GRAY default background", Color.Green);
+        buffer.AppendLine("=== AnsiBuffer Demo: Text + SIXEL Graphics ===");
+        buffer.AppendLine();
+
+        // Append SIXEL image using Append(string) - EncodedData contains complete SIXEL sequence
+        buffer.Append(userImage.EncodedData);
+
+        buffer.AppendLine("This should be default text on default background");
+        buffer.AppendLine("This is GREEN on default background", Color.Green);
         buffer.AppendLine("this is blue text with yellow background", Color.Blue, Color.Yellow);
-        buffer.AppendLine("This is RED default text, on green background", background: Color.Green);
+        buffer.AppendLine("This is default text, on green background", background: Color.Green);
+        buffer.AppendLine("This all terminal default colors");
 
-        buffer.AppendLine("This all terminal default colors (RED on GRAY)");
-
-
-        Console.Write(buffer.ToString()); // Outputs colored text to terminal
-
+        Console.Write(buffer.ToString()); // Outputs colored text + SIXEL image to terminal
     }
 
-    //private static async Task Main()
-    //{
-    //    Terminal.Title = "Showing some Console Demos";
-    //    Terminal.Clear(new Color(0, 0, 40));
-    //    //comment out to run specific demo
+    private static async Task Main2()
+    {
+        Terminal.Title = "Showing some Console Demos";
+        Terminal.Clear(new Color(0, 0, 40));
+        //comment out to run specific demo
 
-    //    ConsoleDemo.Run();
+        ConsoleDemo.Run();
 
-    //    await CSharpSyntaxHighlightingDemo.Run();
+        await CSharpSyntaxHighlightingDemo.Run();
 
-    //    ConsoleImageDemo demo3 = new();
-    //    await demo3.RunAsync(); //run demo 3
+        ConsoleImageDemo demo3 = new();
+        await demo3.RunAsync(); //run demo 3
 
-    //    for (int i = 0; i <= 30; i++) //write some lines
-    //        Terminal.WriteLine(i.ToString(CultureInfo.InvariantCulture));
+        for (int i = 0; i <= 30; i++) //write some lines
+            Terminal.WriteLine(i.ToString(CultureInfo.InvariantCulture));
 
-    //    await demo3.RunAsync(); //run demo 3 again
+        await demo3.RunAsync(); //run demo 3 again
 
-    //    Terminal.Write("\n\n\n");
-    //}
+        Terminal.Write("\n\n\n");
+    }
 }

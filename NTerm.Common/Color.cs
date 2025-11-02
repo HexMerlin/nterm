@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace Nterm.Core;
+namespace Nterm.Common;
 
 /// <summary>
 /// Immutable platform-independent struct for 32-bit true colors with alpha channel.
