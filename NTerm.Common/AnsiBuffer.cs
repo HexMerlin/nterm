@@ -110,11 +110,18 @@ public sealed class AnsiBuffer
     /// <summary>
     /// Initializes <see cref="AnsiBuffer"/> with specified initial text content.
     /// </summary>
-    /// <param name="text">Initial text content (without ANSI sequences).</param>
+    /// <param name="text">Initial text content.</param>
     /// <param name="foreground">Foreground color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
     /// <param name="background">Background color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
     public AnsiBuffer(string text, Color foreground = default, Color background = default) : this() => Append(text, foreground, background);
 
+    /// <summary>
+    /// Initializes <see cref="AnsiBuffer"/> with specified initial text content.
+    /// </summary>
+    /// <param name="text">Initial text content.</param>
+    /// <param name="foreground">Foreground color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    /// <param name="background">Background color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    public AnsiBuffer(ReadOnlySpan<char> text, Color foreground = default, Color background = default) : this() => Append(text, foreground, background);
 
     /// <summary>
     /// Current length of the buffer in characters (including ANSI escape sequences).
@@ -128,6 +135,30 @@ public sealed class AnsiBuffer
     {
         get => buffer.Capacity;
         set => buffer.Capacity = value;
+    }
+
+    /// <summary>
+    /// Appends character with optional foreground and background colors.
+    /// </summary>
+    /// <param name="ch">Character to append.</param>
+    /// <param name="foreground">Foreground color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    /// <param name="background">Background color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    /// <returns><see langword="this"/> instance for method chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// Always emits both foreground and background color sequences—non-transparent colors emit
+    /// RGB sequences; transparent colors emit reset sequences restoring terminal default colors.
+    /// </para>
+    /// <para>
+    /// Terminal state explicitly set for each append operation, eliminating color pollution
+    /// from previous operations.
+    /// </para>
+    /// </remarks>
+    public AnsiBuffer Append(char ch, Color foreground = default, Color background = default)
+    {
+        AppendColorSequences(foreground, background);
+        buffer.Append(ch);
+        return this;
     }
 
     /// <summary>

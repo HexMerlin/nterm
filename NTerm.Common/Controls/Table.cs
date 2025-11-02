@@ -1,7 +1,6 @@
-﻿using Nterm.Core.Buffer;
-using Nterm.Common;
+﻿using Nterm.Common;
 
-namespace Nterm.Core.Controls;
+namespace Nterm.Common.Controls;
 
 /// <summary>
 /// Immutable-dimension table with beautiful Unicode grid formatting and 24‑bit color support.
@@ -9,15 +8,13 @@ namespace Nterm.Core.Controls;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Use <see cref="ToTextBuffer()"/> or <see cref="ToTextBuffer(TableTheme)"/> to render the table
-/// into a <see cref="TextBuffer"/> for terminal output. Rendering supports color theming and multiple
-/// border styles via <see cref="TableTheme"/> and <see cref="TableBorders"/>.
+/// Use <see cref="ToString()"/> to render the table as ANSI-encoded string with embedded color sequences.
+/// Rendering supports color theming and multiple border styles via <see cref="TableTheme"/> and <see cref="TableBorders"/>.
 /// </para>
 /// <para>This type is not thread-safe.</para>
 /// </remarks>
 /// <seealso cref="TableTheme"/>
 /// <seealso cref="TableBorders"/>
-/// <seealso cref="TextBuffer"/>
 public class Table
 {
     /// <summary>
@@ -102,39 +99,6 @@ public class Table
     }
 
     /// <summary>
-    /// Renders the complete table with default theme.
-    /// </summary>
-    /// <returns>A <see cref="TextBuffer"/> containing styled, formatted output.</returns>
-    public TextBuffer ToTextBuffer() => ToTextBuffer(TableTheme.MonokaiMidnight);
-
-    /// <summary>
-    /// Renders the complete table with specified theme.
-    /// Headers are displayed if any header has content.
-    /// </summary>
-    /// <param name="theme">Theme containing border style and styles to use for rendering.</param>
-    /// <returns>A <see cref="TextBuffer"/> containing styled, formatted output.</returns>
-    /// <remarks>
-    /// If <see cref="TableBorders.Header"/> is selected but no headers are present, the border style falls back to <see cref="TableBorders.None"/>.
-    /// </remarks>
-    public TextBuffer ToTextBuffer(TableTheme theme)
-    {
-        TextBuffer output = new();
-
-        if (ColCount == 0 || RowCount == 0)
-            return output;
-
-        // Header style with no headers falls back to None
-        TableBorders borders = theme.Borders;
-        if (borders == TableBorders.Header && !HasHeaders)
-            borders = TableBorders.None;
-
-        int[] columnWidths = CalculateColumnWidths();
-        BorderConfig borderConfig = GetBorderConfiguration(borders);
-
-        Write(output, columnWidths, borderConfig, theme);
-        return output;
-    }
-    /// <summary>
     /// Calculates minimum required width for each column based on headers and cell content.
     /// </summary>
     /// <returns>Array of column widths where index corresponds to column number.</returns>
@@ -169,7 +133,7 @@ public class Table
     /// <summary>
     /// Renders horizontal border line with specified corner and junction characters.
     /// </summary>
-    private void WriteHorizontalBorderWithJunctions(TextBuffer bufferedOutput, int[] columnWidths, char left, char junction, char right, Color color)
+    private void WriteHorizontalBorderWithJunctions(AnsiBuffer bufferedOutput, int[] columnWidths, char left, char junction, char right, Color color)
     {
         _ = bufferedOutput.Append(left, color);
 
@@ -216,46 +180,46 @@ public class Table
     /// <summary>
     /// Renders table using the specified border configuration and theme.
     /// </summary>
-    private void Write(TextBuffer textBuffer, int[] columnWidths, BorderConfig config, TableTheme theme)
+    private void Write(AnsiBuffer ansiBuffer, int[] columnWidths, BorderConfig config, TableTheme theme)
     {
         // Top border
         if (config.TopBorder)
-            WriteHorizontalBorder(textBuffer, columnWidths, config, BorderPosition.Top, theme.BorderColor);
+            WriteHorizontalBorder(ansiBuffer, columnWidths, config, BorderPosition.Top, theme.BorderColor);
 
         // Header row
         if (HasHeaders)
         {
-            WriteContentRow(textBuffer, columnWidths, config, theme, true);
+            WriteContentRow(ansiBuffer, columnWidths, config, theme, true);
 
             // Header separator
             if (config.HeaderSeparator)
-                WriteHorizontalBorder(textBuffer, columnWidths, config, BorderPosition.HeaderSeparator, theme.BorderColor);
+                WriteHorizontalBorder(ansiBuffer, columnWidths, config, BorderPosition.HeaderSeparator, theme.BorderColor);
         }
 
         // Data rows
         for (int row = 0; row < RowCount; row++)
         {
-            WriteContentRow(textBuffer, columnWidths, config, theme, false, row);
+            WriteContentRow(ansiBuffer, columnWidths, config, theme, false, row);
 
             // Row separator (except after last row)
             if (config.RowSeparators && row < RowCount - 1)
-                WriteHorizontalBorder(textBuffer, columnWidths, config, BorderPosition.RowSeparator, theme.BorderColor);
+                WriteHorizontalBorder(ansiBuffer, columnWidths, config, BorderPosition.RowSeparator, theme.BorderColor);
         }
 
         // Bottom border
         if (config.BottomBorder)
-            WriteHorizontalBorder(textBuffer, columnWidths, config, BorderPosition.Bottom, theme.BorderColor);
+            WriteHorizontalBorder(ansiBuffer, columnWidths, config, BorderPosition.Bottom, theme.BorderColor);
     }
 
     /// <summary>
     /// Renders a content row (header or data) with appropriate separators.
     /// </summary>
-    private void WriteContentRow(TextBuffer textBuffer, int[] columnWidths, BorderConfig config, TableTheme theme, bool isHeader, int rowIndex = 0)
+    private void WriteContentRow(AnsiBuffer ansiBuffer, int[] columnWidths, BorderConfig config, TableTheme theme, bool isHeader, int rowIndex = 0)
     {
         // Left border
         if (config.SideBorders)
         {
-            _ = textBuffer.Append(Vertical, theme.BorderColor).Append(' ', theme.BorderColor); // Only padding on the inside
+            _ = ansiBuffer.Append(Vertical, theme.BorderColor).Append(' ', theme.BorderColor); // Only padding on the inside
         }
 
         // Column content
@@ -263,21 +227,21 @@ public class Table
         {
             string content = isHeader ? Headers[col] : this[col, rowIndex];
             Color textColor = GetCellColor(col, isHeader, theme);
-            _ = textBuffer.Append(content.PadRight(columnWidths[col]), textColor);
+            _ = ansiBuffer.Append(content.PadRight(columnWidths[col]), textColor);
 
             // Column separator or spacing
             if (col < ColCount - 1)
-                WriteColumnSeparator(textBuffer, config.ColumnSeparators, theme.BorderColor);
+                WriteColumnSeparator(ansiBuffer, config.ColumnSeparators, theme.BorderColor);
         }
 
         // Right border
         if (config.SideBorders)
         {
             // Only padding on the inside
-            _ = textBuffer.Append(' ', theme.BorderColor).Append(Vertical, theme.BorderColor);
+            _ = ansiBuffer.Append(' ', theme.BorderColor).Append(Vertical, theme.BorderColor);
         }
 
-        _ = textBuffer.AppendLine();
+        _ = ansiBuffer.AppendLine();
     }
 
     /// <summary>
@@ -296,24 +260,24 @@ public class Table
     /// <summary>
     /// Renders horizontal border with configuration-appropriate characters.
     /// </summary>
-    private void WriteHorizontalBorder(TextBuffer textBuffer, int[] columnWidths, BorderConfig config, BorderPosition position, Color borderColor)
+    private void WriteHorizontalBorder(AnsiBuffer ansiBuffer, int[] columnWidths, BorderConfig config, BorderPosition position, Color borderColor)
     {
         if (config.SideBorders && config.ColumnSeparators)
         {
             // Full border with junctions
             (char left, char junction, char right) = GetBorderChars(position);
-            WriteHorizontalBorderWithJunctions(textBuffer, columnWidths, left, junction, right, borderColor);
+            WriteHorizontalBorderWithJunctions(ansiBuffer, columnWidths, left, junction, right, borderColor);
         }
         else if (config.SideBorders)
         {
             // Side borders only
             (char left, char _, char right) = GetBorderChars(position);
-            WriteHorizontalBorderWithSides(textBuffer, columnWidths, left, right, borderColor);
+            WriteHorizontalBorderWithSides(ansiBuffer, columnWidths, left, right, borderColor);
         }
         else
         {
             // Simple line only
-            WriteHorizontalLine(textBuffer, columnWidths, borderColor);
+            WriteHorizontalLine(ansiBuffer, columnWidths, borderColor);
         }
     }
 
@@ -331,10 +295,10 @@ public class Table
     /// <summary>
     /// Renders horizontal border with only left/right characters (no column junctions).
     /// </summary>
-    private void WriteHorizontalBorderWithSides(TextBuffer textBuffer, int[] columnWidths, char left, char right, Color borderColor)
+    private void WriteHorizontalBorderWithSides(AnsiBuffer ansiBuffer, int[] columnWidths, char left, char right, Color borderColor)
     {
         int contentWidth = CalculateContentWidth(columnWidths);
-        _ = textBuffer
+        _ = ansiBuffer
             .Append(left, borderColor)
             .Append(new string(Horizontal, contentWidth + (CellPadding * 2)), borderColor)
             .Append(right, borderColor)
@@ -344,10 +308,10 @@ public class Table
     /// <summary>
     /// Renders simple horizontal line without borders.
     /// </summary>
-    private void WriteHorizontalLine(TextBuffer textBuffer, int[] columnWidths, Color borderColor)
+    private void WriteHorizontalLine(AnsiBuffer ansiBuffer, int[] columnWidths, Color borderColor)
     {
         int totalWidth = CalculateContentWidth(columnWidths);
-        _ = textBuffer
+        _ = ansiBuffer
             .Append(new string(Horizontal, totalWidth), borderColor)
             .AppendLine();
     }
@@ -355,7 +319,7 @@ public class Table
     /// <summary>
     /// Writes a character with padding spaces around it.
     /// </summary>
-    private static void WriteCharWithPadding(TextBuffer textBuffer, char character, Color color) => _ = textBuffer
+    private static void WriteCharWithPadding(AnsiBuffer ansiBuffer, char character, Color color) => _ = ansiBuffer
             .Append(' ', color)
             .Append(character, color)
             .Append(' ', color);
@@ -363,11 +327,46 @@ public class Table
     /// <summary>
     /// Writes column separator: either vertical bar with spaces or just spacing.
     /// </summary>
-    private static void WriteColumnSeparator(TextBuffer textBuffer, bool hasColumnSeparators, Color borderColor)
+    private static void WriteColumnSeparator(AnsiBuffer ansiBuffer, bool hasColumnSeparators, Color borderColor)
     {
         if (hasColumnSeparators)
-            WriteCharWithPadding(textBuffer, Vertical, borderColor);
+            WriteCharWithPadding(ansiBuffer, Vertical, borderColor);
         else
-            _ = textBuffer.Append(new string(' ', ColumnSpacing));
+            _ = ansiBuffer.Append(new string(' ', ColumnSpacing));
+    }
+
+
+    /// <summary>
+    /// ANSI-encoded string representation with embedded color sequences using default theme.
+    /// </summary>
+    /// <returns>ANSI-encoded string with embedded color sequences.</returns>
+    public override string ToString() => ToString(TableTheme.MonokaiMidnight);
+
+    /// <summary>
+    /// ANSI-encoded string representation with embedded color sequences using specified theme.
+    /// Headers are displayed <c>iff</c> any header has content.
+    /// </summary>
+    /// <param name="theme">Theme containing border style and color styles for rendering.</param>
+    /// <returns>ANSI-encoded string with embedded color sequences.</returns>
+    /// <remarks>
+    /// <c>iff</c> <see cref="TableBorders.Header"/> selected but no headers present, border style falls back to <see cref="TableBorders.None"/>.
+    /// </remarks>
+    public string ToString(TableTheme theme)
+    {
+        AnsiBuffer output = new();
+
+        if (ColCount == 0 || RowCount == 0)
+            return output.ToString();
+
+        // Header style with no headers falls back to None
+        TableBorders borders = theme.Borders;
+        if (borders == TableBorders.Header && !HasHeaders)
+            borders = TableBorders.None;
+
+        int[] columnWidths = CalculateColumnWidths();
+        BorderConfig borderConfig = GetBorderConfiguration(borders);
+
+        Write(output, columnWidths, borderConfig, theme);
+        return output.ToString();
     }
 }

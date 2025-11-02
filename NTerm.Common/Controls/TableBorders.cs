@@ -1,4 +1,4 @@
-namespace Nterm.Core.Controls;
+namespace Nterm.Common.Controls;
 
 /// <summary>
 /// Border style options for table rendering.
