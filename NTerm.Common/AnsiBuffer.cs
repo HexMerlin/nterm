@@ -101,22 +101,20 @@ public sealed class AnsiBuffer
     }
 
     /// <summary>
-    /// Initializes <see cref="AnsiBuffer"/> with specified initial text content.
-    /// </summary>
-    /// <param name="text">Initial text content (without ANSI sequences).</param>
-    public AnsiBuffer(string text)
-    {
-        buffer = new StringBuilder(text);
-    }
-
-    /// <summary>
     /// Initializes <see cref="AnsiBuffer"/> with specified initial capacity.
     /// </summary>
     /// <param name="capacity">Initial capacity in characters.</param>
-    public AnsiBuffer(int capacity)
-    {
-        buffer = new StringBuilder(capacity);
-    }
+    public AnsiBuffer(int capacity) => buffer = new StringBuilder(capacity);
+
+
+    /// <summary>
+    /// Initializes <see cref="AnsiBuffer"/> with specified initial text content.
+    /// </summary>
+    /// <param name="text">Initial text content (without ANSI sequences).</param>
+    /// <param name="foreground">Foreground color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    /// <param name="background">Background color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    public AnsiBuffer(string text, Color foreground = default, Color background = default) : this() => Append(text, foreground, background);
+
 
     /// <summary>
     /// Current length of the buffer in characters (including ANSI escape sequences).
@@ -157,6 +155,30 @@ public sealed class AnsiBuffer
     }
 
     /// <summary>
+    /// Appends text with optional foreground and background colors.
+    /// </summary>
+    /// <param name="text">Text to append.</param>
+    /// <param name="foreground">Foreground color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    /// <param name="background">Background color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    /// <returns><see langword="this"/> instance for method chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// Always emits both foreground and background color sequences—non-transparent colors emit
+    /// RGB sequences; transparent colors emit reset sequences restoring terminal default colors.
+    /// </para>
+    /// <para>
+    /// Terminal state explicitly set for each append operation, eliminating color pollution
+    /// from previous operations.
+    /// </para>
+    /// </remarks>
+    public AnsiBuffer Append(ReadOnlySpan<char> text, Color foreground = default, Color background = default)
+    {
+        AppendColorSequences(foreground, background);
+        buffer.Append(text);
+        return this;
+    }
+
+    /// <summary>
     /// Appends text followed by line terminator, with optional foreground and background colors.
     /// </summary>
     /// <param name="text">Text to append.</param>
@@ -167,6 +189,23 @@ public sealed class AnsiBuffer
     /// Equivalent to <see cref="Append(string, Color, Color)"/> followed by <see cref="AppendLine()"/>.
     /// </remarks>
     public AnsiBuffer AppendLine(string text, Color foreground = default, Color background = default)
+    {
+        Append(text, foreground, background);
+        buffer.AppendLine();
+        return this;
+    }
+
+    /// <summary>
+    /// Appends text followed by line terminator, with optional foreground and background colors.
+    /// </summary>
+    /// <param name="text">Text to append.</param>
+    /// <param name="foreground">Foreground color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    /// <param name="background">Background color. <see cref="Color.Transparent"/> (default) resets to terminal default.</param>
+    /// <returns><see langword="this"/> instance for method chaining.</returns>
+    /// <remarks>
+    /// Equivalent to <see cref="Append(ReadOnlySpan{char}, Color, Color)"/> followed by <see cref="AppendLine()"/>.
+    /// </remarks>
+    public AnsiBuffer AppendLine(ReadOnlySpan<char> text, Color foreground = default, Color background = default)
     {
         Append(text, foreground, background);
         buffer.AppendLine();
