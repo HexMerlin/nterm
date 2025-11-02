@@ -14,15 +14,19 @@ internal static class Program
 
     private static async Task Main()
     {
-        //the terminal I run this from (windows terminal) have WHTTE text on BLUE background as default colors
+        // Reset terminal to known default colors: Red text on Gray background
+        Console.Write(AnsiBuffer.Reset(foreground: Color.Red, background: Color.Gray));
+        
+        //the terminal I run this from (windows terminal) have WHITE text on BLUE background as default colors
+        //but after Reset() above, we should have RED text on GRAY background as new defaults
         AnsiBuffer buffer = new AnsiBuffer();
-        buffer.AppendLine("This is white (default) text on blue bg (default) - CORRECT!"); 
-        buffer.AppendLine("This is RED on BLUE default background - CORRECT!", Color.Red); 
-        buffer.AppendLine("this is blue text with yellow background - CORRECT!)", Color.Blue, Color.Yellow); 
-        buffer.AppendLine("This is white default text, on green background - CORRECT!", background: Color.Green); 
+        buffer.AppendLine("This should be RED (new default) text on GRAY bg (new default)");
+        buffer.AppendLine("This is GREEN on GRAY default background", Color.Green);
+        buffer.AppendLine("this is blue text with yellow background", Color.Blue, Color.Yellow);
+        buffer.AppendLine("This is RED default text, on green background", background: Color.Green);
 
-        buffer.AppendLine("This all terminal default colors (WHITE on BLUE) - CORRECT!"); 
-                                                                   
+        buffer.AppendLine("This all terminal default colors (RED on GRAY)");
+
 
         Console.Write(buffer.ToString()); // Outputs colored text to terminal
 

@@ -21,42 +21,71 @@ namespace Nterm.Core.Buffer;
 /// </remarks>
 public sealed class AnsiBuffer
 {
+    // ============================================================================
+    // ANSI/VT Escape Sequence Constants
+    // ============================================================================
+
     /// <summary>
-    /// ANSI escape character (ESC, 0x1B).
+    /// ESC - Escape character (0x1B).
     /// </summary>
     private const char ESC = '\x1b';
 
     /// <summary>
-    /// Control Sequence Introducer for Select Graphic Rendition (SGR) - foreground RGB color.
-    /// Format: ESC[38;2;{r};{g};{b}m
+    /// CSI - Control Sequence Introducer (ESC[).
     /// </summary>
-    private const string SGR_FG_RGB_PREFIX = "[38;2;";
+    private const string CSI = "\x1b[";
 
     /// <summary>
-    /// Control Sequence Introducer for Select Graphic Rendition (SGR) - background RGB color.
-    /// Format: ESC[48;2;{r};{g};{b}m
+    /// OSC - Operating System Command introducer (ESC]).
     /// </summary>
-    private const string SGR_BG_RGB_PREFIX = "[48;2;";
+    private const string OSC = "\x1b]";
 
     /// <summary>
-    /// SGR sequence terminator.
+    /// ST - String Terminator (ESC\).
     /// </summary>
-    private const char SGR_END = 'm';
+    private const string ST = "\x1b\\";
+
+    // ============================================================================
+    // SGR (Select Graphic Rendition) Sequences
+    // ============================================================================
 
     /// <summary>
-    /// SGR reset sequence - resets all graphic modes (styles and colors).
+    /// SGR - Reset all graphic modes (styles and colors to defaults).
     /// </summary>
-    private const string SGR_RESET = "[0m";
+    private const string SGR_RESET = "\x1b[0m";
 
     /// <summary>
-    /// SGR foreground color reset to default.
+    /// SGR - Set foreground to default color.
     /// </summary>
-    private const string SGR_FG_DEFAULT = "[39m";
+    private const string SGR_FG_DEFAULT = "\x1b[39m";
 
     /// <summary>
-    /// SGR background color reset to default.
+    /// SGR - Set background to default color.
     /// </summary>
-    private const string SGR_BG_DEFAULT = "[49m";
+    private const string SGR_BG_DEFAULT = "\x1b[49m";
+
+    // ============================================================================
+    // Cursor Positioning Sequences
+    // ============================================================================
+
+    /// <summary>
+    /// CUP - Cursor Position to home (1,1).
+    /// </summary>
+    private const string CUP_HOME = "\x1b[H";
+
+    // ============================================================================
+    // Erase Sequences
+    // ============================================================================
+
+    /// <summary>
+    /// ED - Erase in Display (entire screen).
+    /// </summary>
+    private const string ED_ENTIRE_SCREEN = "\x1b[2J";
+
+    /// <summary>
+    /// ED - Erase scrollback buffer.
+    /// </summary>
+    private const string ED_SCROLLBACK = "\x1b[3J";
 
     /// <summary>
     /// Internal storage for ANSI-coded content.
@@ -168,6 +197,47 @@ public sealed class AnsiBuffer
     public override string ToString() => this._buffer.ToString();
 
     /// <summary>
+    /// ANSI sequence to reset terminal with specified default colors.
+    /// </summary>
+    /// <param name="foreground">Default foreground color. Use <see cref="Color.Transparent"/> to skip foreground reset.</param>
+    /// <param name="background">Default background color. Use <see cref="Color.Transparent"/> to skip background reset.</param>
+    /// <returns>ANSI escape sequence string that clears screen and sets default colors.</returns>
+    /// <remarks>
+    /// <para>
+    /// Emits minimal OSC (Operating System Command) sequences to change terminal's default colors:
+    /// 1. Set terminal default foreground (OSC 10) - affects what SGR 39 resets to
+    /// 2. Set terminal default background (OSC 11) - affects what SGR 49 resets to
+    /// 3. Reset all graphic modes (SGR 0) - applies new defaults
+    /// 4. Clear entire screen (ED 2J) - fills viewport with new background
+    /// 5. Move cursor to home position (CUP H)
+    /// </para>
+    /// <para>
+    /// Use at application startup to establish known default colors independent of
+    /// user's terminal configuration. Essential for themed applications where text
+    /// visibility must be guaranteed.
+    /// </para>
+    /// <para>
+    /// After calling this, all subsequent uses of <see cref="Color.Transparent"/> will
+    /// reset to these new defaults instead of the terminal's original defaults.
+    /// </para>
+    /// <para>
+    /// Example: <c>Console.Write(AnsiBuffer.Reset(Color.White, Color.Black));</c>
+    /// </para>
+    /// </remarks>
+    public static string Reset(Color foreground = default, Color background = default)
+    {
+        string oscForeground = foreground.IsTransparent
+            ? string.Empty
+            : $"{OSC}10;rgb:{foreground.R:x2}/{foreground.G:x2}/{foreground.B:x2}{ST}";
+
+        string oscBackground = background.IsTransparent
+            ? string.Empty
+            : $"{OSC}11;rgb:{background.R:x2}/{background.G:x2}/{background.B:x2}{ST}";
+
+        return oscForeground + oscBackground + SGR_RESET + ED_ENTIRE_SCREEN + CUP_HOME;
+    }
+
+    /// <summary>
     /// Appends ANSI color sequences to the internal buffer based on provided colors.
     /// </summary>
     /// <param name="foreground">Foreground color. Transparent emits reset to terminal default.</param>
@@ -179,38 +249,14 @@ public sealed class AnsiBuffer
     /// </remarks>
     private void AppendColorSequences(Color foreground, Color background)
     {
-        // Foreground: emit RGB sequence or reset to terminal default
-        this._buffer.Append(ESC);
-        if (foreground.IsTransparent)
-        {
-            this._buffer.Append(SGR_FG_DEFAULT);
-        }
-        else
-        {
-            this._buffer.Append(SGR_FG_RGB_PREFIX);
-            this._buffer.Append(foreground.R);
-            this._buffer.Append(';');
-            this._buffer.Append(foreground.G);
-            this._buffer.Append(';');
-            this._buffer.Append(foreground.B);
-            this._buffer.Append(SGR_END);
-        }
+        string fgSequence = foreground.IsTransparent
+            ? SGR_FG_DEFAULT
+            : $"{CSI}38;2;{foreground.R};{foreground.G};{foreground.B}m";
 
-        // Background: emit RGB sequence or reset to terminal default
-        this._buffer.Append(ESC);
-        if (background.IsTransparent)
-        {
-            this._buffer.Append(SGR_BG_DEFAULT);
-        }
-        else
-        {
-            this._buffer.Append(SGR_BG_RGB_PREFIX);
-            this._buffer.Append(background.R);
-            this._buffer.Append(';');
-            this._buffer.Append(background.G);
-            this._buffer.Append(';');
-            this._buffer.Append(background.B);
-            this._buffer.Append(SGR_END);
-        }
+        string bgSequence = background.IsTransparent
+            ? SGR_BG_DEFAULT
+            : $"{CSI}48;2;{background.R};{background.G};{background.B}m";
+
+        this._buffer.Append(fgSequence + bgSequence);
     }
 }
