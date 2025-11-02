@@ -7,13 +7,7 @@ namespace Nterm.Common;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Simplified alternative to <c>TextBuffer</c>, storing content as single ANSI-encoded string
-/// rather than structured line objects.
-/// </para>
-/// <para>
-/// Color sequences embedded directly using VT100/ANSI escape codes for 24-bit RGB colors.
-/// Buffer does not track terminal state—calling code responsible for restoring terminal colors
-/// after writing buffer content.
+/// Color sequences embedded directly using VT100/ANSI escape codes for 24-bit RGB colors. Sending no color means terminal default is used.
 /// </para>
 /// <para>
 /// Extract complete ANSI-coded string via <see cref="ToString"/> for direct terminal output.
