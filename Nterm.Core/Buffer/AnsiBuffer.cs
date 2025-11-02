@@ -1,5 +1,6 @@
-﻿using System.Text;
-using Nterm.Common;
+﻿using Nterm.Common;
+using Nterm.Sixel;
+using System.Text;
 
 namespace Nterm.Core.Buffer;
 
@@ -91,14 +92,14 @@ public sealed class AnsiBuffer
     /// <summary>
     /// Internal storage for ANSI-coded content.
     /// </summary>
-    private readonly StringBuilder _buffer;
+    private readonly StringBuilder buffer;
 
     /// <summary>
     /// Initializes a new, empty <see cref="AnsiBuffer"/>.
     /// </summary>
     public AnsiBuffer()
     {
-        this._buffer = new StringBuilder();
+        buffer = new StringBuilder();
     }
 
     /// <summary>
@@ -107,21 +108,21 @@ public sealed class AnsiBuffer
     /// <param name="capacity">Initial capacity in characters.</param>
     public AnsiBuffer(int capacity)
     {
-        this._buffer = new StringBuilder(capacity);
+        buffer = new StringBuilder(capacity);
     }
 
     /// <summary>
     /// Current length of the buffer in characters (including ANSI escape sequences).
     /// </summary>
-    public int Length => this._buffer.Length;
+    public int Length => buffer.Length;
 
     /// <summary>
     /// Current capacity of the internal buffer.
     /// </summary>
     public int Capacity
     {
-        get => this._buffer.Capacity;
-        set => this._buffer.Capacity = value;
+        get => buffer.Capacity;
+        set => buffer.Capacity = value;
     }
 
     /// <summary>
@@ -145,7 +146,7 @@ public sealed class AnsiBuffer
     public AnsiBuffer Append(string text, Color foreground = default, Color background = default)
     {
         AppendColorSequences(foreground, background);
-        this._buffer.Append(text);
+        buffer.Append(text);
         return this;
     }
 
@@ -162,7 +163,7 @@ public sealed class AnsiBuffer
     public AnsiBuffer AppendLine(string text, Color foreground = default, Color background = default)
     {
         Append(text, foreground, background);
-        this._buffer.AppendLine();
+        buffer.AppendLine();
         return this;
     }
 
@@ -172,9 +173,11 @@ public sealed class AnsiBuffer
     /// <returns>This <see cref="AnsiBuffer"/> instance for method chaining.</returns>
     public AnsiBuffer AppendLine()
     {
-        this._buffer.AppendLine();
+        buffer.AppendLine();
         return this;
     }
+
+    public void Append(TerminalImage terminalImage) => buffer.Append(terminalImage.EncodedData);
 
     /// <summary>
     /// Clears all content from the buffer.
@@ -182,7 +185,7 @@ public sealed class AnsiBuffer
     /// <returns>This <see cref="AnsiBuffer"/> instance for method chaining.</returns>
     public AnsiBuffer Clear()
     {
-        this._buffer.Clear();
+        buffer.Clear();
         return this;
     }
 
@@ -195,7 +198,7 @@ public sealed class AnsiBuffer
     /// Terminal color state will be affected by embedded sequences - calling code
     /// is responsible for restoring terminal state after output.
     /// </remarks>
-    public override string ToString() => this._buffer.ToString();
+    public override string ToString() => buffer.ToString();
 
     /// <summary>
     /// ANSI sequence to reset terminal with specified default colors.
@@ -258,6 +261,6 @@ public sealed class AnsiBuffer
             ? SGR_BG_DEFAULT
             : $"{CSI}48;2;{background.R};{background.G};{background.B}m";
 
-        this._buffer.Append(fgSequence + bgSequence);
+        buffer.Append(fgSequence + bgSequence);
     }
 }

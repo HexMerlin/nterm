@@ -10,6 +10,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\NTerm.Common\NTerm.Common.csproj" />
+	  <ProjectReference Include="..\Nterm.Sixel\Nterm.Sixel.csproj" />
 	</ItemGroup>
 
 </Project>

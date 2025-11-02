@@ -33,7 +33,7 @@ internal static class Program
         buffer.AppendLine();
 
         // Append SIXEL image using Append(string) - EncodedData contains complete SIXEL sequence
-        buffer.Append(userImage.EncodedData);
+        buffer.Append(userImage);
 
         buffer.AppendLine("This should be default text on default background");
         buffer.AppendLine("This is GREEN on default background", Color.Green);
